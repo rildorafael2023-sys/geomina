@@ -53,13 +53,15 @@ geomina/
 │   │   ├── migrar.py             migrações automáticas + backup prévio
 │   │   ├── modelos.py            registro de todos os modelos
 │   │   ├── janela.py             janela própria, instância única, encerramento
-│   │   ├── migrations/           Alembic (0001_nucleo, 0002_estrutura)
+│   │   ├── migrations/           Alembic (0001_nucleo, 0002_estrutura, 0003_backup)
 │   │   ├── core/                 auditoria, segurança, armazenamento, erros, dependências
 │   │   ├── espacial/             geometria WKB 3D (base para a topografia)
 │   │   ├── modules/
 │   │   │   ├── auth/             usuários, papéis, permissões, sessões
 │   │   │   ├── arquivos/         arquivos originais
 │   │   │   ├── estrutura/        minas, tipos, regras, unidades, avanços (E3)
+│   │   │   ├── painel/           painel e consulta da auditoria (E4)
+│   │   │   ├── backup/           backup, backup diário, restauração (E4)
 │   │   │   └── sistema/          saúde, parâmetros da instalação
 │   │   └── static/               interface compilada (gerada, fora do git)
 │   └── tests/                    pytest (banco SQLite real em pasta temporária)
@@ -99,6 +101,9 @@ Endpoints **[IMPLEMENTADO]**:
 | GET/POST/PATCH · PUT | `/tipos-unidade` · `/regras-hierarquia` | `estrutura:configurar` (leitura: `estrutura:ler`) |
 | POST/GET/PATCH/DELETE | `/unidades` · `/unidades/{id}` · POST `/unidades/{id}/mover` · PUT `/unidades/{id}/niveis` · GET `/unidades/{id}/historico` | `estrutura:editar` / `estrutura:ler` |
 | GET/POST · PUT | `/unidades/{id}/avancos` · `/avancos/{id}` | `avanco:registrar` / `estrutura:ler` |
+| GET | `/painel` | autenticado (blocos conforme permissões) |
+| GET | `/auditoria?tabela=&operacao=&usuario_id=&de=&ate=&texto=&pagina=&tamanho=` · `/auditoria/tabelas` | `auditoria:ler` |
+| GET/POST | `/backups` · GET `/backups/{nome}/download` · POST `/backups/abrir-pasta` · POST `/backups/restaurar` | `sistema:backup` |
 
 ## 6. Arquitetura espacial (adaptada ao SQLite — DT-017)
 
@@ -133,9 +138,9 @@ Endereçado por conteúdo (`objetos/ab/cd/<sha256>`), gravação atômica (arqui
 - Papéis: Administrador, Geólogo revisor, Geólogo, Técnico/amostrador, Consulta.
 - Login sem diferenciar maiúsculas; mesma resposta e tempo para usuário inexistente e senha errada.
 
-## 9. Backup
-- Automático antes de cada migração **[IMPLEMENTADO]**.
-- Backup manual e restauração pela interface: Etapa 4 (pendente).
+## 9. Backup **[IMPLEMENTADO — DT-020, DT-025]**
+- Antes de cada migração (.db), diário automático na abertura (.zip só do banco, 14 mantidos), completo manual (.zip com arquivos) com cópia opcional para pendrive, antes de cada restauração.
+- Restauração validada e auditada pela interface.
 
 ## 10. Tablets e celulares (E20)
 Os geólogos usam tablets e celulares **sem rede**. Proposta: a mesma interface instalada como aplicativo offline no tablet, com banco local, e troca de dados com o PC por **arquivo de sincronização** (cabo USB), com resolução de conflitos usando `instalacao_id`, UUID e `versao`. Detalhamento quando a etapa for iniciada.

@@ -1,4 +1,4 @@
-# INSTRUÇÕES DE USO — versão 0.3.0
+# INSTRUÇÕES DE USO — versão 0.4.0
 
 > Descreve apenas o que está implementado e testado. Mapeamento, amostras, laudos e topografia ainda não estão disponíveis.
 
@@ -56,7 +56,21 @@ Menu **Tipos e regras**: crie tipos de unidade (ex.: Painel) e marque, na matriz
 | Técnico / amostrador | consultar; registrar avanços |
 | Consulta | consultar |
 
-## 8. Segurança dos dados
+## 8. Painel
+Primeira tela depois de entrar. Os números são lidos do banco a cada abertura (e a cada minuto): unidades por tipo, frentes ativas, avanço dos últimos 30 dias, últimos avanços e atividades recentes. Cada usuário vê só os blocos dos módulos a que tem acesso.
+
+## 9. Histórico de alterações (Administrador e Geólogo revisor)
+Menu **Histórico de alterações**. Filtre por assunto, operação, usuário, período ou texto (ex.: "N144"). Em **detalhes** aparecem os valores antes e depois de cada campo. Nada pode ser apagado do histórico.
+
+## 10. Backup e restauração (Administrador)
+Menu **Backup**.
+- **Fazer backup**: gera um arquivo .zip com o banco e todos os arquivos originais. Informe uma pasta de pendrive/disco (ex.: `E:\`) para gravar também uma cópia lá; a cópia é conferida.
+- **Automático**: o GeoMina faz um backup diário do banco ao abrir (guarda os 14 mais recentes), um antes de cada atualização e um antes de cada restauração.
+- **Restaurar**: substitui todos os dados atuais pelos do backup escolhido. Pede a sua senha e a palavra RESTAURAR. Antes, guarda automaticamente o estado atual. Depois, é preciso entrar de novo.
+- Para restaurar um backup que está no pendrive: **Abrir pasta de backups**, copie o .zip para essa pasta e atualize a página.
+- Recomendação: um backup completo por semana num pendrive guardado fora do computador.
+
+## 11. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.

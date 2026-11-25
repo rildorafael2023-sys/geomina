@@ -75,6 +75,13 @@
 | 2026-11-25 | E3 | `ruff`, `tsc -b`, `vite build` | sem erros | |
 | 2026-11-25 | E3 | Atualização real 0.2.0 → 0.3.0 (pacote linux): dados criados na 0.2.0, zip novo por cima, `pip --upgrade` offline | **aprovado** | banco 0001 → 0002; login do admin antigo mantido; tipos padrão criados; backup `antes-migracao-0001` gerado automaticamente |
 
+| 2026-11-25 | E4 | `pytest` backend: 77 testes (+14 painel/auditoria/backup/restauração) | **77 aprovados** | 1ª execução: 2 falhas reais (busca com acento; rota API inexistente servia a interface), corrigidas |
+| 2026-11-25 | E4 | E2E `e2e/painel_backup.cjs` (7 cenários: painel vazio, painel com números, histórico com filtro e detalhes, backup completo, restauração com senha/confirmação e verificação dos dados, permissões do geólogo, celular) | **aprovado** | Falhas encontradas: rolagem lateral no celular, tela após restaurar (corrigidas); seletor do teste corrigido |
+| 2026-11-25 | E4 | E2E `estrutura.cjs` e `fluxo_basico.cjs` (regressão) | **aprovados** | executados um a um com pasta de dados limpa (a execução em sequência com pasta reaproveitada gerou falsos negativos, que foram investigados) |
+
+| 2026-11-25 | E4 | Atualização real 0.3.0 → 0.4.0 (pacote linux) com mina já cadastrada | **aprovado** | banco 0002 → 0003; mina preservada e exibida no painel; backups `antes-migracao` e `diario` criados; admin antigo recebeu a permissão de backup |
+
 ### Ainda não testado
 - Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
+- "Abrir pasta de backups" no Windows (E4).
 - Desempenho com volume real de dados (não se aplica à E2).

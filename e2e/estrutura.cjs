@@ -26,7 +26,7 @@ const SENHA = "senhaForte123";
   await page.getByText("Olá, Administrador").waitFor();
 
   // 1. Cadastro da mina (SIRGAS 2000 por padrão)
-  await page.getByRole("link", { name: "Estrutura da mina" }).click();
+  await page.getByRole("navigation").getByRole("link", { name: "Estrutura da mina" }).click();
   await page.getByText("Cadastrar a mina").waitFor();
   await page.getByLabel("Código").fill("MINA01");
   await page.getByLabel("Nome").fill("Mina 01");

@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-25 · **Versão:** 0.3.0 · **Etapa atual:** E3 concluída, aguardando validação
+**Última atualização:** 2026-11-25 · **Versão:** 0.4.0 · **Etapa atual:** E4 concluída, aguardando validação
 
 ## Etapas
 
@@ -8,9 +8,29 @@
 |-------|--------|
 | E1 Arquitetura e especificação | ✅ Aprovada |
 | E2 Infraestrutura, banco local, autenticação, auditoria, arquivos | ✅ Validada (instalada e aberta pelo usuário no Windows) |
-| E3 Estrutura operacional da mina + janela própria | 🟡 **Concluída e testada, aguardando validação do usuário** |
-| E4 Painel (dashboard), consulta de auditoria, backup pela interface | ⚪ Próxima |
+| E3 Estrutura operacional da mina + janela própria | ✅ Usuário autorizou prosseguir (validação no Windows da janela própria ainda pendente) |
+| E4 Painel, histórico de alterações, backup e restauração | 🟡 **Concluída e testada, aguardando validação do usuário** |
+| E5 Mapeamento geológico (ficha digital) | ⚪ Próxima — depende da revisão de `FICHA_MAPEAMENTO.md` |
 | E5 – E21 | ⚪ Pendentes |
+
+## Entregue na E4 (versão 0.4.0)
+| Funcionalidade | Teste |
+|---|---|
+| **Painel** com números reais do banco: unidades ativas por tipo, frentes ativas/paralisadas, avanço dos últimos 30 dias, últimos avanços, arquivos, usuários ativos, atividades recentes. Cada bloco só aparece com a permissão correspondente | API (valores conferidos com dados criados no teste) + E2E |
+| **Histórico de alterações** (auditoria) com filtros por assunto, operação, usuário, período e texto; paginação; detalhes antes/depois por campo. Acesso: Administrador e Geólogo revisor | API + E2E |
+| **Backup completo** (banco + arquivos originais + manifesto com contagens e hash), com cópia opcional para pendrive/disco (conferida por hash), download e "abrir pasta" | API + E2E |
+| **Backup diário automático** do banco na abertura (14 mais recentes) | teste automático (inclusive retenção) |
+| **Restauração** pela tela: exige senha + digitar RESTAURAR; valida hash, integridade e versão; faz backup de segurança antes; registra na auditoria; bloqueia o uso durante a restauração; exige novo login | API (incluindo backup corrompido e de versão mais nova) + E2E |
+| Busca no histórico com acentos ("Nível") | teste automático |
+
+### Problemas encontrados e corrigidos na E4
+| Problema | Correção |
+|---|---|
+| Acentos gravados codificados no histórico (`\u00ed`) impediam a busca por "Nível" | JSON gravado com acentos legíveis |
+| Endereço `/api/...` inexistente devolvia a página da interface em vez de erro (sem vazamento de dados, conferido) | resposta 404 JSON + teste |
+| Painel com rolagem lateral de 69 px no celular | tabelas com rolagem própria |
+| Após restaurar e entrar de novo, a tela permanecia em Backup | volta ao Painel |
+| Resumo do avanço em formato de computador ("2026-11-25 3.2 m") | "25/11/2026 · +3,2 m" |
 
 ## Entregue na E3 (versão 0.3.0)
 | Funcionalidade | Teste |
@@ -27,7 +47,7 @@
 | Histórico legível por unidade (cadastro, alterações, unidades criadas dentro, avanços, vínculos de nível) | API + E2E |
 | Datas e horas em UTC no banco, exibidas no horário local | teste automático |
 
-Resumo dos testes: **63 testes do backend**, **E2E da estrutura (10 cenários)** e **E2E básico (7 cenários)** aprovados; lint e checagem de tipos sem erros. Detalhes em `TESTES.md`.
+Resumo dos testes (E3): **63 testes do backend**, **E2E da estrutura (10 cenários)** e **E2E básico (7 cenários)** aprovados; lint e checagem de tipos sem erros. Detalhes em `TESTES.md`.
 
 ## Problemas encontrados e corrigidos na E3
 | Problema | Correção |
@@ -59,7 +79,9 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - **Janela própria e atalho não testados no Windows** (testados em Linux com Chromium). Se a janela não abrir, use `GeoMina.bat` (modo diagnóstico) e envie a mensagem.
 - O instalador exige Python 3.12/3.13 (instalador .exe único previsto para a E19).
 - Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
-- Ainda não há painel com indicadores, consulta geral da auditoria nem backup/restauração pela interface (E4).
+- Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
+- Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").
+- "Abrir pasta de backups" funciona no Windows; em outros sistemas mostra o caminho.
 - Avanço de frente: a distância é a medida informada (trena/topografia). O chainage calculado sobre o eixo topográfico chega na E10.
 
 ## Pendências que dependem do usuário
@@ -74,6 +96,5 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Usuário valida a E3 no Windows (ícone, janela, cadastro da estrutura).
-2. **E4 — Painel e administração**: painel inicial com números reais do banco (unidades por tipo, frentes ativas, últimos avanços, atividades recentes), consulta da auditoria com filtros, backup e restauração pela interface.
-3. Em seguida, **E5 — Mapeamento geológico** com a ficha digital (depende da revisão de `FICHA_MAPEAMENTO.md`).
+1. Usuário valida a E4 (Painel, Histórico de alterações, Backup) e a janela própria da E3 no Windows.
+2. **E5 — Mapeamento geológico** com a ficha digital: precisa da revisão de `FICHA_MAPEAMENTO.md` (enviada ao usuário em 2026-11-25).

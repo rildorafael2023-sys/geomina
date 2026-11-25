@@ -9,10 +9,12 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
   const [aberto, { toggle, close }] = useDisclosure();
   const local = useLocation();
   const itens = [
-    { para: "/", rotulo: "Início", visivel: true },
+    { para: "/", rotulo: "Painel", visivel: true },
     { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
     { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },
     { para: "/usuarios", rotulo: "Usuários", visivel: usuario.permissoes.includes("usuario:gerenciar") },
+    { para: "/auditoria", rotulo: "Histórico de alterações", visivel: usuario.permissoes.includes("auditoria:ler") },
+    { para: "/backup", rotulo: "Backup", visivel: usuario.permissoes.includes("sistema:backup") },
     { para: "/sistema", rotulo: "Sistema", visivel: true },
     { para: "/senha", rotulo: "Trocar minha senha", visivel: true },
   ];

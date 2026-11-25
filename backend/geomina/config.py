@@ -13,7 +13,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-VERSAO_APP = "0.3.0"
+VERSAO_APP = "0.4.0"
 
 
 def pasta_dados_padrao() -> Path:
@@ -36,6 +36,7 @@ class Config(BaseSettings):
     porta: int = 8765
     sessao_horas: int = 12
     tamanho_max_upload_mb: int = 500
+    backup_diario: bool = True
 
     @cached_property
     def caminho_banco(self) -> Path:

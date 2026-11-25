@@ -61,13 +61,14 @@
 - ✅ Geometria 3D preserva Z exatamente (WKB) e a consulta R*Tree funciona.
 - ✅ Instalação em Windows real: o usuário instalou e abriu o aplicativo.
 
-## E3 — Estrutura operacional da mina 🟡 concluída e testada, aguardando validação
+## E3 — Estrutura operacional da mina ✅ concluída (usuário autorizou prosseguir)
 **Realizado também:** janela própria com ícone na área de trabalho, instância única e encerramento automático (pedido do usuário).
 **Escopo:** mina (com CRS de trabalho, proposto SIRGAS 2000 / UTM 23S), tipos de unidade, regras de hierarquia, unidades (árvore ltree), unidades multinível, frentes e avanços, histórico por unidade, inativação.
 **Aceitação:** ✅ cadastro, consulta e alteração pela API e pela interface testados; ✅ regra de hierarquia violada é rejeitada **pelo banco** (testado com SQL direto, sem a API); ✅ ciclos impossíveis; ✅ mover sub-árvore atualiza os caminhos; ✅ rampa vinculada a 3 níveis aparece na consulta de cada nível; ✅ exclusão de unidade com vínculos bloqueada; ✅ cada operação auditada, com histórico legível por unidade; ✅ avanços de frente com referência obrigatória.
 
-## E4 — Interface base, usuários e dashboard
-**Escopo:** SPA React/TS (layout, navegação, login, tratamento de sessão), cliente da API gerado; telas de estrutura operacional (árvore, cadastro, histórico); administração de usuários/papéis; dashboard com indicadores **apenas dos módulos existentes**, calculados no banco.
+## E4 — Painel, histórico de alterações, backup e restauração 🟡 concluída e testada, aguardando validação
+**Realizado:** painel com dados reais, consulta da auditoria, backup completo/diário, cópia para pendrive, restauração segura. A interface base e a administração de usuários já tinham sido feitas na E2.
+**Escopo original:** **Escopo:** SPA React/TS (layout, navegação, login, tratamento de sessão), cliente da API gerado; telas de estrutura operacional (árvore, cadastro, histórico); administração de usuários/papéis; dashboard com indicadores **apenas dos módulos existentes**, calculados no banco.
 **Aceitação:** testes E2E (Playwright): login, criar mina/nível/galeria/frente pela interface, ver no dashboard a contagem real; usuário "Consulta" não vê botões de edição e a API também recusa; uso testado em resolução de tablet.
 
 ## E5 — Mapeamento geológico

@@ -7,6 +7,8 @@ import { aoSessaoExpirar, api, definirToken, lerToken, type Eu } from "./api/cli
 import { Layout } from "./componentes/Layout";
 import { ConfiguracaoEstrutura } from "./paginas/estrutura/Configuracao";
 import { Estrutura } from "./paginas/estrutura/Estrutura";
+import { Auditoria } from "./paginas/Auditoria";
+import { Backup } from "./paginas/Backup";
 import { Inicio } from "./paginas/Inicio";
 import { Instalacao } from "./paginas/Instalacao";
 import { Login } from "./paginas/Login";
@@ -57,6 +59,10 @@ export function App() {
         {usuario.permissoes.includes("estrutura:ler") && <Route path="/estrutura" element={<Estrutura eu={usuario} />} />}
         {usuario.permissoes.includes("estrutura:configurar") && <Route path="/configuracao/estrutura" element={<ConfiguracaoEstrutura />} />}
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}
+        {usuario.permissoes.includes("auditoria:ler") && (
+          <Route path="/auditoria" element={<Auditoria podeVerUsuarios={usuario.permissoes.includes("usuario:gerenciar")} />} />
+        )}
+        {usuario.permissoes.includes("sistema:backup") && <Route path="/backup" element={<Backup aoRestaurar={sair} />} />}
         <Route path="/sistema" element={<Sistema />} />
         <Route path="/senha" element={<TrocarSenha aoConcluir={sair} />} />
         <Route path="*" element={<Navigate to="/" replace />} />

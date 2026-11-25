@@ -181,3 +181,67 @@ export const CRS_OPCOES = [
 
 export const dataHora = (iso: string) => new Date(iso).toLocaleString("pt-BR");
 export const dataCurta = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("pt-BR");
+
+// ---- Painel, auditoria e backup (Etapa 4) ----
+export interface Atividade {
+  id: number;
+  ocorrido_em: string;
+  tabela: string;
+  tabela_nome: string;
+  operacao: string;
+  operacao_nome: string;
+  resumo: string;
+  usuario: string | null;
+}
+export interface ItemAuditoria extends Atividade {
+  registro_id: string;
+  origem: string;
+  antes: Record<string, unknown> | null;
+  depois: Record<string, unknown> | null;
+}
+export interface PainelDados {
+  gerado_em: string;
+  mina: string | null;
+  unidades_por_tipo: { codigo: string; nome: string; cor: string | null; ativas: number; inativas: number }[] | null;
+  frentes: Record<string, number> | null;
+  avancos_30_dias: { registros: number; metros: number } | null;
+  ultimos_avancos:
+    | { frente_id: string; frente: string; data: string; distancia_m: number | null; referencia: string | null; avanco_m: number | null; responsavel: string | null }[]
+    | null;
+  atividades: Atividade[];
+  arquivos: { quantidade: number; bytes: number } | null;
+  usuarios_ativos: number | null;
+}
+export interface Backup {
+  nome: string;
+  tipo: string;
+  criado_em: string;
+  tamanho: number;
+  versao_app: string | null;
+  revisao_banco: string | null;
+  com_arquivos: boolean;
+  usuario: string | null;
+}
+
+export function tamanhoLegivel(bytes: number): string {
+  const u = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  let v = bytes;
+  while (v >= 1024 && i < u.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toLocaleString("pt-BR", { maximumFractionDigits: i ? 1 : 0 })} ${u[i]}`;
+}
+
+/** Baixa um arquivo da API autenticada (o token vai no cabeçalho, não na URL). */
+export async function baixar(caminho: string, nome: string): Promise<void> {
+  const r = await fetch(`/api/v1${caminho}`, { headers: { Authorization: `Bearer ${tokenMemoria ?? ""}` } });
+  if (!r.ok) throw new ErroApi(r.status, "download", "Falha ao baixar o arquivo.");
+  const url = URL.createObjectURL(await r.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nome;
+  a.click();
+  URL.revokeObjectURL(url);
+}

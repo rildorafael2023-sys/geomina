@@ -133,3 +133,8 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 ## DT-024 — Posição de frente como colunas X/Y/Z (não geometria)
 **Estado:** Aceita
 **Justificativa.** Um avanço é um único ponto opcional, medido em campo. Colunas numéricas (no CRS de trabalho da mina) são mais simples de validar (X e Y juntos, Z exige XY) e de consultar. Geometrias WKB ficam para linhas e polígonos (topografia, eixos). A distância exige a **referência** de onde foi medida.
+
+## DT-025 — Backup em .zip com manifesto; restauração pela API de backup do SQLite
+**Estado:** Aceita (E4)
+**Decisão.** Backup completo = banco (cópia consistente) + arquivos originais + `manifesto.json` (versão, revisão do esquema, SHA-256 do banco, contagens por tabela, usuário). A restauração valida o manifesto, o hash, o `integrity_check` e a revisão (recusa backup de versão mais nova). Antes, faz um backup de segurança. Depois, copia o banco do backup para o banco em uso pela API de backup do SQLite, sem trocar arquivos com conexões abertas. Os arquivos originais só são acrescentados (endereçamento por hash). As migrações pendentes são aplicadas e o evento é registrado na auditoria do banco restaurado. A API fica bloqueada (503) durante a restauração.
+**Segurança.** Exige a permissão `sistema:backup` (só Administrador), a senha do usuário e a confirmação digitada. O download valida o nome do arquivo para não sair da pasta de backups.

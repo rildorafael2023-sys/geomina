@@ -9,7 +9,7 @@ SENHA = "senhaForte123"
 
 @pytest.fixture
 def cfg(tmp_path):
-    return Config(dados=tmp_path / "dados")
+    return Config(dados=tmp_path / "dados", backup_diario=False)
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import UTC, datetime
 
@@ -70,7 +71,9 @@ def _configurar_conexao(dbapi_conn, _record) -> None:
 
 
 def criar_engine(url: str) -> Engine:
-    engine = create_engine(url, connect_args={"check_same_thread": False})
+    # JSON com acentos legíveis (ensure_ascii=False): permite buscar "Nível" no histórico.
+    engine = create_engine(url, connect_args={"check_same_thread": False},
+                           json_serializer=lambda o: json.dumps(o, ensure_ascii=False))
     event.listen(engine, "connect", _configurar_conexao)
     return engine
 
