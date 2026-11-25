@@ -2,13 +2,17 @@
 
 Software de gestão de dados geológicos para a rotina operacional de mina subterrânea: estrutura da mina, mapeamento geológico, croquis, fotografias, amostragem, geoquímica, topografia XYZ, visualização 3D, análise longitudinal, consultas, GIS e relatórios.
 
-## Estado atual
+**Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-**Etapa 1 (arquitetura e especificação) entregue para revisão. Ainda não há código executável.**
-Detalhes em [`docs/STATUS_DO_PROJETO.md`](docs/STATUS_DO_PROJETO.md).
+## Estado atual — versão 0.2.0
+- ✅ Etapa 1: arquitetura e especificação (aprovada).
+- 🟡 Etapa 2: infraestrutura concluída e testada, aguardando validação. Inclui banco local, usuários e permissões, auditoria, arquivos originais, interface e pacote de instalação offline para Windows.
+- Os módulos geológicos começam na Etapa 3 (estrutura da mina).
 
-## Stack proposta
-PostgreSQL 16 + PostGIS 3 · Python / FastAPI / SQLAlchemy / GeoAlchemy2 / GDAL · React + TypeScript · Three.js · Plotly · Docker Compose.
+Detalhes em [`docs/STATUS_DO_PROJETO.md`](docs/STATUS_DO_PROJETO.md). Instalação em [`docs/INSTRUCOES_DE_INSTALACAO.md`](docs/INSTRUCOES_DE_INSTALACAO.md).
+
+## Tecnologia
+Python · FastAPI (servidor interno local) · SQLite (WAL, R*Tree) · SQLAlchemy/Alembic · Shapely · pyproj/PROJ · React + TypeScript + Mantine. Previstos: Three.js (3D) e Plotly (gráficos).
 Justificativas em [`docs/DECISOES_TECNICAS.md`](docs/DECISOES_TECNICAS.md).
 
 ## Documentação
@@ -23,5 +27,7 @@ Justificativas em [`docs/DECISOES_TECNICAS.md`](docs/DECISOES_TECNICAS.md).
 | [PLANO_DE_DESENVOLVIMENTO](docs/PLANO_DE_DESENVOLVIMENTO.md) | Roadmap e critérios de aceitação |
 | [TESTES](docs/TESTES.md) | Estratégia e registro de testes |
 | [STATUS_DO_PROJETO](docs/STATUS_DO_PROJETO.md) | Situação atual e pendências |
-| [INSTRUCOES_DE_INSTALACAO](docs/INSTRUCOES_DE_INSTALACAO.md) | Instalação (a partir da E2) |
+| [DADOS_REAIS](docs/DADOS_REAIS.md) | O que os arquivos reais da mina mostraram |
+| [FICHA_MAPEAMENTO](docs/FICHA_MAPEAMENTO.md) | Proposta da ficha digital de mapeamento |
+| [INSTRUCOES_DE_INSTALACAO](docs/INSTRUCOES_DE_INSTALACAO.md) | Instalação (usuário e desenvolvimento) |
 | [INSTRUCOES_DE_USO](docs/INSTRUCOES_DE_USO.md) | Manual (conforme módulos forem concluídos) |

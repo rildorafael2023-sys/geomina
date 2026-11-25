@@ -1,6 +1,23 @@
 # BANCO DE DADOS — Modelo inicial
 
-> Estado: **modelo conceitual/lógico proposto (Etapa 1)**. Nenhuma tabela criada ainda.
+> Estado: modelo lógico da Etapa 1, **adaptado ao SQLite em 2026-11-25** (DT-016/DT-017).
+> **Tabelas implementadas (migração `0001_nucleo`, Etapa 2):** `usuario`, `papel`, `permissao`, `papel_permissao`, `usuario_papel`, `sessao`, `auditoria`, `arquivo`, `parametro_sistema`. As demais ainda são projeto.
+
+## 0. Adaptação ao SQLite (aplicativo local)
+
+| Projeto original (PostgreSQL/PostGIS) | Implementação local (SQLite) |
+|---|---|
+| `geometry(PointZ/LineStringZ/…, srid)` | `geom` BLOB com WKB 2D/3D + `srid` + `dimensao`; índice R*Tree 3D |
+| `ltree` (caminho da árvore) | coluna texto `caminho` materializada (`/id1/id2/…`) mantida pelo serviço, com índice |
+| `JSONB` | `JSON` (texto validado; funções `json_*` do SQLite) |
+| `citext` (login) | `COLLATE NOCASE` |
+| `timestamptz` | `DateTime(timezone=True)` gravado sempre em UTC |
+| `uuid` | `Uuid` do SQLAlchemy (32 caracteres hexadecimais) |
+| auditoria por trigger com `SET LOCAL` | eventos do ORM + triggers de imutabilidade (DT-019) |
+| `spatial_ref_sys` | base EPSG do PROJ (pyproj) |
+| `num_nonnulls(...) = 1` | `CHECK ((a IS NOT NULL) + (b IS NOT NULL) + … = 1)` |
+| `SELECT … FOR UPDATE` (gerar código) | transação `BEGIN IMMEDIATE` (o SQLite serializa escritas) |
+
 > As tabelas serão criadas progressivamente, por migrações Alembic, na etapa de cada módulo.
 > O modelo completo é apresentado agora para garantir que as primeiras tabelas não bloqueiem as seguintes, especialmente as espaciais.
 
@@ -16,7 +33,7 @@
 - `CHECK` para faixas de valores (mergulho, azimute, chainage ≥ 0 etc.).
 - Auditoria por trigger em todas as tabelas de domínio (seção 9).
 
-## 2. Núcleo — usuários e permissões (Etapa 2)
+## 2. Núcleo — usuários e permissões (Etapa 2) **[IMPLEMENTADO]**
 
 | Tabela | Colunas principais | Restrições |
 |--------|--------------------|-----------|
@@ -24,8 +41,9 @@
 | `papel` | id, codigo, nome | UNIQUE(codigo) |
 | `permissao` | id, codigo (`modulo:acao`), descricao | UNIQUE(codigo) |
 | `papel_permissao` | papel_id, permissao_id | PK composta |
-| `usuario_papel` | usuario_id, papel_id, mina_id (nulo = todas) | PK (usuario, papel, mina) |
-| `sessao_renovacao` | id, usuario_id, hash_token, expira_em, revogado_em | — |
+| `usuario_papel` | usuario_id, papel_id | PK (usuario, papel). *Restrição por mina adiada até existir mais de uma mina.* |
+| `sessao` | id, usuario_id, token_hash, criado_em, expira_em, revogado_em | UNIQUE(token_hash) (DT-018) |
+| `parametro_sistema` | chave, valor | ex.: `instalacao_id` |
 
 ## 3. Estrutura operacional (Etapa 3)
 
@@ -61,7 +79,7 @@
 
 | Tabela | Colunas principais | Observações |
 |--------|--------------------|-------------|
-| `arquivo` | id, sha256, tamanho, mime, extensao, chave_armazenamento, enviado_por, enviado_em | UNIQUE(sha256) — conteúdo deduplicado |
+| `arquivo` **[IMPLEMENTADO]** | id, sha256, tamanho, mime, nome_original, chave, enviado_por, enviado_em | UNIQUE(sha256) — conteúdo deduplicado |
 | `documento` | id, mina_id, categoria (`croqui`/`foto`/`relatorio`/`planilha`/`gis`/`topografia`/`campo`/`outro`), titulo, descricao, data_documento, autor_id, estado | entidade lógica com versões |
 | `documento_versao` | id, documento_id, numero, arquivo_id, nome_original, motivo, criado_por, criado_em | UNIQUE(documento_id, numero); nunca apagada |
 | `foto` | documento_id (PK/FK), legenda, identificador, data_captura, exif JSONB, geom PointZ, orientacao | especialização de documento |
@@ -104,7 +122,7 @@
 
 Colunas `eixo_versao_id` em `frente_avanco`, `mapeamento` e `amostra` serão FKs adicionadas na migração desta etapa (as colunas existem antes, nulas — sem retrabalho).
 
-## 9. Auditoria (Etapa 2)
+## 9. Auditoria (Etapa 2) **[IMPLEMENTADO — por ORM, DT-019]**
 
 | Tabela | Colunas |
 |--------|---------|
@@ -144,4 +162,8 @@ erDiagram
 
 - Confirmar se haverá **mais de uma mina** no mesmo sistema (o modelo já suporta).
 - Confirmar regras reais de código de amostra e de unidade.
-- Confirmar CRS de trabalho (EPSG ou grade local) — necessário antes da Etapa 3, pois `mina.srid_trabalho` é obrigatório.
+- CRS confirmados: SIRGAS 2000 / UTM 23S (31983) e SAD69 / UTM 23S (29193). Proposta: CRS de trabalho = SIRGAS 2000 (a confirmar).
+- `amostra.codigo`: regras BS-RP (mina), BMT-TS (testemunho), BE (antigas); forma canônica sem espaços (DADOS_REAIS.md §3).
+- `termo`: acrescentar tabela `termo_sinonimo` (grafias encontradas na importação → termo).
+- `resultado`: acrescentar `tipo_linha_laboratorio` (SMP/DUP/REP/STD) dos laudos SGS.
+- Topografia: `feicao_topografica` ganha `camada_cad`, `entidade_cad`, `cor_cad`, `z_suspeito`.

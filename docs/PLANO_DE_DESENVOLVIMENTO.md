@@ -1,6 +1,6 @@
 # PLANO DE DESENVOLVIMENTO — Roadmap
 
-> Estado: **proposta (Etapa 1), aguardando aprovação.**
+> Estado: **aprovado pelo usuário em 2026-11-25**, com a mudança para **aplicativo local no PC** (DT-016).
 > Alterações em relação à ordem original estão marcadas **[ALTERADO]** e justificadas em `ANALISE_CRITICA.md`.
 > Regra: nenhuma etapa começa sem autorização explícita, e cada etapa termina com testes executados, documentação e status atualizados.
 
@@ -43,23 +43,26 @@
 
 ---
 
-## E1 — Arquitetura, planejamento e especificação técnica ✅ (entregue para revisão)
+## E1 — Arquitetura, planejamento e especificação técnica ✅ aprovada
 **Entregáveis:** REQUISITOS, ANALISE_CRITICA, ARQUITETURA, BANCO_DE_DADOS, DECISOES_TECNICAS, PLANO, TESTES, STATUS, README, instruções.
 **Aceitação:** documentos revisados e aprovados pelo usuário; pendências críticas respondidas (CRS, offline, implantação).
 
-## E2 — Infraestrutura, banco, autenticação e auditoria
-**Escopo:** repositório estruturado; Docker Compose (PostGIS, API); FastAPI com configuração, logs e tratamento de erros; SQLAlchemy + Alembic; extensões (postgis, ltree, pgcrypto, citext); tabelas do núcleo (usuario, papel, permissao, sessao, auditoria); trigger de auditoria; login/JWT/renovação; RBAC; interface de armazenamento (disco local) com hash; `/saude`; CI no GitHub Actions (lint + testes com PostGIS).
+## E2 — Infraestrutura, banco, autenticação e auditoria 🟡 concluída, aguardando validação
+**Escopo realizado (revisado para aplicativo local):** aplicativo Python local (127.0.0.1) que abre o navegador; SQLite (WAL, FK); SQLAlchemy + Alembic com migração automática e backup prévio; usuários, papéis, permissões, sessões revogáveis; auditoria por ORM com tabela imutável; armazenamento de arquivos por hash; `/saude`; interface React (primeiro acesso, login, usuários, sistema, troca de senha); pacote de instalação offline para Windows.
+**Fora do escopo realizado:** Docker e PostGIS (substituídos, DT-016/017); CI no GitHub (adiado: o usuário não quer nada na rede por enquanto).
+**Escopo original (Etapa 1):** Docker Compose (PostGIS, API); FastAPI; SQLAlchemy + Alembic; extensões; tabelas do núcleo; trigger de auditoria; login/JWT; RBAC; armazenamento com hash; `/saude`; CI.
 **Aceitação:**
-- `docker compose up` sobe banco e API do zero; `/saude` informa versão do PostGIS.
-- Migração inicial aplicada e revertida com sucesso.
-- Login válido/inválido, token expirado, renovação e revogação testados.
-- Rota protegida nega acesso sem permissão (teste).
-- Alteração em tabela auditada gera registro com usuário correto (teste).
-- Upload de arquivo armazena original, calcula SHA-256, deduplica e não sobrescreve (teste).
-- Inserção de geometria `PointZ`/`LineStringZ` com SRID preserva Z (teste de fumaça espacial).
+- ✅ O aplicativo sobe do zero com uma pasta de dados vazia; `/saude` informa revisão do banco, R*Tree e PROJ.
+- ✅ Migração inicial aplicada, revertida e reaplicada.
+- ✅ Login válido/inválido, sessão expirada e revogação testados.
+- ✅ Rota protegida nega acesso sem permissão.
+- ✅ Alteração em tabela auditada gera registro com o usuário correto.
+- ✅ O envio de arquivo armazena o original, calcula o SHA-256, deduplica e não sobrescreve.
+- ✅ Geometria 3D preserva Z exatamente (WKB) e a consulta R*Tree funciona.
+- ⚠️ Instalação em Windows real: pendente (validação do usuário).
 
 ## E3 — Estrutura operacional da mina
-**Escopo:** mina (com CRS de trabalho), tipos de unidade, regras de hierarquia, unidades (árvore ltree), unidades multinível, frentes e avanços, histórico por unidade, inativação.
+**Escopo:** mina (com CRS de trabalho, proposto SIRGAS 2000 / UTM 23S), tipos de unidade, regras de hierarquia, unidades (árvore ltree), unidades multinível, frentes e avanços, histórico por unidade, inativação.
 **Aceitação:** CRUD via API testado; regra de hierarquia violada é rejeitada **pelo banco**; ciclos na árvore impossíveis; mover sub-árvore atualiza caminhos; rampa vinculada a 3 níveis aparece na consulta de cada nível; exclusão de unidade com vínculos bloqueada; cada operação auditada.
 
 ## E4 — Interface base, usuários e dashboard
@@ -67,7 +70,7 @@
 **Aceitação:** testes E2E (Playwright): login, criar mina/nível/galeria/frente pela interface, ver no dashboard a contagem real; usuário "Consulta" não vê botões de edição e a API também recusa; uso testado em resolução de tablet.
 
 ## E5 — Mapeamento geológico
-**Escopo:** dicionários configuráveis; mapeamento com observações e medidas estruturais; conversões de orientação; validações; fluxo rascunho→submetido→aprovado; revisões; consulta cronológica por unidade.
+**Escopo:** **ficha digital nova (`FICHA_MAPEAMENTO.md`, sem RQD)**; dicionários configuráveis com sinônimos (grafias da planilha de campo); estereograma automático; ficha em PDF e ficha em branco para impressão; mapeamento com observações e medidas estruturais; conversões de orientação; validações; fluxo rascunho→submetido→aprovado; revisões; consulta cronológica por unidade.
 **Aceitação:** conversão rumo(RHR)/mergulho → dip-direction/dip testada com casos de referência; valores fora de faixa rejeitados; aprovação bloqueia edição direta e gera revisão; histórico reconstrói versões anteriores; termo inativo não aparece para novos registros mas permanece nos antigos.
 
 ## E6 — Serviço de arquivos, croquis e documentos
@@ -79,15 +82,15 @@
 **Aceitação:** lote de N fotos com EXIF extraído e miniaturas geradas; filtros retornam o conjunto correto; captura testada em navegador móvel (registro manual).
 
 ## E8 — Amostragem
-**Escopo:** tipos, métodos, regras de código, campanhas, amostras (ponto/intervalo), QA/QC (padrões, brancos, duplicatas), lotes de envio, importação/exportação CSV/Excel, detecção de duplicidade.
+**Escopo:** tipos, métodos, regras de código (BS-RP mina, BMT-TS testemunho, BE antigas; forma canônica e normalização com confirmação), importação da planilha "GEOQUIMICA_DESCRIÇÃO", campanhas, amostras (ponto/intervalo), QA/QC (padrões, brancos, duplicatas), lotes de envio, importação/exportação CSV/Excel, detecção de duplicidade.
 **Aceitação:** código duplicado rejeitado pelo banco; geração de códigos concorrentes sem colisão (teste com concorrência); duplicata sem original rejeitada; importação histórica com relatório de linhas rejeitadas; estado "aguardando resultado" derivado corretamente.
 
 ## E9 — Importação geoquímica
-**Escopo:** assistente de 12 passos; CSV (`;`/`,`, vírgula decimal, encoding) e Excel; mapeamento de colunas salvo por laboratório; parsing de `<LD`, `>`, `ND`, `IS`; unidades; certificado/bateria; resultado preferido; cancelamento de importação; QA/QC básico (desejável).
+**Escopo:** leitor do layout SGS Geosol (.xls: certificado, método/analito/unidade por coluna, SMP/DUP/REP/STD); assistente de 12 passos; CSV (`;`/`,`, vírgula decimal, encoding) e Excel; mapeamento de colunas salvo por laboratório; parsing de `<LD`, `>`, `ND`, `IS`; unidades; certificado/bateria; resultado preferido; cancelamento de importação; QA/QC básico (desejável).
 **Aceitação:** arquivos de laboratório **reais** (ou anonimizados) importados com contagens conferidas; amostras não encontradas e duplicidades listadas antes da confirmação; nada é gravado antes da confirmação; reimportação do mesmo arquivo detectada; valor original sempre recuperável.
 
 ## E10 — Importação topográfica, banco espacial, eixos e chainage
-**Escopo:** configuração/validação do CRS; leitura de shapefile Z (linhas, polígonos, multi) via GDAL; relatório de validação (§12.4); levantamentos versionados; feições com atributos originais; criação de eixo de referência a partir de feição; chainage 3D; projeção de amostras/mapeamentos no eixo com afastamento.
+**Escopo:** shapefiles CAD convertidos (layers, entidades, Z suspeito, cabeçalho inválido — DADOS_REAIS.md); validação SAD69 → SIRGAS com o piso fornecido nos dois sistemas; **eixos de galeria desenhados ou derivados com revisão** (não existem nos arquivos); configuração/validação do CRS; leitura de shapefile Z (linhas, polígonos, multi) via GDAL; relatório de validação (§12.4); levantamentos versionados; feições com atributos originais; criação de eixo de referência a partir de feição; chainage 3D; projeção de amostras/mapeamentos no eixo com afastamento.
 **Aceitação:** Z preservado vértice a vértice (comparação com o arquivo original); arquivo 2D identificado como 2D; arquivo sem `.prj` exige declaração; transformação registrada; chainage conferido com casos calculados à mão e com eixo real; dois levantamentos coexistem; desempenho medido com o maior arquivo disponível.
 
 ## E11 — Análise geoquímica longitudinal
@@ -117,10 +120,10 @@ PDF/Excel/CSV a partir de dados reais com filtros selecionáveis.
 Testes integrados completos, revisão de segurança, carga, integridade, correções.
 
 ## E19 — Implantação
-Servidor da mina, HTTPS, backup agendado, **teste de restauração**, manual e treinamento.
+Instalador único para Windows (.exe, sem exigir Python), backup agendado no PC, **teste de restauração**, manual e treinamento. (Pacote zip offline já existe desde a E2.)
 
-## E20 — Captura offline (condicional)
-PWA com formulários offline (mapeamento, amostra, foto), fila de sincronização, resolução de conflitos.
+## E20 — Captura offline em tablet e celular (confirmada)
+Os geólogos usam tablets e celulares sem rede. Aplicativo offline com a ficha de mapeamento, amostras e fotos; troca de dados com o PC por arquivo de sincronização (USB); resolução de conflitos. **Pode ser antecipada** para logo depois da E8, se o usuário preferir.
 
 ## E21 — OCR/IA em croquis (opcional)
 Avaliação com croquis reais; sugestões sempre "não validadas" até revisão.

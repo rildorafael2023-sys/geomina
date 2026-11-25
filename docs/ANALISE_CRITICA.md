@@ -107,3 +107,24 @@ Servidor local (on-premise) na mina × nuvem corporativa. A proposta assume **on
 
 ### D3 Demais pendências
 Listadas em `STATUS_DO_PROJETO.md` → *Pendências que dependem do usuário*.
+
+---
+
+## E. Revisão após as respostas do usuário (2026-11-25)
+
+| Tema | Resposta | Consequência |
+|---|---|---|
+| D1 Offline | Geólogos usam tablets e celulares **sem rede** | E20 confirmada |
+| D2 Implantação | **Aplicativo no PC, sem rede** | Arquitetura revisada: SQLite + servidor interno em 127.0.0.1 (DT-016 a DT-021). Docker e PostGIS saem; o desenho de módulos, API e modelo de dados é mantido |
+| C2 CRS | SIRGAS 2000 / UTM 23S e SAD69 / UTM 23S | Os dois existem nos arquivos reais, com `.prj` correto |
+| C9 Dados reais | Enviados | Análise em `DADOS_REAIS.md`; novos riscos abaixo |
+
+### Novos riscos identificados nos dados reais
+| # | Risco | Grav. | Mitigação |
+|---|---|---|---|
+| C11 | A topografia não tem eixos de galeria (só paredes, teto e piso em segmentos CAD) | 🔴 | Eixo desenhado/derivado com revisão do usuário; perguntar se a topografia pode fornecer eixos |
+| C12 | Códigos de amostra com várias grafias ("RP 478" × "BS-RP-478") | 🔴 | Forma canônica + normalização com confirmação + relatório de não encontrados |
+| C13 | Litologias com grafias diferentes | 🟡 | Dicionário com sinônimos |
+| C14 | Layers com Z inválido e cabeçalho de shapefile corrompido | 🟡 | Validação por registro; "Z suspeito" |
+| C15 | Instalação em Windows não testada no ambiente de desenvolvimento | 🟡 | Validação do usuário; instalador .exe na E19 |
+| C16 | SQLite não suporta vários PCs gravando no mesmo arquivo de rede | 🟡 | Documentado; cada PC tem seu banco; a sincronização (E20) servirá também entre PCs |

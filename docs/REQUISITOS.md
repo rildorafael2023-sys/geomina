@@ -21,8 +21,8 @@ Prioridade: **M** = obrigatório (must) · **D** = desejável · **F** = futuro/
 | RNF-06 | Nenhuma informação espacial inventada (cota, largura, seção, 3D a partir de 2D). | M | 12.7, 12.8 |
 | RNF-07 | Extensibilidade: novas variáveis analíticas, tipos de amostra, litologias, estruturas e tipos de unidade operacional sem alteração de esquema. | M | 6.2, 9.2, 10.4 |
 | RNF-08 | Autenticação e controle de acesso por papéis. | M | 20 |
-| RNF-09 | Funcionamento em rede local da mina, sem dependência de internet. | M | 20 |
-| RNF-10 | Captura em campo com conectividade intermitente (tablet). **[A CONFIRMAR]** necessidade e escopo. | D | 19, 20 |
+| RNF-09 | **Aplicativo local no PC**, sem rede e sem internet; servidor interno só em 127.0.0.1 (decisão do usuário, 2026-11-25). | M | 20 |
+| RNF-10 | Captura em campo em **tablets e celulares sem rede** (confirmado pelo usuário), com sincronização com o PC. | M | 19, 20 |
 | RNF-11 | Desempenho com grandes volumes topográficos: carregamento seletivo, índices espaciais. | M | 12.17 |
 | RNF-12 | Backup e recuperação documentados e testados. | M | 20 |
 | RNF-13 | Interface em português (pt-BR), responsiva (desktop e tablet). | M | 19 |
@@ -84,7 +84,7 @@ Prioridade: **M** = obrigatório (must) · **D** = desejável · **F** = futuro/
 | RF-AMO-01 | Cadastro de amostra com código único (por mina), unidade operacional, data, geólogo, tipo, método, posição, descrição geológica (via dicionários), referências a mapeamento/croqui/foto. | M |
 | RF-AMO-02 | Geometria da amostra: ponto (XYZ) **ou** intervalo (de/até — linha), pois amostras de canal/parede são intervalos. **[ADIÇÃO]** | M |
 | RF-AMO-03 | Tipos e métodos de amostragem configuráveis. | M |
-| RF-AMO-04 | Regras de código configuráveis (prefixo, sequência, padrão regex de validação), geração opcional automática. | M |
+| RF-AMO-04 | Regras de código configuráveis (prefixo, sequência, padrão regex de validação), geração opcional automática. Regras atuais: **BS-RP** (mina), **BMT-TS** (testemunho de sondagem), **BE** (antigas). Forma canônica sem espaços; grafias variantes ("RP 478", "BS - RP - 237 B") normalizadas **com confirmação**. | M |
 | RF-AMO-05 | Bloqueio de duplicidade de código (restrição única) e aviso de possíveis duplicatas (mesma posição/data). | M |
 | RF-AMO-06 | Lote de envio ao laboratório (cadeia de custódia): data de envio, laboratório, amostras, estado. **[ADIÇÃO]** | M |
 | RF-AMO-07 | Amostras de controle de qualidade: padrões (CRM), brancos, duplicatas — identificadas e vinculadas à amostra original quando duplicata. **[ADIÇÃO]** | M |
@@ -156,4 +156,6 @@ Prioridade: **M** = obrigatório (must) · **D** = desejável · **F** = futuro/
 | RF-SEG-01 | Login com senha (hash Argon2), sessão com expiração, troca de senha. | M |
 | RF-SEG-02 | Papéis: Administrador, Geólogo revisor, Geólogo, Técnico/Amostrador, Consulta. Permissões por ação e módulo. | M |
 | RF-SEG-03 | Trilha de auditoria imutável para o usuário comum. | M |
-| RF-SEG-04 | Integração com diretório corporativo (LDAP/AD). **[A CONFIRMAR]** | F |
+| RF-SEG-04 | Integração com diretório corporativo (LDAP/AD). Não se aplica ao aplicativo local. | F |
+| RF-MAP-10 | Ficha digital de mapeamento conforme `FICHA_MAPEAMENTO.md` (sem RQD). | M |
+| RF-GQ-10 | Leitor do layout de laudo SGS Geosol (.xls) com tipos SMP/DUP/REP/STD. | M |

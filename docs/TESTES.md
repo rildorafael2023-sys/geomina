@@ -1,17 +1,17 @@
 # TESTES — Estratégia e registro
 
-> **Nenhum teste de software foi executado até o momento**, porque ainda não existe código (Etapa 1 = especificação).
-> Este documento define a estratégia; a seção "Registro de execuções" será preenchida com resultados reais a partir da Etapa 2.
+> Estratégia de testes e registro das execuções reais. Ajustada ao aplicativo local (SQLite) em 2026-11-25.
 
 ## 1. Níveis de teste
 
 | Nível | Ferramenta | O que cobre | Banco |
 |-------|-----------|-------------|-------|
 | Unitário (backend) | pytest | regras puras: chainage 3D, conversões de orientação, parsing de <LD/unidades, validação de códigos | sem banco |
-| Integração (backend) | pytest + PostGIS real em container | API + serviços + banco: restrições, triggers de auditoria, hierarquia, importações, consultas espaciais | **PostGIS real** (nunca SQLite: o comportamento espacial e de restrições difere) |
+| Integração (backend) | pytest + FastAPI TestClient | API + serviços + banco: restrições, auditoria, hierarquia, importações | **SQLite real** num arquivo temporário, com as mesmas migrações do aplicativo (o mesmo motor usado em produção) |
 | Contrato | OpenAPI + cliente gerado | frontend e backend no mesmo contrato | — |
 | Unitário (frontend) | Vitest + Testing Library | componentes, formulários, validações de interface | — |
-| Ponta a ponta | Playwright | fluxos do geólogo na stack completa | PostGIS real |
+| Ponta a ponta | Playwright (`e2e/`) | fluxos do geólogo com o aplicativo real (`python -m geomina`) | SQLite real |
+| Instalação | pacote offline instalado num ambiente limpo com `pip --no-index` | empacotamento, migrações na primeira execução, interface servida | real |
 | Desempenho | scripts medidos (pytest-benchmark / Playwright traces) | importação e visualização de grandes arquivos | real |
 | Manual documentado | roteiro em `TESTES.md` | QGIS/ArcGIS, captura por câmera em tablet, uso em campo | — |
 
@@ -36,13 +36,22 @@
 - strike RHR 090 / dip 45 → dip-direction 180 / dip 45.
 - dip 95 → rejeitado; azimute 360 → normalizado para 0; plunge > dip do plano hospedeiro → aviso.
 
-### 3.3 Geoquímica
+### 3.3 Geoquímica (com os laudos SGS reais)
+- Laudos GQ2613496 e GQ2604840: cabeçalho (certificado, data, projeto), método/analito/unidade por coluna, tipos SMP/DUP/REP/STD.
+- Ordem de colunas diferente entre os dois laudos → mesmo resultado por analito.
+- `N.A.` e `--` não viram zero.
+- `BS-RP-468B` (SMP) e `BS-RP-468B` (DUP) coexistem sem conflito.
 - `"<0,005"` → qualificador `<`, LD 0,005, valor_num nulo (ou regra), valor_texto preservado.
 - `"1.234,5"` com locale pt-BR → 1234,5; `"1,234.5"` em arquivo en-US → 1234,5 — locale declarado na importação, nunca adivinhado silenciosamente.
 - Mesmo arquivo importado duas vezes → segunda detectada pelo hash.
 
-### 3.4 Topografia
-- LineStringZ: todos os vértices e Z idênticos ao original após importação (comparação vértice a vértice).
+### 3.4 Topografia (com os arquivos reais de 2026-09-28)
+- LineStringZ: todos os vértices e Z idênticos ao original após importação (comparação vértice a vértice): 44.273 + 10.143 + 10.143 feições.
+- Contagens por layer/entidade conferidas com a análise de `DADOS_REAIS.md`.
+- Registros sem vértices (5 no arquivo SIRGAS) relatados.
+- Faixa Z calculada pelos registros, ignorando o cabeçalho corrompido.
+- Layers SC e PONTO CONVERGÊNCIA marcados como "Z suspeito".
+- Transformação SAD69 → SIRGAS comparada com o piso fornecido nos dois sistemas (diferença máxima registrada).
 - Shapefile 2D → `dimensao_original = 2`, sem Z inventado.
 - Z constante em toda a feição → aviso.
 - Sem `.prj` → importação bloqueada até declaração do CRS.
@@ -51,4 +60,13 @@
 
 | Data | Etapa | Suíte | Resultado | Observações |
 |------|-------|-------|-----------|-------------|
-| — | E1 | — | não aplicável | Etapa documental; nenhum código. |
+| 2026-11-25 | E1 | — | não aplicável | Etapa documental; nenhum código. |
+| 2026-11-25 | E2 | `pytest` backend (34 testes: infra 6, auth 13, auditoria 4, arquivos 6, espacial 5) | **34 aprovados** | 1ª execução: 5 falhas + 21 erros (migração sem commit); 2ª: 5 falhas (dados de teste inválidos; versão incrementada pelo login). Todas corrigidas. |
+| 2026-11-25 | E2 | `ruff check` | sem erros | regra B008 desativada (padrão `Depends` do FastAPI) |
+| 2026-11-25 | E2 | `tsc -b` + `vite build` | sem erros | |
+| 2026-11-25 | E2 | E2E `e2e/fluxo_basico.cjs` (7 cenários: primeiro acesso, sistema, criar usuário, troca de senha obrigatória, permissões na interface, senha errada, layout 390 px sem rolagem horizontal; sem erros de JavaScript) | **aprovado** | 1ª execução falhou no seletor do campo de senha (rótulo com asterisco); teste corrigido. Capturas revisadas: 2 defeitos visuais corrigidos e retestados. |
+| 2026-11-25 | E2 | Instalação offline (pacote linux, `pip --no-index`, ambiente limpo) + `/api/v1/saude` + interface | **aprovado** | O pacote Windows foi gerado (52 MB), mas **não foi instalado em Windows**. |
+
+### Ainda não testado
+- `instalar.bat` / `GeoMina.bat` em Windows real.
+- Desempenho com volume real de dados (não se aplica à E2).

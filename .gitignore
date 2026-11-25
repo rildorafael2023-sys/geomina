@@ -1,0 +1,21 @@
+# ambientes e builds
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+node_modules/
+frontend/dist/
+backend/geomina/static/
+*.egg-info/
+build/
+dist/
+
+# dados locais do aplicativo — NUNCA versionar (contêm dados da mina)
+dados_locais/
+*.db
+*.db-wal
+*.db-shm
+
+# arquivos reais da mina usados em testes locais (confidenciais)
+dados_reais/

@@ -1,55 +1,78 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-25 · **Etapa atual:** E1 — entregue para revisão
+**Última atualização:** 2026-11-25 · **Versão:** 0.2.0 · **Etapa atual:** E2 concluída, aguardando validação
 
 ## Etapas
 
 | Etapa | Estado |
 |-------|--------|
-| E1 Arquitetura e especificação | 🟡 **Entregue, aguardando validação do usuário** |
-| E2 – E21 | ⚪ Pendentes (não iniciadas) |
+| E1 Arquitetura e especificação | ✅ Aprovada pelo usuário (com a mudança para aplicativo local) |
+| E2 Infraestrutura, banco local, autenticação, auditoria, arquivos | 🟡 **Concluída e testada, aguardando validação do usuário** |
+| E3 Estrutura operacional da mina | ⚪ Próxima |
+| E4 – E21 | ⚪ Pendentes |
 
-## Funcionalidades implementadas
-**Nenhuma.** O projeto ainda não possui código executável. Existe apenas a documentação de especificação.
+## Decisões do usuário (2026-11-25)
+- Aplicativo para rodar **no PC, sem rede** → arquitetura revisada (DT-016 a DT-021).
+- Sistemas de coordenadas: **SIRGAS 2000 / UTM 23S** e **SAD69 / UTM 23S**.
+- Os geólogos usam **tablets e celulares sem rede** → a etapa E20 (captura offline) é necessária.
+- Códigos de amostra: **BS-RP** = mina; **BMT-TS** = testemunho de sondagem; **BE** = antigas (mina e testemunho).
+- As demais propostas da Etapa 1 foram aprovadas ("os demais pode fazer tudo").
+- Ficha de mapeamento: **não** copiar a ficha atual; propor uma melhor, **sem RQD** → proposta em `FICHA_MAPEAMENTO.md` (aguarda revisão).
 
-## Funcionalidades testadas
-Nenhuma.
+## Funcionalidades implementadas e testadas (E2)
+
+| Funcionalidade | Teste |
+|---|---|
+| Aplicativo local: `python -m geomina` / `GeoMina.bat`; escuta só em 127.0.0.1; abre o navegador; usa outra porta se a 8765 estiver ocupada | automático + manual (porta ocupada observada durante os testes) |
+| Banco SQLite na pasta do usuário, WAL, chaves estrangeiras ativas | `test_infra.py` |
+| Migrações automáticas na inicialização, reversíveis; backup antes de migrar | `test_infra.py` |
+| Primeiro acesso: criação do administrador (só uma vez) | `test_auth.py`, E2E |
+| Login/logout, sessão de 12 h, expiração, senha forte, troca de senha, troca obrigatória para usuário novo | `test_auth.py`, E2E |
+| Usuários: criar, editar, desativar, redefinir senha; papéis; proteção do último administrador | `test_auth.py`, E2E |
+| Permissões por papel, conferidas na API (não só na tela) | `test_auth.py`, E2E |
+| Concorrência otimista (versão do registro) | `test_auth.py` |
+| Auditoria de inserção/alteração/exclusão com usuário e origem; senha mascarada; tabela imutável | `test_auditoria.py` |
+| Arquivos originais: SHA-256, deduplicação, somente leitura, detecção de corrupção, tipo pelo conteúdo, limite de tamanho | `test_arquivos.py` |
+| Base espacial: WKB 3D preserva Z exatamente; 2D não vira 3D; índice R*Tree 3D; EPSG 29193/31983 sem internet | `test_espacial.py` |
+| Interface: primeiro acesso, login, início, usuários, sistema, troca de senha; layout para celular | E2E (Playwright) |
+| Pacote de instalação offline | instalação real sem internet em ambiente Linux limpo |
 
 ## Testes executados
-Nenhum teste de software. Verificação do ambiente de desenvolvimento: Docker 29.9, cliente PostgreSQL 16.15, Python 3.13, Node 22 disponíveis (GDAL não instalado no sistema; será usado via pacote Python/container na E2).
+Ver `TESTES.md` → Registro. Resumo: **34 testes automatizados do backend aprovados**, **teste E2E com 7 cenários aprovado**, **lint sem erros**, **typecheck do frontend sem erros**, **instalação offline testada (Linux)**.
 
-## Produzido na E1
-- `docs/REQUISITOS.md` — requisitos rastreáveis (RNF, RF por módulo)
-- `docs/ANALISE_CRITICA.md` — inconsistências, lacunas, riscos e propostas
-- `docs/ARQUITETURA.md` — arquitetura técnica, espacial e do visualizador 3D
-- `docs/BANCO_DE_DADOS.md` — modelo de dados completo proposto
-- `docs/DECISOES_TECNICAS.md` — DT-001 a DT-015
-- `docs/PLANO_DE_DESENVOLVIMENTO.md` — roadmap revisado e critérios de aceitação
-- `docs/TESTES.md` — estratégia e casos críticos
-- `docs/INSTRUCOES_DE_INSTALACAO.md`, `docs/INSTRUCOES_DE_USO.md` — esqueleto (sem conteúdo aplicável ainda)
+## Análise dos arquivos reais
+Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
+1. A topografia é **desenho CAD convertido** (paredes, teto e piso em segmentos), **sem eixos de galeria**: o chainage dependerá de eixos desenhados ou derivados com revisão.
+2. Há layers com **Z inválido** (SC, PONTO CONVERGÊNCIA) e um cabeçalho de shapefile corrompido.
+3. Os laudos SGS trazem QA/QC (DUP, REP, STD, branco), `<LD` com vírgula, `N.A.`, e a ordem das colunas muda entre laudos.
+4. Os códigos de amostra e as litologias têm várias grafias, o que exige normalização com confirmação.
 
-## Problemas identificados na especificação
-Ver `ANALISE_CRITICA.md`. Principais: hierarquia linear (A1), longitudinal antes da topografia (A2), autenticação tardia (A3), ausência de QA/QC (B1), tratamento de <LD (B2), amostras de intervalo (B3), precisão float32 no 3D (C1), CRS local/sem `.prj` (C2), chainage 2D no PostGIS (C3), conectividade no subsolo (D1).
-
-## Pendências que dependem do usuário
-
-| # | Pergunta | Bloqueia |
-|---|----------|----------|
-| P1 | Aprovação do roadmap revisado (E10 antes da análise longitudinal; auth na E2; arquivos unificados). | E2 |
-| P2 | Sistema de coordenadas usado na topografia: EPSG (qual? ex.: SIRGAS 2000 / UTM 23S) ou grade local da mina? Unidades em metros? | E3 |
-| P3 | Haverá mais de uma mina no sistema? | E3 (não bloqueante: modelo já suporta) |
-| P4 | Uso de tablets no subsolo sem rede? (define a E20) | E20 / priorização |
-| P5 | Implantação: servidor local na mina ou nuvem corporativa? Quantos usuários simultâneos? | E19 (não bloqueante agora) |
-| P6 | Amostras reais (podem ser anonimizadas): 1–2 shapefiles topográficos, 1–2 laudos de laboratório, planilha de amostras, alguns croquis e fotos. | E8–E10 (testes reais) |
-| P7 | Regras atuais de código de amostras e nomenclatura de níveis/galerias. | E3/E8 |
-| P8 | Existem dados históricos a migrar? Volume e formato aproximados. | E8–E9 |
-| P9 | Integração com login corporativo (AD/LDAP) é necessária? | E2 (opcional) |
-| P10 | O repositório GitHub deve permanecer **privado**? (dados da mina) | — |
+## Problemas encontrados e corrigidos nesta etapa
+| Problema | Correção |
+|---|---|
+| Migrações não eram gravadas (transação aberta pelo PRAGMA no SQLAlchemy 2) | commit explícito em `migrations/env.py`; teste de migração do zero |
+| O login incrementava a versão do usuário e gerava conflito falso na edição | registro de acesso sem versionar (`UPDATE` direto); teste de concorrência |
+| Título da janela trocava durante o fechamento; elemento HTML aninhado inválido na página inicial | corrigidos e conferidos por captura de tela |
+| Download de dependências Linux travava (variantes de plataforma) | empacotador com várias variantes compatíveis |
 
 ## Limitações conhecidas
-- Nenhum software funcional ainda.
-- Todos os documentos são propostas; podem mudar após sua revisão.
+- **Scripts `instalar.bat` e `GeoMina.bat` não foram executados em Windows** (o ambiente de desenvolvimento é Linux). O mecanismo foi testado em Linux, mas o primeiro uso no Windows deve ser acompanhado.
+- O instalador exige Python 3.12 ou 3.13 instalado no PC (instalador .exe único previsto para a E19).
+- Alterações feitas diretamente no arquivo `.db`, fora do aplicativo, não são auditadas.
+- Ainda não há consulta da auditoria nem backup/restauração manual pela interface (E4).
+- Nenhum módulo geológico implementado ainda (estrutura da mina, mapeamento, amostras etc.).
+
+## Pendências que dependem do usuário
+| # | Pergunta | Bloqueia |
+|---|---|---|
+| P1 | Validar a E2: instalar no PC com Windows e testar o primeiro acesso | E3 (recomendado) |
+| P2 | Revisar a proposta da ficha (`FICHA_MAPEAMENTO.md`) e responder às 4 perguntas da §4 | E5 |
+| P3 | CRS de trabalho padrão: SIRGAS 2000 (proposto) ou SAD69? | E3 |
+| P4 | Lista de níveis, galerias, travessas e rampas e a nomenclatura usada (ex.: N144, N567, N603, Rampa Sul, Travessa 1F) | E3 |
+| P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
+| P6 | Existe arquivo de eixos de galeria na topografia, ou o eixo deverá ser desenhado no GeoMina? | E10 |
+| P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Usuário revisa a E1 e responde às pendências (P1 é obrigatória para iniciar a E2; P2 é necessária até a E3).
-2. Após autorização: iniciar a **E2 — Infraestrutura, banco, autenticação e auditoria**.
+1. Usuário valida a E2 e responde P3/P4.
+2. **E3 — Estrutura operacional da mina**: mina com CRS, tipos de unidade configuráveis, árvore de níveis/galerias/travessas/rampas/frentes, unidades multinível, histórico de avanço, telas.

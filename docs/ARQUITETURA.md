@@ -1,170 +1,133 @@
 # ARQUITETURA — GeoMina
 
-> Estado: **proposta (Etapa 1)**. Nenhum código implementado ainda.
-> Justificativas detalhadas de cada escolha: `DECISOES_TECNICAS.md`.
+> **Revisada em 2026-11-25** após a definição do usuário: *aplicativo para rodar no PC, sem rede* (DT-016).
+> Seções marcadas **[IMPLEMENTADO]** existem no código e têm testes; as demais são o projeto para as próximas etapas.
+> Justificativas: `DECISOES_TECNICAS.md`.
 
 ## 1. Visão geral
 
-**Monólito modular** web, implantado na rede local da mina com Docker Compose.
-
 ```
- Navegador (desktop / tablet)
- ┌──────────────────────────────────────────────────────────────┐
- │  Frontend SPA — React + TypeScript (Vite)                     │
- │  Módulos: estrutura · mapeamento · documentos · fotos ·        │
- │  amostras · geoquímica · longitudinal · topografia · 3D ·      │
- │  consultas · relatórios · administração                       │
- │  Libs: TanStack Query · React Router · Mantine · Plotly ·      │
- │        Three.js (visualizador 3D)                              │
- └───────────────▲──────────────────────────────────────────────┘
-                 │ HTTPS · REST/JSON (/api/v1) · OpenAPI
- ┌───────────────┴──────────────────────────────────────────────┐
- │  Backend — Python 3.12+ · FastAPI                              │
- │  ┌─────────────┐ ┌──────────────┐ ┌───────────────────────┐   │
- │  │ API (routers)│→│ Serviços de  │→│ Repositórios          │   │
- │  │ validação    │ │ domínio      │ │ SQLAlchemy 2 +        │   │
- │  │ Pydantic v2  │ │ (regras)     │ │ GeoAlchemy2           │   │
- │  └─────────────┘ └──────────────┘ └──────────┬────────────┘   │
- │  Núcleo: autenticação · permissões · auditoria · armazenamento │
- │  Processamento: pyogrio/GDAL · Shapely 2 · pyproj · NumPy ·    │
- │                 pandas/openpyxl · Pillow · pypdf               │
- │  Tarefas pesadas (importações grandes, miniaturas): fila       │
- │  simples em processo (Etapa 2) → worker dedicado se necessário │
- └───────────────┬──────────────────────────┬───────────────────┘
-                 │                          │
-   ┌─────────────▼─────────────┐  ┌─────────▼──────────────────┐
-   │ PostgreSQL 16 + PostGIS 3 │  │ Armazenamento de arquivos   │
-   │ dados, geometrias Z,      │  │ originais imutáveis (hash), │
-   │ auditoria, índices GiST   │  │ miniaturas, pré-visualiz.   │
-   └───────────────────────────┘  │ backend: disco local → S3/  │
-                                  │ MinIO (mesma interface)     │
-                                  └────────────────────────────┘
+ Computador do geólogo (Windows) — nada sai desta máquina
+ ┌──────────────────────────────────────────────────────────────────┐
+ │  Navegador  ──HTTP──▶  http://127.0.0.1:8765                     │
+ │                         │                                        │
+ │  ┌──────────────────────▼────────────────────────────────────┐   │
+ │  │ Processo GeoMina (Python) — iniciado por GeoMina.bat      │   │
+ │  │  • Interface React/TypeScript compilada (arquivos estáticos)│ │
+ │  │  • API REST /api/v1 (FastAPI)                              │   │
+ │  │  • Núcleo: login, permissões, auditoria, arquivos, migrações│  │
+ │  │  • Geoprocessamento: Shapely · pyproj/PROJ · NumPy         │   │
+ │  └──────────────┬──────────────────────────┬─────────────────┘   │
+ │                 │                          │                     │
+ │   %LOCALAPPDATA%\GeoMina\geomina.db   …\GeoMina\arquivos\        │
+ │   (SQLite: dados + geometrias WKB      (originais imutáveis,     │
+ │    + índice R*Tree + auditoria)         endereçados por SHA-256) │
+ │                                       …\GeoMina\backups\         │
+ └──────────────────────────────────────────────────────────────────┘
+
+ Tablets e celulares (sem rede) ── futuro (E20): captura offline e troca
+ de dados por arquivo de sincronização (cabo/USB), sem servidor.
 ```
 
 ## 2. Princípios
+1. **Somente local**: o servidor escuta apenas em `127.0.0.1` **[IMPLEMENTADO]**. Não há chamadas a serviços externos; a base de sistemas de coordenadas (PROJ) vem embutida **[IMPLEMENTADO — testado com rede desativada]**.
+2. **O banco é a fonte da verdade**: FK, UNIQUE e CHECK no SQLite, com `foreign_keys=ON` **[IMPLEMENTADO]**.
+3. **Original imutável + dado interpretado**: todo arquivo importado é guardado intacto e somente-leitura **[IMPLEMENTADO]**.
+4. **Nada silencioso**: transformações de coordenadas, conversões de unidade, tratamento de <LD, normalização de códigos e de litologias são sempre mostrados ao usuário e registrados.
+5. **Configuração em vez de código**: dicionários, tipos de unidade, tipos de amostra e analitos são dados.
+6. **Preparado para tablets offline**: UUID como chave, `versao` por registro **[IMPLEMENTADO]**, `instalacao_id` por computador **[IMPLEMENTADO]**.
 
-1. **O banco é a fonte da verdade**: restrições de integridade no PostgreSQL (FK, UNIQUE, CHECK), não só na interface.
-2. **Original imutável + dado interpretado**: todo arquivo importado é guardado intacto; o que se extrai dele aponta para o arquivo de origem.
-3. **Nada silencioso**: transformações de coordenadas, conversões de unidade, tratamento de <LD, normalizações e promoções 2D→3D são explícitas, registradas e visíveis.
-4. **Configuração em vez de código**: dicionários geológicos, tipos de unidade, tipos de amostra e analitos são dados, não colunas.
-5. **Módulos com fronteiras claras**: cada módulo tem modelos, esquemas, serviços e rotas próprios; comunicação entre módulos por serviços, nunca por acesso direto às tabelas de outro módulo nas rotas.
-6. **Preparado para offline** (sem implementá-lo agora): UUIDs como chave primária, operações idempotentes, número de versão por registro para detectar conflitos.
-
-## 3. Estrutura do repositório (proposta)
+## 3. Estrutura do repositório **[IMPLEMENTADO]**
 
 ```
 geomina/
 ├── README.md
-├── docs/                       documentação obrigatória (§21) + análise crítica
-├── docker-compose.yml          db (PostGIS), api, web, [minio opcional]
-├── .env.example
+├── docs/                         documentação do projeto
 ├── backend/
 │   ├── pyproject.toml
-│   ├── alembic/                migrações versionadas do banco
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── core/               config, segurança, auditoria, armazenamento, erros
-│   │   ├── db/                 sessão, base declarativa, tipos espaciais
-│   │   └── modules/
-│   │       ├── auth/           usuários, papéis, permissões
-│   │       ├── estrutura/      minas, tipos e unidades operacionais, frentes
-│   │       ├── dicionarios/    listas configuráveis (litologias etc.)
-│   │       ├── mapeamento/     mapeamentos, observações, medidas estruturais
-│   │       ├── arquivos/       arquivos, versões, vínculos (croquis, docs, fotos)
-│   │       ├── amostragem/     amostras, tipos, regras de código, lotes, QA/QC
-│   │       ├── geoquimica/     analitos, laboratórios, métodos, importações, resultados
-│   │       ├── espacial/       CRS, levantamentos, feições, eixos, chainage
-│   │       ├── analise/        longitudinal, consultas avançadas
-│   │       ├── gis/            exportações
-│   │       └── relatorios/
-│   │       (cada módulo: models.py · schemas.py · service.py · router.py)
-│   └── tests/                  pytest — unit/ integration/ (banco real) fixtures/
-└── frontend/
-    ├── package.json
-    ├── src/
-    │   ├── app/                rotas, layout, autenticação
-    │   ├── api/                cliente gerado a partir do OpenAPI
-    │   ├── components/         componentes compartilhados
-    │   └── modules/            um diretório por módulo (espelha o backend)
-    └── tests/                  Vitest (unidade) · Playwright (ponta a ponta)
+│   ├── geomina/
+│   │   ├── __main__.py           inicia o aplicativo (python -m geomina)
+│   │   ├── main.py               criação da aplicação FastAPI
+│   │   ├── config.py             pasta de dados, porta, limites
+│   │   ├── db.py                 SQLite (WAL, FK), base declarativa, colunas padrão
+│   │   ├── migrar.py             migrações automáticas + backup prévio
+│   │   ├── modelos.py            registro de todos os modelos
+│   │   ├── migrations/           Alembic (0001_nucleo)
+│   │   ├── core/                 auditoria, segurança, armazenamento, erros, dependências
+│   │   ├── espacial/             geometria WKB 3D (base para a topografia)
+│   │   ├── modules/
+│   │   │   ├── auth/             usuários, papéis, permissões, sessões
+│   │   │   ├── arquivos/         arquivos originais
+│   │   │   └── sistema/          saúde, parâmetros da instalação
+│   │   └── static/               interface compilada (gerada, fora do git)
+│   └── tests/                    pytest (banco SQLite real em pasta temporária)
+├── frontend/                     React + TypeScript + Mantine (Vite)
+├── e2e/                          teste ponta a ponta no navegador (Playwright)
+└── distribuicao/                 empacotador offline e scripts Windows (.bat)
 ```
 
-## 4. Camadas do backend
+Novos módulos seguirão o mesmo padrão: `modules/<nome>/{models,schemas,service,router}.py`, uma migração por etapa e testes.
 
-| Camada | Responsabilidade | Não faz |
-|--------|------------------|---------|
-| Router | HTTP, autenticação, permissão, (des)serialização Pydantic | regra de negócio |
-| Serviço | regras de domínio, validações cruzadas, transações, auditoria de contexto | SQL específico de outro módulo |
-| Repositório/modelos | mapeamento ORM, consultas | regras de negócio |
-| Núcleo | autenticação, auditoria, armazenamento de arquivos, erros padronizados | — |
+## 4. Camadas
+| Camada | Responsabilidade |
+|---|---|
+| Router | HTTP, autenticação, permissão, validação Pydantic |
+| Serviço | regras de negócio, validações cruzadas |
+| Modelos | mapeamento ORM (SQLAlchemy 2) |
+| Núcleo | auditoria, sessão de banco por requisição (commit/rollback), erros padronizados `{codigo, mensagem, detalhes}`, armazenamento |
 
-**Auditoria**: triggers do PostgreSQL gravam `antes/depois` (JSONB) em `auditoria` para as tabelas de domínio; o usuário da requisição é passado ao banco por `SET LOCAL app.usuario_id` no início de cada transação. Assim, nem uma alteração feita fora da API escapa do registro (ela aparece com usuário nulo, o que denuncia acesso direto).
+- **Concorrência otimista** **[IMPLEMENTADO]**: coluna `versao` (version_id do SQLAlchemy); alteração com versão antiga → 409.
+- **Auditoria** **[IMPLEMENTADO]**: DT-019.
 
 ## 5. API
+REST em `/api/v1`, documentação automática em `http://127.0.0.1:8765/api/docs`.
 
-REST, versionada em `/api/v1`, documentação OpenAPI automática (FastAPI). Convenções:
+Endpoints **[IMPLEMENTADO]**:
+| Método | Caminho | Permissão |
+|---|---|---|
+| GET | `/saude` | pública (não expõe dados da mina) |
+| GET | `/instalacao` · POST `/instalacao/admin` | só funciona sem usuários |
+| POST | `/auth/login` · `/auth/logout` · `/auth/senha` · GET `/auth/eu` | autenticado |
+| GET | `/papeis` | autenticado |
+| GET/POST | `/usuarios` · PATCH `/usuarios/{id}` · POST `/usuarios/{id}/senha` | `usuario:gerenciar` |
+| POST | `/arquivos` · GET `/arquivos/{id}` · GET `/arquivos/{id}/conteudo?verificar=` | `arquivo:enviar` / `arquivo:ler` |
 
-- recursos no plural em português: `/minas`, `/unidades`, `/mapeamentos`, `/amostras`, `/resultados`, `/levantamentos`, `/eixos`…
-- listagens paginadas (`?pagina=&tamanho=`) com filtros por query string; ordenação explícita;
-- erros padronizados `{codigo, mensagem, detalhes}`; validação 422 com campo e motivo;
-- concorrência otimista: cada registro tem `versao`; `PATCH` exige `versao` atual (409 se divergente);
-- importações em duas fases: `POST /importacoes` (envia, analisa, retorna prévia + relatório) → `POST /importacoes/{id}/confirmar`;
-- geometria trafega em GeoJSON (com Z) nas rotas comuns; o visualizador 3D usa um formato compacto próprio (arrays de coordenadas relativas à origem local) para desempenho.
+## 6. Arquitetura espacial (adaptada ao SQLite — DT-017)
 
-Endpoints iniciais (Etapas 2–3): `POST /auth/login`, `GET /auth/eu`, `/usuarios`, `/minas`, `/tipos-unidade`, `/regras-hierarquia`, `/unidades` (+ `/unidades/{id}/arvore`, `/unidades/{id}/historico`), `/frentes/{id}/avancos`, `/saude`.
+### 6.1 Sistemas de coordenadas
+- Confirmados pelo usuário: **SIRGAS 2000 / UTM 23S (EPSG:31983)** e **SAD69 / UTM 23S (EPSG:29193)** **[disponibilidade testada]**.
+- Cada mina terá um CRS de trabalho (proposta: SIRGAS 2000). Dados em SAD69 são convertidos **somente** com confirmação, e a transformação usada (parâmetros) fica registrada.
+- **Validação planejada**: a topografia enviada tem o mesmo piso em SAD69 e em SIRGAS. A transformação escolhida será comparada com essa conversão feita pela topografia da mina antes de ser adotada (ver DADOS_REAIS.md).
 
-## 6. Arquitetura espacial
+### 6.2 Armazenamento
+| Dado | Representação |
+|---|---|
+| geometria | coluna `geom` BLOB (WKB 2D/3D) + `srid` + `dimensao` (2/3) |
+| índice | tabela virtual R*Tree `(id, minx, maxx, miny, maxy, minz, maxz)` por tabela espacial |
+| atributos originais | coluna JSON |
 
-### 6.1 Sistema de coordenadas
-- Cada **mina** define um CRS de trabalho (`srid_trabalho`): um EPSG (ex.: SIRGAS 2000 / UTM) ou uma **grade local** registrada em `spatial_ref_sys` com SRID ≥ 900000 e definição PROJ documentada.
-- Todas as geometrias da mina são armazenadas no CRS de trabalho, com Z em metros (cota).
-- Arquivo importado em CRS diferente → transformação **somente** com confirmação do usuário; registro em `transformacao_coordenadas` (origem, destino, método/pipeline PROJ, precisão estimada). A geometria original fica preservada no arquivo original e em `geom_original` quando houver transformação.
-- Arquivo sem CRS → o usuário declara; o sistema nunca supõe.
+### 6.3 Topografia (Etapa 10), conforme os arquivos reais
+- O formato real é **DXF convertido em shapefile** (Line/3DPolyline/Circle/Insert por layer CAD). O importador vai preservar `Layer`, `Entity`, `Color` e os demais atributos, e agrupar por layer.
+- **Não existem eixos de galeria nos arquivos**: o eixo para chainage será desenhado/derivado com revisão do usuário (DADOS_REAIS.md §1).
+- Z suspeito (layers SC e PONTO CONVERGÊNCIA) é marcado e não exibido em 3D sem confirmação.
 
-### 6.2 Tipos geométricos
-| Dado | Tipo PostGIS |
-|------|--------------|
-| feição topográfica | `geometry(GeometryZ, srid)` + `dimensao_original` (2/3) |
-| eixo de referência | `geometry(LineStringZ, srid)` |
-| amostra | `geometry(GeometryZ)` com CHECK PointZ ou LineStringZ |
-| mapeamento, foto, medida estrutural | `geometry(PointZ)` (opcional) |
-| avanço de frente | `geometry(PointZ)` (opcional) |
+### 6.4 Chainage e visualizador 3D
+Sem mudança em relação à Etapa 1: chainage 3D em NumPy (DT-006); Three.js com origem local para evitar a perda de precisão em float32 (DT-005).
 
-Índices GiST em todas as colunas de geometria; índices por `levantamento_id` e `unidade_id` para carregamento seletivo.
+## 7. Armazenamento de arquivos **[IMPLEMENTADO]**
+Endereçado por conteúdo (`objetos/ab/cd/<sha256>`), gravação atômica (arquivo temporário + rename), deduplicação, somente-leitura, verificação de integridade sob demanda, tipo detectado pelo conteúdo, limite de tamanho (500 MB padrão).
 
-### 6.3 Chainage (distância acumulada)
-- Calculado em Python (NumPy) sobre os vértices 3D do eixo: soma de √(Δx²+Δy²+Δz²) segmento a segmento.
-- Projeção de um ponto no eixo: menor distância 3D ao segmento → chainage do pé da projeção + **distância de afastamento** (alerta se acima de uma tolerância configurável, ex.: 10 m).
-- Resultado guardado com `eixo_versao_id`; recálculo explícito e auditado.
-- Chainage manual (trena) aceito e marcado como `origem = 'manual'`.
+## 8. Segurança **[IMPLEMENTADO no núcleo]**
+- Senhas Argon2id; mínimo de 8 caracteres combinando letras e números.
+- Sessões com token opaco revogável (DT-018); troca de senha encerra as sessões.
+- Novo usuário e senha redefinida pelo administrador obrigam troca no próximo acesso.
+- Proteções: não é possível desativar a si mesmo nem remover o último administrador.
+- Papéis: Administrador, Geólogo revisor, Geólogo, Técnico/amostrador, Consulta.
+- Login sem diferenciar maiúsculas; mesma resposta e tempo para usuário inexistente e senha errada.
 
-### 6.4 Visualizador 3D
-- **Three.js** (com wrapper React próprio, fino), câmera em perspectiva e ortográfica, controles orbitais.
-- **Origem local**: o servidor calcula a origem (centro da extensão) e envia coordenadas relativas em float32; o cliente soma a origem em float64 para exibir coordenadas reais.
-- Linhas: `LineSegments2`/`Line2` (espessura em tela); polígonos: contorno + preenchimento triangulado quando planar; pontos: `InstancedMesh`/`Points`.
-- Seleção: raycasting sobre geometrias agrupadas por camada, com tabela de ids → registro.
-- Carregamento seletivo por camada/nível/caixa envolvente (`ST_3DIntersects`/`&&&`), simplificação por nível de detalhe se o volume exigir (medido, não presumido).
-- Camadas são registros de configuração (tipo, fonte de dados, estilo) → extensível.
+## 9. Backup
+- Automático antes de cada migração **[IMPLEMENTADO]**.
+- Backup manual e restauração pela interface: Etapa 4 (pendente).
 
-## 7. Armazenamento de arquivos
-
-- Interface `Armazenamento` com implementação **disco local** (Etapa 2) e **S3/MinIO** (quando necessário), sem alteração do restante do código.
-- Endereçamento por conteúdo: caminho derivado do SHA-256; deduplicação natural; o arquivo nunca é sobrescrito.
-- Banco guarda metadados (nome original, MIME, tamanho, hash, autor, data) e vínculos.
-- Derivados (miniaturas, pré-visualizações de TIFF/PDF) são regeneráveis e ficam separados dos originais.
-
-## 8. Segurança
-
-- Senhas com Argon2id; tokens JWT de acesso de curta duração + token de renovação revogável (armazenado no banco).
-- RBAC: papéis → permissões por `modulo:acao` (ex.: `amostra:criar`, `mapeamento:aprovar`).
-- HTTPS via proxy reverso (Caddy/Nginx) na implantação; CORS restrito.
-- Upload: limite de tamanho, verificação de tipo por conteúdo (não só extensão), nomes de arquivo nunca usados como caminho.
-- Backup: `pg_dump` diário + cópia do diretório de arquivos; procedimento de restauração **testado** na Etapa 18.
-
-## 9. Ambientes
-
-| Ambiente | Composição |
-|----------|------------|
-| Desenvolvimento | `docker compose up` (PostGIS + API com reload + Vite) |
-| Testes | PostGIS descartável (container), pytest com banco real; Playwright contra a stack completa |
-| Produção | servidor local na mina: Docker Compose, proxy HTTPS, volumes persistentes, backup agendado |
+## 10. Tablets e celulares (E20)
+Os geólogos usam tablets e celulares **sem rede**. Proposta: a mesma interface instalada como aplicativo offline no tablet, com banco local, e troca de dados com o PC por **arquivo de sincronização** (cabo USB), com resolução de conflitos usando `instalacao_id`, UUID e `versao`. Detalhamento quando a etapa for iniciada.
