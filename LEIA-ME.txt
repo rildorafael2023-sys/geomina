@@ -1,0 +1,23 @@
+GeoMina — aplicativo local de gestão de dados geológicos
+=========================================================
+
+O aplicativo roda somente neste computador. Ele não usa internet e não aceita
+conexões de outros computadores (escuta apenas em 127.0.0.1).
+
+INSTALAÇÃO (uma vez)
+1. Instale o Python 3.12 ou 3.13 (python.org). Na primeira tela do instalador,
+   marque "Add python.exe to PATH".
+2. Descompacte esta pasta onde quiser (ex.: C:\GeoMina).
+3. Dê dois cliques em instalar.bat. Todas as bibliotecas estão na pasta "pacotes";
+   nada é baixado da internet.
+
+USO
+- Dê dois cliques em GeoMina.bat. O navegador abre o aplicativo.
+- Mantenha a janela preta aberta enquanto usa; feche-a para encerrar.
+- No primeiro acesso, crie o usuário administrador.
+
+ONDE FICAM OS DADOS
+  %LOCALAPPDATA%\GeoMina   (banco geomina.db, arquivos originais e backups)
+Para fazer backup, copie essa pasta com o aplicativo fechado.
+Antes de cada atualização do banco, o aplicativo cria automaticamente uma cópia em
+%LOCALAPPDATA%\GeoMina\backups.
