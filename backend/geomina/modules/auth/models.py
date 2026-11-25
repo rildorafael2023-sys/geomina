@@ -5,10 +5,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table, Uuid
+from sqlalchemy import Boolean, Column, ForeignKey, String, Table, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from geomina.db import Base, EntidadeMixin, agora
+from geomina.db import Base, DataHoraUTC, EntidadeMixin, agora
 
 papel_permissao = Table(
     "papel_permissao",
@@ -52,7 +52,7 @@ class Usuario(EntidadeMixin, Base):
     senha_hash: Mapped[str] = mapped_column(String(200), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     trocar_senha: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    ultimo_acesso: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ultimo_acesso: Mapped[datetime | None] = mapped_column(DataHoraUTC())
 
     papeis: Mapped[list[Papel]] = relationship(secondary=usuario_papel, lazy="selectin")
 
@@ -68,6 +68,6 @@ class Sessao(Base):
     usuario_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("usuario.id", ondelete="CASCADE"),
                                                   nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=agora)
-    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    criado_em: Mapped[datetime] = mapped_column(DataHoraUTC(), nullable=False, default=agora)
+    expira_em: Mapped[datetime] = mapped_column(DataHoraUTC(), nullable=False)
+    revogado_em: Mapped[datetime | None] = mapped_column(DataHoraUTC())

@@ -1,15 +1,42 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-25 · **Versão:** 0.2.0 · **Etapa atual:** E2 concluída, aguardando validação
+**Última atualização:** 2026-11-25 · **Versão:** 0.3.0 · **Etapa atual:** E3 concluída, aguardando validação
 
 ## Etapas
 
 | Etapa | Estado |
 |-------|--------|
-| E1 Arquitetura e especificação | ✅ Aprovada pelo usuário (com a mudança para aplicativo local) |
-| E2 Infraestrutura, banco local, autenticação, auditoria, arquivos | 🟡 **Concluída e testada, aguardando validação do usuário** |
-| E3 Estrutura operacional da mina | ⚪ Próxima |
-| E4 – E21 | ⚪ Pendentes |
+| E1 Arquitetura e especificação | ✅ Aprovada |
+| E2 Infraestrutura, banco local, autenticação, auditoria, arquivos | ✅ Validada (instalada e aberta pelo usuário no Windows) |
+| E3 Estrutura operacional da mina + janela própria | 🟡 **Concluída e testada, aguardando validação do usuário** |
+| E4 Painel (dashboard), consulta de auditoria, backup pela interface | ⚪ Próxima |
+| E5 – E21 | ⚪ Pendentes |
+
+## Entregue na E3 (versão 0.3.0)
+| Funcionalidade | Teste |
+|---|---|
+| Janela própria (sem barra de endereço), ícone na área de trabalho, instância única, encerramento ao fechar | automático (lógica) + real com Chromium (Linux). **Windows/Edge não testado** |
+| Cadastro da mina com sistema de coordenadas (SIRGAS 2000 ou SAD69 / UTM 23S) e declinação magnética | API + E2E |
+| Tipos de unidade configuráveis (9 padrão) e regras de hierarquia editáveis (matriz) | API + E2E |
+| Árvore: níveis, galerias, travessas, rampas, subdivisões, realces, chaminés, frentes | API + E2E |
+| Regras garantidas pelo **banco** (hierarquia, mesma mina, ciclos, multinível, avanço só em frente) | testes com SQL direto + teste de mutação |
+| Rampas e chaminés ligadas a vários níveis; consulta por nível inclui as unidades ligadas | API + E2E |
+| Mover unidade com tudo o que está dentro (caminhos recalculados) | API |
+| Inativar (bloqueado se houver unidades ativas dentro), reativar, excluir (só sem vínculos) | API + E2E |
+| Avanço de frente: data, distância + referência, avanço, XYZ opcional, responsável; correção com controle de versão | API + E2E |
+| Histórico legível por unidade (cadastro, alterações, unidades criadas dentro, avanços, vínculos de nível) | API + E2E |
+| Datas e horas em UTC no banco, exibidas no horário local | teste automático |
+
+Resumo dos testes: **63 testes do backend**, **E2E da estrutura (10 cenários)** e **E2E básico (7 cenários)** aprovados; lint e checagem de tipos sem erros. Detalhes em `TESTES.md`.
+
+## Problemas encontrados e corrigidos na E3
+| Problema | Correção |
+|---|---|
+| Horários seriam exibidos 3 h deslocados (o SQLite não guarda fuso) | tipo `DataHoraUTC` em todas as colunas de data/hora + teste |
+| Unidade recém-criada ficava escondida em ramo fechado da árvore | a árvore abre o caminho até a unidade selecionada |
+| Notificações cobriam os botões de ação | movidas para baixo, no máximo 3 |
+| "Nível N144 cadastrada" (concordância) | "Unidade N144 cadastrada (Nível)." |
+| No celular, os detalhes ficavam fora da tela | rolagem automática até o painel |
 
 ## Decisões do usuário (2026-11-25)
 - Aplicativo para rodar **no PC, sem rede** → arquitetura revisada (DT-016 a DT-021).
@@ -17,28 +44,9 @@
 - Os geólogos usam **tablets e celulares sem rede** → a etapa E20 (captura offline) é necessária.
 - Códigos de amostra: **BS-RP** = mina; **BMT-TS** = testemunho de sondagem; **BE** = antigas (mina e testemunho).
 - As demais propostas da Etapa 1 foram aprovadas ("os demais pode fazer tudo").
+- E2 validada: aplicativo instalado e aberto no PC.
+- Pedido: abrir em janela própria, com ícone na área de trabalho → feito na E3.
 - Ficha de mapeamento: **não** copiar a ficha atual; propor uma melhor, **sem RQD** → proposta em `FICHA_MAPEAMENTO.md` (aguarda revisão).
-
-## Funcionalidades implementadas e testadas (E2)
-
-| Funcionalidade | Teste |
-|---|---|
-| Aplicativo local: `python -m geomina` / `GeoMina.bat`; escuta só em 127.0.0.1; abre o navegador; usa outra porta se a 8765 estiver ocupada | automático + manual (porta ocupada observada durante os testes) |
-| Banco SQLite na pasta do usuário, WAL, chaves estrangeiras ativas | `test_infra.py` |
-| Migrações automáticas na inicialização, reversíveis; backup antes de migrar | `test_infra.py` |
-| Primeiro acesso: criação do administrador (só uma vez) | `test_auth.py`, E2E |
-| Login/logout, sessão de 12 h, expiração, senha forte, troca de senha, troca obrigatória para usuário novo | `test_auth.py`, E2E |
-| Usuários: criar, editar, desativar, redefinir senha; papéis; proteção do último administrador | `test_auth.py`, E2E |
-| Permissões por papel, conferidas na API (não só na tela) | `test_auth.py`, E2E |
-| Concorrência otimista (versão do registro) | `test_auth.py` |
-| Auditoria de inserção/alteração/exclusão com usuário e origem; senha mascarada; tabela imutável | `test_auditoria.py` |
-| Arquivos originais: SHA-256, deduplicação, somente leitura, detecção de corrupção, tipo pelo conteúdo, limite de tamanho | `test_arquivos.py` |
-| Base espacial: WKB 3D preserva Z exatamente; 2D não vira 3D; índice R*Tree 3D; EPSG 29193/31983 sem internet | `test_espacial.py` |
-| Interface: primeiro acesso, login, início, usuários, sistema, troca de senha; layout para celular | E2E (Playwright) |
-| Pacote de instalação offline | instalação real sem internet em ambiente Linux limpo |
-
-## Testes executados
-Ver `TESTES.md` → Registro. Resumo: **34 testes automatizados do backend aprovados**, **teste E2E com 7 cenários aprovado**, **lint sem erros**, **typecheck do frontend sem erros**, **instalação offline testada (Linux)**.
 
 ## Análise dos arquivos reais
 Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
@@ -47,32 +55,25 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 3. Os laudos SGS trazem QA/QC (DUP, REP, STD, branco), `<LD` com vírgula, `N.A.`, e a ordem das colunas muda entre laudos.
 4. Os códigos de amostra e as litologias têm várias grafias, o que exige normalização com confirmação.
 
-## Problemas encontrados e corrigidos nesta etapa
-| Problema | Correção |
-|---|---|
-| Migrações não eram gravadas (transação aberta pelo PRAGMA no SQLAlchemy 2) | commit explícito em `migrations/env.py`; teste de migração do zero |
-| O login incrementava a versão do usuário e gerava conflito falso na edição | registro de acesso sem versionar (`UPDATE` direto); teste de concorrência |
-| Título da janela trocava durante o fechamento; elemento HTML aninhado inválido na página inicial | corrigidos e conferidos por captura de tela |
-| Download de dependências Linux travava (variantes de plataforma) | empacotador com várias variantes compatíveis |
-
 ## Limitações conhecidas
-- **Scripts `instalar.bat` e `GeoMina.bat` não foram executados em Windows** (o ambiente de desenvolvimento é Linux). O mecanismo foi testado em Linux, mas o primeiro uso no Windows deve ser acompanhado.
-- O instalador exige Python 3.12 ou 3.13 instalado no PC (instalador .exe único previsto para a E19).
-- Alterações feitas diretamente no arquivo `.db`, fora do aplicativo, não são auditadas.
-- Ainda não há consulta da auditoria nem backup/restauração manual pela interface (E4).
-- Nenhum módulo geológico implementado ainda (estrutura da mina, mapeamento, amostras etc.).
+- **Janela própria e atalho não testados no Windows** (testados em Linux com Chromium). Se a janela não abrir, use `GeoMina.bat` (modo diagnóstico) e envie a mensagem.
+- O instalador exige Python 3.12/3.13 (instalador .exe único previsto para a E19).
+- Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
+- Ainda não há painel com indicadores, consulta geral da auditoria nem backup/restauração pela interface (E4).
+- Avanço de frente: a distância é a medida informada (trena/topografia). O chainage calculado sobre o eixo topográfico chega na E10.
 
 ## Pendências que dependem do usuário
 | # | Pergunta | Bloqueia |
 |---|---|---|
-| P1 | Validar a E2: instalar no PC com Windows e testar o primeiro acesso | E3 (recomendado) |
+| P1 | Validar a E3: atualizar a instalação (ver INSTRUCOES_DE_INSTALACAO → Atualização), abrir pelo ícone e cadastrar a mina e alguns níveis | E4 |
 | P2 | Revisar a proposta da ficha (`FICHA_MAPEAMENTO.md`) e responder às 4 perguntas da §4 | E5 |
-| P3 | CRS de trabalho padrão: SIRGAS 2000 (proposto) ou SAD69? | E3 |
-| P4 | Lista de níveis, galerias, travessas e rampas e a nomenclatura usada (ex.: N144, N567, N603, Rampa Sul, Travessa 1F) | E3 |
+| P3 | CRS de trabalho: a tela de cadastro da mina sugere SIRGAS 2000; confirmar ao cadastrar | — |
+| P4 | Lista de níveis, galerias, travessas e rampas (posso preparar uma importação por planilha se for longa) | uso real da E3 |
 | P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
 | P6 | Existe arquivo de eixos de galeria na topografia, ou o eixo deverá ser desenhado no GeoMina? | E10 |
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Usuário valida a E2 e responde P3/P4.
-2. **E3 — Estrutura operacional da mina**: mina com CRS, tipos de unidade configuráveis, árvore de níveis/galerias/travessas/rampas/frentes, unidades multinível, histórico de avanço, telas.
+1. Usuário valida a E3 no Windows (ícone, janela, cadastro da estrutura).
+2. **E4 — Painel e administração**: painel inicial com números reais do banco (unidades por tipo, frentes ativas, últimos avanços, atividades recentes), consulta da auditoria com filtros, backup e restauração pela interface.
+3. Em seguida, **E5 — Mapeamento geológico** com a ficha digital (depende da revisão de `FICHA_MAPEAMENTO.md`).

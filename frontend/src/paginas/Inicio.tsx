@@ -10,10 +10,10 @@ export function Inicio({ usuario }: { usuario: Eu }) {
       <Title order={3}>Olá, {usuario.nome}</Title>
       <Paper withBorder p="md">
         <Stack gap="xs">
-          <Text fw={600}>Versão 0.2 — Etapa 2 (infraestrutura)</Text>
+          <Text fw={600}>Versão 0.3 — Etapa 3 (estrutura da mina)</Text>
           <Text size="sm">
-            Disponível nesta versão: banco de dados local, usuários e permissões, registro de todas as alterações (auditoria) e
-            armazenamento seguro de arquivos originais.
+            Disponível nesta versão: estrutura da mina (níveis, galerias, travessas, rampas, frentes e avanços), usuários e
+            permissões, registro de todas as alterações (auditoria) e armazenamento seguro de arquivos originais.
           </Text>
           <Group gap={4}>
             <Text size="sm" c="dimmed">
@@ -32,7 +32,6 @@ export function Inicio({ usuario }: { usuario: Eu }) {
           Próximos módulos (ainda não disponíveis)
         </Text>
         <List size="sm">
-          <List.Item>Estrutura operacional da mina (níveis, galerias, travessas, rampas, frentes)</List.Item>
           <List.Item>Mapeamento geológico com ficha digital</List.Item>
           <List.Item>Croquis, fotografias e documentos</List.Item>
           <List.Item>Amostragem (BS-RP, BMT-TS, BE) e laudos SGS</List.Item>

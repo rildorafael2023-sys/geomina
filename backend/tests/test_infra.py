@@ -52,14 +52,14 @@ def test_backup_gera_copia_consistente(cfg):
     con.close()
 
 
-def test_saude(cliente):
+def test_saude(cfg, cliente):
     r = cliente.get("/api/v1/saude")
     assert r.status_code == 200
     d = r.json()
     assert d["status"] == "ok"
     assert d["rtree"] is True
     assert d["crs_disponiveis"] == {"29193": True, "31983": True}
-    assert d["revisao_banco"] == "0001"
+    assert d["revisao_banco"] == revisao_alvo(cfg)
 
 
 def test_servidor_so_escuta_localmente(cfg):

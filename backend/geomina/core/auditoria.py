@@ -17,10 +17,10 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, Integer, String, Uuid, event, insert, inspect
+from sqlalchemy import JSON, BigInteger, Integer, String, Uuid, event, insert, inspect
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from geomina.db import Base, agora
+from geomina.db import Base, DataHoraUTC, agora
 
 OCULTO = "***"
 
@@ -36,7 +36,7 @@ class Auditoria(Base):
     depois: Mapped[dict | None] = mapped_column(JSON)
     usuario_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
     origem: Mapped[str] = mapped_column(String(20), nullable=False, default="aplicativo")
-    ocorrido_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=agora)
+    ocorrido_em: Mapped[datetime] = mapped_column(DataHoraUTC(), nullable=False, default=agora)
 
 
 def _valor_json(v: Any) -> Any:

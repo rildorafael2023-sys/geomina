@@ -100,3 +100,84 @@ export interface Saude {
   pasta_dados: string;
   modo: string;
 }
+
+// ---- Estrutura da mina (Etapa 3) ----
+export type StatusUnidade = "ativa" | "paralisada" | "encerrada";
+export interface Mina {
+  id: string;
+  codigo: string;
+  nome: string;
+  srid_trabalho: number;
+  crs_nome: string | null;
+  declinacao_magnetica: number | null;
+  observacoes: string | null;
+  ativo: boolean;
+  versao: number;
+}
+export interface TipoUnidade {
+  id: string;
+  codigo: string;
+  nome: string;
+  pode_ser_raiz: boolean;
+  possui_eixo: boolean;
+  multinivel: boolean;
+  e_nivel: boolean;
+  e_frente: boolean;
+  cor: string | null;
+  ordem: number;
+  ativo: boolean;
+  versao: number;
+  filhos_permitidos: string[];
+}
+export interface UnidadeResumo {
+  id: string;
+  mina_id: string;
+  pai_id: string | null;
+  tipo: string;
+  tipo_nome: string;
+  codigo: string;
+  nome: string;
+  status: StatusUnidade;
+  ativo: boolean;
+  versao: number;
+}
+export interface UnidadeDetalhe extends UnidadeResumo {
+  cota_referencia: number | null;
+  descricao: string | null;
+  caminho_nomes: string[];
+  niveis: UnidadeResumo[];
+  filhos: number;
+  criado_em: string;
+  atualizado_em: string | null;
+}
+export interface Avanco {
+  id: string;
+  frente_id: string;
+  data: string;
+  distancia_m: number | null;
+  referencia: string | null;
+  avanco_m: number | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  responsavel_id: string | null;
+  responsavel_nome: string | null;
+  observacao: string | null;
+  versao: number;
+  criado_em: string;
+}
+export interface EventoHistorico {
+  ocorrido_em: string;
+  tabela: string;
+  operacao: string;
+  descricao: string;
+  usuario: string | null;
+}
+
+export const CRS_OPCOES = [
+  { value: "31983", label: "SIRGAS 2000 / UTM 23S (EPSG:31983)" },
+  { value: "29193", label: "SAD69 / UTM 23S (EPSG:29193)" },
+];
+
+export const dataHora = (iso: string) => new Date(iso).toLocaleString("pt-BR");
+export const dataCurta = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("pt-BR");

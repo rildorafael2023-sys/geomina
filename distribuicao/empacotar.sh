@@ -22,6 +22,6 @@ for PYV in 3.12 3.13; do
   $PIP download -d "$DESTINO/pacotes" --only-binary=:all: "${PLATAFORMAS[@]}" \
     --python-version "$PYV" "$DESTINO"/pacotes/geomina-*.whl setuptools -q
 done
-cp "$RAIZ/distribuicao/instalar.bat" "$RAIZ/distribuicao/GeoMina.bat" "$RAIZ/distribuicao/LEIA-ME.txt" "$DESTINO/"
+cp "$RAIZ/distribuicao/instalar.bat" "$RAIZ/distribuicao/GeoMina.bat" "$RAIZ/distribuicao/LEIA-ME.txt" "$RAIZ/distribuicao/geomina.ico" "$DESTINO/"
 (cd "$SAIDA" && rm -f "$NOME.zip" && python3 -c "import shutil,sys; shutil.make_archive(sys.argv[1],'zip','.',sys.argv[1])" "$NOME")
 echo "$SAIDA/$NOME.zip"

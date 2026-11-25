@@ -12,9 +12,19 @@ INSTALAÇÃO (uma vez)
    nada é baixado da internet.
 
 USO
-- Dê dois cliques em GeoMina.bat. O navegador abre o aplicativo.
-- Mantenha a janela preta aberta enquanto usa; feche-a para encerrar.
+- Abra pelo ícone "GeoMina" na área de trabalho (criado pelo instalar.bat).
+  O GeoMina abre em janela própria (usa o Microsoft Edge já existente no Windows,
+  sem barra de endereço). Ao fechar a janela, o programa se encerra sozinho
+  (em alguns segundos).
 - No primeiro acesso, crie o usuário administrador.
+- GeoMina.bat é o "modo diagnóstico": abre mostrando as mensagens numa janela
+  preta. Use se algo der errado e envie a mensagem ao suporte.
+- Registro de funcionamento: %LOCALAPPDATA%\GeoMina\logs\geomina.log
+
+ATUALIZAÇÃO
+Descompacte a versão nova por cima da pasta antiga e execute instalar.bat de novo.
+Os dados não são afetados (ficam em %LOCALAPPDATA%\GeoMina) e o banco recebe
+backup automático antes de qualquer atualização.
 
 ONDE FICAM OS DADOS
   %LOCALAPPDATA%\GeoMina   (banco geomina.db, arquivos originais e backups)

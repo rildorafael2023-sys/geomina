@@ -37,9 +37,29 @@ def registrar_tratadores(app: FastAPI) -> None:
 
     @app.exception_handler(IntegrityError)
     async def _integridade(_r: Request, e: IntegrityError):
-        return _resp(409, "integridade", "A operação viola uma regra de integridade do banco.", str(e.orig))
+        return _resp(*traduzir_integridade(str(e.orig)))
 
     @app.exception_handler(StaleDataError)
     async def _concorrencia(_r: Request, _e: StaleDataError):
         return _resp(409, "versao_desatualizada",
                      "O registro foi alterado por outra operação. Recarregue e tente novamente.")
+
+
+# Prefixos das mensagens RAISE(ABORT, ...) dos triggers (migrações): são regras de negócio
+# garantidas pelo banco e podem ser mostradas ao usuário como estão.
+PREFIXOS_REGRAS = ("hierarquia:", "multinível:", "avanço:", "tipo de unidade:", "regra de hierarquia:",
+                   "auditoria:")
+
+
+def traduzir_integridade(msg: str) -> tuple[int, str, str, str]:
+    for prefixo in PREFIXOS_REGRAS:
+        if msg.startswith(prefixo):
+            texto = msg[len(prefixo):].strip()
+            return 422, "regra_violada", texto[:1].upper() + texto[1:] + ".", msg
+    if msg.startswith("UNIQUE constraint failed"):
+        return 409, "duplicado", "Já existe um registro com esses dados.", msg
+    if msg.startswith("FOREIGN KEY constraint failed"):
+        return 409, "possui_vinculos", "O registro está vinculado a outros registros.", msg
+    if msg.startswith("CHECK constraint failed"):
+        return 422, "valor_invalido", "Valor fora das regras permitidas.", msg
+    return 409, "integridade", "A operação viola uma regra de integridade do banco.", msg

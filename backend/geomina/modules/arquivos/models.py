@@ -5,10 +5,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import BigInteger, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
-from geomina.db import Base, agora
+from geomina.db import Base, DataHoraUTC, agora
 
 
 class Arquivo(Base):
@@ -28,5 +28,5 @@ class Arquivo(Base):
     nome_original: Mapped[str] = mapped_column(String(260), nullable=False)
     chave: Mapped[str] = mapped_column(String(200), nullable=False)
     enviado_por: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("usuario.id", ondelete="RESTRICT"))
-    enviado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=agora)
+    enviado_em: Mapped[datetime] = mapped_column(DataHoraUTC(), nullable=False, default=agora)
 

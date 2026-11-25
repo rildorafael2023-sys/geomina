@@ -2,20 +2,23 @@
 
 ## A. Usuário (PC com Windows) — pacote offline
 
-> ⚠️ O mecanismo de instalação foi testado em Linux. Os scripts `.bat` **ainda não foram executados em Windows**; acompanhe a primeira instalação e informe qualquer mensagem de erro.
+> A versão 0.2.0 foi instalada e aberta pelo usuário no Windows. O atalho com ícone e a janela própria (0.3.0) ainda não foram testados em Windows.
 
 1. Instale o **Python 3.12 ou 3.13** (64 bits, python.org). Na primeira tela do instalador, marque **"Add python.exe to PATH"**.
-2. Descompacte `GeoMina-0.2.0-windows.zip` numa pasta (ex.: `C:\GeoMina`).
+2. Descompacte `GeoMina-<versão>-windows.zip` numa pasta (ex.: `C:\GeoMina`).
 3. Dê dois cliques em **`instalar.bat`**. As bibliotecas estão na pasta `pacotes`; **nada é baixado da internet**.
-4. Para usar, dê dois cliques em **`GeoMina.bat`**. O navegador abre em `http://127.0.0.1:8765`. Mantenha a janela preta aberta enquanto usa.
+4. O instalador cria o ícone **GeoMina** na área de trabalho. Abra por ele: o GeoMina abre em janela própria e se encerra ao fechar a janela.
 5. No primeiro acesso, crie o usuário administrador.
+
+**Atualização (ex.: de 0.2.0 para 0.3.0):** feche o GeoMina, descompacte a versão nova por cima da pasta antiga (substituindo os arquivos) e execute `instalar.bat` de novo. Os dados não são afetados e o banco recebe backup automático antes de ser atualizado.
 
 **Dados:** `%LOCALAPPDATA%\GeoMina` (`geomina.db`, `arquivos\`, `backups\`). Para fazer backup, copie essa pasta com o aplicativo fechado.
 
 **Opções** (em `GeoMina.bat` ou na linha de comando):
 - `--dados D:\GeoMinaDados`: outra pasta de dados.
 - `--porta 8800`: outra porta local.
-- `--sem-navegador`: não abre o navegador.
+- `--sem-navegador`: não abre a interface.
+- `--aba`: abre numa aba do navegador padrão em vez de janela própria.
 
 ## B. Desenvolvimento (Linux/macOS/Windows)
 

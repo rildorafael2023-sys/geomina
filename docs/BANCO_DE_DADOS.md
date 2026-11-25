@@ -1,7 +1,7 @@
 # BANCO DE DADOS — Modelo inicial
 
 > Estado: modelo lógico da Etapa 1, **adaptado ao SQLite em 2026-11-25** (DT-016/DT-017).
-> **Tabelas implementadas (migração `0001_nucleo`, Etapa 2):** `usuario`, `papel`, `permissao`, `papel_permissao`, `usuario_papel`, `sessao`, `auditoria`, `arquivo`, `parametro_sistema`. As demais ainda são projeto.
+> **Tabelas implementadas:** migração `0001_nucleo` (E2): `usuario`, `papel`, `permissao`, `papel_permissao`, `usuario_papel`, `sessao`, `auditoria`, `arquivo`, `parametro_sistema`. Migração `0002_estrutura` (E3): `mina`, `tipo_unidade`, `regra_hierarquia`, `unidade_operacional`, `unidade_nivel`, `frente_avanco`, mais 10 triggers de integridade e os dados iniciais (9 tipos, regras, 4 permissões). As demais tabelas ainda são projeto.
 
 ## 0. Adaptação ao SQLite (aplicativo local)
 
@@ -45,7 +45,7 @@
 | `sessao` | id, usuario_id, token_hash, criado_em, expira_em, revogado_em | UNIQUE(token_hash) (DT-018) |
 | `parametro_sistema` | chave, valor | ex.: `instalacao_id` |
 
-## 3. Estrutura operacional (Etapa 3)
+## 3. Estrutura operacional (Etapa 3) **[IMPLEMENTADO — ver ajustes abaixo]**
 
 | Tabela | Colunas principais | Restrições / observações |
 |--------|--------------------|--------------------------|
@@ -55,6 +55,13 @@
 | `unidade_operacional` | id, mina_id, tipo_id, pai_id (nulo = raiz da mina), codigo, nome, caminho `ltree`, cota_referencia, status, descricao, ativo | UNIQUE(mina_id, codigo); `pai` da mesma mina (trigger); tipo do pai permitido por `regra_hierarquia` (trigger); `caminho` mantido por trigger; GiST em `caminho` |
 | `unidade_nivel` | unidade_id, nivel_id | Para unidades multinível (rampa ↔ níveis). `nivel_id` deve ser do tipo NIVEL |
 | `frente_avanco` | id, frente_id, data, chainage, origem_chainage ('manual','calculado'), eixo_versao_id, geom PointZ, avanco_m, responsavel_id, observacao | `frente_id` deve ser unidade com `e_frente` |
+
+**Ajustes na implementação (E3):**
+- `mina`: `srid_trabalho` validado (precisa ser um sistema projetado em metros); `declinacao_magnetica` (graus, + leste). Sem `origem_local` (será calculada pelo visualizador 3D).
+- `tipo_unidade`: `pode_ser_raiz` e `e_nivel` acrescentados (DT-023).
+- `unidade_operacional.caminho`: texto `/hexid/…/` mantido por trigger; `status` ∈ ativa/paralisada/encerrada; `UNIQUE(mina_id, codigo)` sem distinção de maiúsculas.
+- `frente_avanco`: `x, y, z` em colunas (DT-024) em vez de `geom`; `referencia` obrigatória quando há distância; `eixo_versao_id` e `origem_chainage` entram na E10.
+- Triggers: `trg_unidade_valida_insercao`, `trg_unidade_caminho_insercao`, `trg_unidade_valida_alteracao`, `trg_unidade_caminho_alteracao`, `trg_unidade_nivel_valida`, `trg_avanco_so_em_frente_*`, `trg_tipo_unidade_caracteristicas`, `trg_tipo_unidade_raiz`, `trg_regra_em_uso`.
 
 > **Por que árvore genérica?** Ver ANALISE_CRITICA A1. A hierarquia é configurável, impõe regras pelo banco e permite consultar a sub-árvore inteira com `caminho <@ 'MINA.N350.GAL01'`.
 

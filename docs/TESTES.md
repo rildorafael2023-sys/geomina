@@ -67,6 +67,14 @@
 | 2026-11-25 | E2 | E2E `e2e/fluxo_basico.cjs` (7 cenários: primeiro acesso, sistema, criar usuário, troca de senha obrigatória, permissões na interface, senha errada, layout 390 px sem rolagem horizontal; sem erros de JavaScript) | **aprovado** | 1ª execução falhou no seletor do campo de senha (rótulo com asterisco); teste corrigido. Capturas revisadas: 2 defeitos visuais corrigidos e retestados. |
 | 2026-11-25 | E2 | Instalação offline (pacote linux, `pip --no-index`, ambiente limpo) + `/api/v1/saude` + interface | **aprovado** | O pacote Windows foi gerado (52 MB), mas **não foi instalado em Windows**. |
 
+| 2026-11-25 | E2 | Instalação em Windows real (pelo usuário) | **aprovado** | O usuário instalou e abriu o aplicativo no navegador. |
+| 2026-11-25 | E3 | `pytest` backend: 63 testes (E2 34 + janela 6 + estrutura 23) | **63 aprovados** | 1ª execução da estrutura: 22/22. **Teste de mutação:** com a regra anticiclo desativada no trigger, 2 testes falharam, como esperado; regra restaurada. |
+| 2026-11-25 | E3 | Janela própria (Linux + Chromium em modo `--app`): abertura, 2ª abertura reaproveita a instância, encerramento ao fechar | **aprovado** | encerrou 10 s após fechar a janela. **Edge/Windows não testado.** |
+| 2026-11-25 | E3 | E2E `e2e/estrutura.cjs` (10 cenários: cadastro da mina SIRGAS, níveis, galeria > travessa > frente, tipos oferecidos conforme as regras, avanço, rampa multinível, histórico, inativação recusada, busca, regras, celular 390 px) | **aprovado** | Falhas encontradas e corrigidas: unidade criada ficava escondida em ramo fechado; notificações cobriam os botões; concordância "Nível … cadastrada"; detalhes fora da tela no celular. |
+| 2026-11-25 | E3 | E2E `e2e/fluxo_basico.cjs` (regressão da E2) | **aprovado** | |
+| 2026-11-25 | E3 | `ruff`, `tsc -b`, `vite build` | sem erros | |
+| 2026-11-25 | E3 | Atualização real 0.2.0 → 0.3.0 (pacote linux): dados criados na 0.2.0, zip novo por cima, `pip --upgrade` offline | **aprovado** | banco 0001 → 0002; login do admin antigo mantido; tipos padrão criados; backup `antes-migracao-0001` gerado automaticamente |
+
 ### Ainda não testado
-- `instalar.bat` / `GeoMina.bat` em Windows real.
+- Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
 - Desempenho com volume real de dados (não se aplica à E2).

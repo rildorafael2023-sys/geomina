@@ -13,9 +13,11 @@ from geomina.core.armazenamento import ArmazenamentoLocal
 from geomina.core.auditoria import registrar_listeners
 from geomina.core.erros import registrar_tratadores
 from geomina.db import criar_engine, criar_fabrica_sessoes
+from geomina.janela import Presenca
 from geomina.migrar import migrar
 from geomina.modules.arquivos.router import router as arquivos_router
 from geomina.modules.auth.router import router as auth_router
+from geomina.modules.estrutura.router import router as estrutura_router
 from geomina.modules.sistema.router import router as sistema_router
 
 PASTA_INTERFACE = Path(__file__).parent / "static"
@@ -32,11 +34,12 @@ def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> Fast
     app.state.engine = criar_engine(cfg.url_banco)
     app.state.fabrica_sessoes = criar_fabrica_sessoes(app.state.engine)
     app.state.armazenamento = ArmazenamentoLocal(cfg.pasta_arquivos)
+    app.state.presenca = Presenca()
     registrar_listeners(app.state.fabrica_sessoes)
     registrar_tratadores(app)
 
     api = APIRouter(prefix="/api/v1")
-    for r in (sistema_router, auth_router, arquivos_router):
+    for r in (sistema_router, auth_router, arquivos_router, estrutura_router):
         api.include_router(r)
     app.include_router(api)
 

@@ -52,12 +52,14 @@ geomina/
 │   │   ├── db.py                 SQLite (WAL, FK), base declarativa, colunas padrão
 │   │   ├── migrar.py             migrações automáticas + backup prévio
 │   │   ├── modelos.py            registro de todos os modelos
-│   │   ├── migrations/           Alembic (0001_nucleo)
+│   │   ├── janela.py             janela própria, instância única, encerramento
+│   │   ├── migrations/           Alembic (0001_nucleo, 0002_estrutura)
 │   │   ├── core/                 auditoria, segurança, armazenamento, erros, dependências
 │   │   ├── espacial/             geometria WKB 3D (base para a topografia)
 │   │   ├── modules/
 │   │   │   ├── auth/             usuários, papéis, permissões, sessões
 │   │   │   ├── arquivos/         arquivos originais
+│   │   │   ├── estrutura/        minas, tipos, regras, unidades, avanços (E3)
 │   │   │   └── sistema/          saúde, parâmetros da instalação
 │   │   └── static/               interface compilada (gerada, fora do git)
 │   └── tests/                    pytest (banco SQLite real em pasta temporária)
@@ -91,6 +93,12 @@ Endpoints **[IMPLEMENTADO]**:
 | GET | `/papeis` | autenticado |
 | GET/POST | `/usuarios` · PATCH `/usuarios/{id}` · POST `/usuarios/{id}/senha` | `usuario:gerenciar` |
 | POST | `/arquivos` · GET `/arquivos/{id}` · GET `/arquivos/{id}/conteudo?verificar=` | `arquivo:enviar` / `arquivo:ler` |
+| POST | `/sistema/presenca` · `/sistema/fechando` (cabeçalho `X-GeoMina: 1`) | sinais da janela (DT-022) |
+| GET/POST/PATCH | `/minas` · `/minas/{id}` | ler: `estrutura:ler`; gravar: `estrutura:configurar` |
+| GET | `/minas/{id}/unidades?nivel_id=&tipo=&texto=&incluir_inativas=` | `estrutura:ler` |
+| GET/POST/PATCH · PUT | `/tipos-unidade` · `/regras-hierarquia` | `estrutura:configurar` (leitura: `estrutura:ler`) |
+| POST/GET/PATCH/DELETE | `/unidades` · `/unidades/{id}` · POST `/unidades/{id}/mover` · PUT `/unidades/{id}/niveis` · GET `/unidades/{id}/historico` | `estrutura:editar` / `estrutura:ler` |
+| GET/POST · PUT | `/unidades/{id}/avancos` · `/avancos/{id}` | `avanco:registrar` / `estrutura:ler` |
 
 ## 6. Arquitetura espacial (adaptada ao SQLite — DT-017)
 

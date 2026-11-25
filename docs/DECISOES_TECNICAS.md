@@ -119,3 +119,17 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 **Estado:** Aceita (mecanismo testado em Linux; **scripts .bat ainda não testados em Windows**)
 **Decisão.** `distribuicao/empacotar.sh windows` gera um zip com a interface compilada, o pacote `geomina` e **todas as bibliotecas** (wheels para Python 3.12 e 3.13, Windows 64 bits). `instalar.bat` cria o ambiente sem internet (`pip --no-index`); `GeoMina.bat` abre o aplicativo. Exige Python instalado.
 **Evolução prevista (E19).** Instalador único (.exe) sem exigir Python, gerado em máquina/CI Windows.
+
+## DT-022 — Janela própria (modo aplicativo do Edge/Chrome) e encerramento automático
+**Estado:** Aceita (pedido do usuário, 2026-11-25) · **Testado:** Linux com Chromium; **Windows/Edge não testado**
+**Decisão.** O atalho da área de trabalho executa `pythonw -m geomina`, sem janela de console. A interface abre com `msedge --app=… --user-data-dir=<dados>/janela`, sem barra de endereço nem abas. A interface envia sinais de presença; ao fechar a última janela, o servidor se encerra em cerca de 10 s. Se já houver um GeoMina aberto com a mesma pasta de dados, só abre outra janela para ele (instância única). Sem Edge/Chrome, usa uma aba do navegador padrão. Erros de inicialização aparecem numa caixa de mensagem do Windows e são gravados em `logs/geomina.log`.
+**Alternativas.** pywebview/Electron: exigem componentes nativos extras no pacote. O Edge já vem no Windows 10/11.
+
+## DT-023 — Árvore da mina com tipos configuráveis e integridade por triggers
+**Estado:** Aceita (implementada na E3)
+**Decisão.** `tipo_unidade` (flags: pode ficar na raiz, é nível, multinível, tem eixo, é frente) + `regra_hierarquia` (pai→filho). Triggers do SQLite recusam: tipo não permitido, unidade-pai de outra mina, ciclos, vínculo multinível inválido, avanço fora de frente, mudança de características de tipo em uso, remoção de regra em uso. O `caminho` materializado (`/id/…/`) é mantido por trigger, inclusive ao mover sub-árvores.
+**Ajuste em relação ao modelo da E1.** "Pode ficar na raiz" virou um atributo do tipo, em vez de uma regra com pai nulo (o SQLite não garante unicidade com NULL em chave primária).
+
+## DT-024 — Posição de frente como colunas X/Y/Z (não geometria)
+**Estado:** Aceita
+**Justificativa.** Um avanço é um único ponto opcional, medido em campo. Colunas numéricas (no CRS de trabalho da mina) são mais simples de validar (X e Y juntos, Z exige XY) e de consultar. Geometrias WKB ficam para linhas e polígonos (topografia, eixos). A distância exige a **referência** de onde foi medida.

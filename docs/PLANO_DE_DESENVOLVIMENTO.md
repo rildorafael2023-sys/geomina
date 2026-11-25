@@ -47,7 +47,7 @@
 **Entregáveis:** REQUISITOS, ANALISE_CRITICA, ARQUITETURA, BANCO_DE_DADOS, DECISOES_TECNICAS, PLANO, TESTES, STATUS, README, instruções.
 **Aceitação:** documentos revisados e aprovados pelo usuário; pendências críticas respondidas (CRS, offline, implantação).
 
-## E2 — Infraestrutura, banco, autenticação e auditoria 🟡 concluída, aguardando validação
+## E2 — Infraestrutura, banco, autenticação e auditoria ✅ validada pelo usuário (instalada e aberta no Windows)
 **Escopo realizado (revisado para aplicativo local):** aplicativo Python local (127.0.0.1) que abre o navegador; SQLite (WAL, FK); SQLAlchemy + Alembic com migração automática e backup prévio; usuários, papéis, permissões, sessões revogáveis; auditoria por ORM com tabela imutável; armazenamento de arquivos por hash; `/saude`; interface React (primeiro acesso, login, usuários, sistema, troca de senha); pacote de instalação offline para Windows.
 **Fora do escopo realizado:** Docker e PostGIS (substituídos, DT-016/017); CI no GitHub (adiado: o usuário não quer nada na rede por enquanto).
 **Escopo original (Etapa 1):** Docker Compose (PostGIS, API); FastAPI; SQLAlchemy + Alembic; extensões; tabelas do núcleo; trigger de auditoria; login/JWT; RBAC; armazenamento com hash; `/saude`; CI.
@@ -59,11 +59,12 @@
 - ✅ Alteração em tabela auditada gera registro com o usuário correto.
 - ✅ O envio de arquivo armazena o original, calcula o SHA-256, deduplica e não sobrescreve.
 - ✅ Geometria 3D preserva Z exatamente (WKB) e a consulta R*Tree funciona.
-- ⚠️ Instalação em Windows real: pendente (validação do usuário).
+- ✅ Instalação em Windows real: o usuário instalou e abriu o aplicativo.
 
-## E3 — Estrutura operacional da mina
+## E3 — Estrutura operacional da mina 🟡 concluída e testada, aguardando validação
+**Realizado também:** janela própria com ícone na área de trabalho, instância única e encerramento automático (pedido do usuário).
 **Escopo:** mina (com CRS de trabalho, proposto SIRGAS 2000 / UTM 23S), tipos de unidade, regras de hierarquia, unidades (árvore ltree), unidades multinível, frentes e avanços, histórico por unidade, inativação.
-**Aceitação:** CRUD via API testado; regra de hierarquia violada é rejeitada **pelo banco**; ciclos na árvore impossíveis; mover sub-árvore atualiza caminhos; rampa vinculada a 3 níveis aparece na consulta de cada nível; exclusão de unidade com vínculos bloqueada; cada operação auditada.
+**Aceitação:** ✅ cadastro, consulta e alteração pela API e pela interface testados; ✅ regra de hierarquia violada é rejeitada **pelo banco** (testado com SQL direto, sem a API); ✅ ciclos impossíveis; ✅ mover sub-árvore atualiza os caminhos; ✅ rampa vinculada a 3 níveis aparece na consulta de cada nível; ✅ exclusão de unidade com vínculos bloqueada; ✅ cada operação auditada, com histórico legível por unidade; ✅ avanços de frente com referência obrigatória.
 
 ## E4 — Interface base, usuários e dashboard
 **Escopo:** SPA React/TS (layout, navegação, login, tratamento de sessão), cliente da API gerado; telas de estrutura operacional (árvore, cadastro, histórico); administração de usuários/papéis; dashboard com indicadores **apenas dos módulos existentes**, calculados no banco.

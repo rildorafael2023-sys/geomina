@@ -5,6 +5,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { aoSessaoExpirar, api, definirToken, lerToken, type Eu } from "./api/cliente";
 import { Layout } from "./componentes/Layout";
+import { ConfiguracaoEstrutura } from "./paginas/estrutura/Configuracao";
+import { Estrutura } from "./paginas/estrutura/Estrutura";
 import { Inicio } from "./paginas/Inicio";
 import { Instalacao } from "./paginas/Instalacao";
 import { Login } from "./paginas/Login";
@@ -52,6 +54,8 @@ export function App() {
     <Layout usuario={usuario} aoSair={sair}>
       <Routes>
         <Route path="/" element={<Inicio usuario={usuario} />} />
+        {usuario.permissoes.includes("estrutura:ler") && <Route path="/estrutura" element={<Estrutura eu={usuario} />} />}
+        {usuario.permissoes.includes("estrutura:configurar") && <Route path="/configuracao/estrutura" element={<ConfiguracaoEstrutura />} />}
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}
         <Route path="/sistema" element={<Sistema />} />
         <Route path="/senha" element={<TrocarSenha aoConcluir={sair} />} />

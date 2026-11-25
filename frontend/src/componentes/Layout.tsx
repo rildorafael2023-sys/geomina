@@ -10,6 +10,8 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
   const local = useLocation();
   const itens = [
     { para: "/", rotulo: "Início", visivel: true },
+    { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
+    { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },
     { para: "/usuarios", rotulo: "Usuários", visivel: usuario.permissoes.includes("usuario:gerenciar") },
     { para: "/sistema", rotulo: "Sistema", visivel: true },
     { para: "/senha", rotulo: "Trocar minha senha", visivel: true },
