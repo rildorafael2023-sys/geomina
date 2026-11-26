@@ -48,3 +48,11 @@ def criar_usuario(cliente, token, login, papeis):
     r2 = cliente.post("/api/v1/auth/login", json={"login": login, "senha": SENHA})
     assert r2.status_code == 200, r2.text
     return r.json(), r2.json()["token"]
+
+
+@pytest.fixture(autouse=True)
+def _limpar_bloqueio_login():
+    from geomina.modules.auth import service
+    service._falhas.clear()
+    yield
+    service._falhas.clear()

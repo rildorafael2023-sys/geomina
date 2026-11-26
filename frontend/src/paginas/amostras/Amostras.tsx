@@ -212,7 +212,7 @@ interface Previa {
   resumo: Record<string, number>;
   com_coordenadas: number;
   litologias_nao_reconhecidas: Record<string, number>;
-  linhas: { linha: number; original: string; codigo: string | null; status: string; mensagens: string[]; local: string | null; de: number | null; ate: number | null; litologia: string | null; litologia_texto: string | null; data: string | null; x: number | null }[];
+  linhas: { linha: number; original: string; codigo: string | null; status: string; mensagens: string[]; local: string | null; de: number | null; ate: number | null; litologia: string | null; litologia_texto: string | null; data: string | null; x: number | null; unidade?: string | null; unidade_texto?: string | null }[];
 }
 const STATUS: Record<string, { rotulo: string; cor: string }> = {
   ok: { rotulo: "ok", cor: "teal" }, sugestao: { rotulo: "confirmar código", cor: "yellow" }, erro: { rotulo: "código inválido", cor: "red" },
@@ -298,7 +298,7 @@ function Importar({ mina }: { mina: Mina }) {
                   <Table.Tr key={l.linha}>
                     <Table.Td>{l.linha}</Table.Td><Table.Td fz="xs">{l.original}</Table.Td><Table.Td fw={500}>{l.codigo}</Table.Td>
                     <Table.Td><Badge size="xs" color={STATUS[l.status].cor}>{STATUS[l.status].rotulo}</Badge></Table.Td>
-                    <Table.Td fz="xs">{l.local}</Table.Td><Table.Td fz="xs">{l.de !== null ? `${l.de}–${l.ate}` : ""}</Table.Td>
+                    <Table.Td fz="xs">{l.unidade ? <Text span fw={600} fz="xs">{l.unidade}</Text> : l.unidade_texto ? <Text span c="orange" fz="xs">{l.unidade_texto}</Text> : null}{(l.unidade || l.unidade_texto) && l.local ? " · " : ""}{l.local}</Table.Td><Table.Td fz="xs">{l.de !== null ? `${l.de}–${l.ate}` : ""}</Table.Td>
                     <Table.Td fz="xs">{l.litologia ?? <Text span c="orange" fz="xs">{l.litologia_texto}</Text>}</Table.Td>
                     <Table.Td fz="xs">{l.data ? dataCurta(l.data) : ""}</Table.Td><Table.Td fz="xs">{l.mensagens.join(" ")}</Table.Td>
                   </Table.Tr>

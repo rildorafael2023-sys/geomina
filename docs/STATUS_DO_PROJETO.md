@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.19.0 · **Etapa atual:** E17 Relatórios gerais concluída; próximas: validação integrada (E18), instalador .exe e backup agendado (E19), captura offline no tablet (E20). Usuário autorizou executar todas as etapas em sequência.
+**Última atualização:** 2026-11-26 · **Versão:** 0.20.0 · **Etapa atual:** E18 Validação integrada concluída; próximas: implantação (E19: backup agendado, teste de restauração, instalador) e captura offline no tablet (E20). Usuário autorizou executar todas as etapas em sequência.
 
 ## Etapas
 
@@ -18,7 +18,15 @@
 | E11 Teores na galeria | ✅ Concluída e testada (v0.11.0) |
 | **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | ✅ Concluída (v0.18.0) — ver GEOQUIMICA_OPERACIONAL.md |
 | E17 Relatórios gerais | ✅ Concluída e testada (v0.19.0) |
-| E18 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+| E18 Validação integrada, segurança, carga e integridade | ✅ Concluída (v0.20.0) — ver VALIDACAO_E18.md |
+| E19 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+
+## Entregue na E18 (versão 0.20.0) — validação integrada
+Detalhes em `VALIDACAO_E18.md`. Resumo:
+- **Segurança**: proteção contra "DNS rebinding" (só atende 127.0.0.1/localhost), bloqueio após 5 senhas erradas, cabeçalhos de segurança, proteção contra zip malformado; teste que percorre todas as rotas sem login.
+- **Carga** (20 mil amostras, 960 mil resultados): confirmar laudo de >3 min para 5,6 s; consultas da Geoquímica operacional de 10–15 s para ~1 s; tabela do laboratório limitada a 500 linhas na tela.
+- **Integridade**: nova verificação no menu Sistema (banco, chaves, regras de proteção, índice espacial, hash de cada arquivo original).
+- **Defeito corrigido**: a coluna "galeria/unidade" da planilha de amostras era descartada; agora liga a amostra à unidade cadastrada.
 
 ## Entregue na E17 (versão 0.19.0) — relatórios gerais
 Novo item de menu **Relatórios** (quem lê mapeamento ou o histórico):

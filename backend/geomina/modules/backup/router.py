@@ -116,6 +116,8 @@ def restaurar(d: Restaurar, request: Request, u: Usuario = Depends(BACKUP), db: 
             m, seguranca = service.restaurar(cfg, caminho, app.state.engine, u.nome)
         finally:
             app.state.restaurando = False
+            from geomina.modules.geoop.servico import limpar_cache
+            limpar_cache()
     except service.BackupInvalido as e:
         raise _erro(e) from e
     # Registra a restauração na auditoria do banco restaurado (o usuário pode não existir nele).

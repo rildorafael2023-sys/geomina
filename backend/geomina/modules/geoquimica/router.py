@@ -6,10 +6,10 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Query, Depends, File, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, update
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.orm import Session
 
 from geomina.core.dependencias import obter_sessao, requer
@@ -155,34 +155,43 @@ def confirmar(imp_id: uuid.UUID, e: Confirmacao, request: Request, u: Usuario = 
             texto, num, qual, lim = L.valor(ln.valores.get(col.indice))
             if qual == "--" and not texto:
                 continue
-            novos.append(Resultado(
-                certificado_id=cert.id, amostra_id=amostra.id if amostra else None, codigo_laboratorio=ln.codigo,
+            novos.append(dict(
+                id=uuid.uuid4(), certificado_id=cert.id, amostra_id=amostra.id if amostra else None, codigo_laboratorio=ln.codigo,
                 codigo_canonico=canon, tipo_linha=tipo, analito_id=analitos[col.analito].id,
                 metodo_id=metodos[col.metodo].id, unidade=col.unidade, valor_texto=texto or "(vazio)", valor_num=num,
-                qualificador=qual, limite=lim, linha_origem=ln.numero))
+                qualificador=qual, limite=lim, preferido=False, linha_origem=ln.numero, observacao=None))
             gravados += 1
         if amostra:
             vinculados.add(amostra.codigo)
-    db.add_all(novos)
-    db.flush()
-    _recalcular_preferidos(db, {r.amostra_id for r in novos if r.amostra_id and r.tipo_linha == "SMP"})
+    # gravação em lote (o ORM objeto a objeto levava ~20 s para 100 mil resultados)
+    for i in range(0, len(novos), 5000):
+        db.execute(insert(Resultado), novos[i:i + 5000])
+    _recalcular_preferidos(db, {r["amostra_id"] for r in novos if r["amostra_id"] and r["tipo_linha"] == "SMP"})
     imp.estado = "confirmada"
     imp.opcoes = e.model_dump()
     imp.relatorio = {**rel, "gravados": gravados, "amostras_vinculadas": sorted(vinculados)}
     db.flush()
     return {"certificado_id": cert.id, "certificado": codigo_cert, "resultados": gravados, "amostras_vinculadas": len(vinculados),
-            "sem_vinculo": sorted({r.codigo_laboratorio for r in novos if r.amostra_id is None})}
+            "sem_vinculo": sorted({r["codigo_laboratorio"] for r in novos if r["amostra_id"] is None})}
 
 
 def _recalcular_preferidos(db: Session, amostra_ids: set) -> None:
     """Preferido = resultado SMP do certificado mais recente (reanálise substitui), por amostra, analito e método."""
     if not amostra_ids:
         return
-    db.execute(update(Resultado).where(Resultado.amostra_id.in_(amostra_ids)).values(preferido=False))
-    linhas = db.execute(select(Resultado.id, Resultado.amostra_id, Resultado.analito_id, Resultado.metodo_id,
-                               Certificado.emitido_em, Certificado.criado_em)
-                        .join(Certificado, Certificado.id == Resultado.certificado_id)
-                        .where(Resultado.amostra_id.in_(amostra_ids), Resultado.tipo_linha == "SMP")).all()
+    # synchronize_session=False: com dezenas de milhares de resultados na sessão, a sincronização em memória do ORM
+    # é quadrática (minutos por laudo). Os objetos são expirados no fim, e o próximo acesso relê do banco.
+    sem_sync = {"synchronize_session": False}
+    ids_am = list(amostra_ids)
+    for i in range(0, len(ids_am), 500):
+        db.execute(update(Resultado).where(Resultado.amostra_id.in_(ids_am[i:i + 500])).values(preferido=False),
+                   execution_options=sem_sync)
+    linhas = []
+    for i in range(0, len(ids_am), 500):
+        linhas += db.execute(select(Resultado.id, Resultado.amostra_id, Resultado.analito_id, Resultado.metodo_id,
+                                    Certificado.emitido_em, Certificado.criado_em)
+                             .join(Certificado, Certificado.id == Resultado.certificado_id)
+                             .where(Resultado.amostra_id.in_(ids_am[i:i + 500]), Resultado.tipo_linha == "SMP")).all()
     melhor: dict[tuple, tuple] = {}
     for rid, am, an, me, emit, criado in linhas:
         chave = (am, an, me)
@@ -191,7 +200,8 @@ def _recalcular_preferidos(db: Session, amostra_ids: set) -> None:
             melhor[chave] = (ordem, rid)
     ids = [v[1] for v in melhor.values()]
     for i in range(0, len(ids), 500):
-        db.execute(update(Resultado).where(Resultado.id.in_(ids[i:i + 500])).values(preferido=True))
+        db.execute(update(Resultado).where(Resultado.id.in_(ids[i:i + 500])).values(preferido=True), execution_options=sem_sync)
+    db.expire_all()
 
 
 @router.post("/minas/{mina_id}/resultados/vincular-pendentes")
@@ -243,8 +253,11 @@ def resultados_amostra(amostra_id: uuid.UUID, _u: Usuario = Depends(LER), db: Se
 
 def _tabela(db: Session, mina_id: uuid.UUID, analitos: list[str] | None, certificado_id: uuid.UUID | None,
             incluir_controles: bool) -> tuple[list[str], list[dict]]:
-    q = (select(Resultado, Analito.codigo, Certificado.codigo, Amostra.codigo)
-         .join(Analito).join(Certificado).outerjoin(Amostra, Amostra.id == Resultado.amostra_id)
+    # colunas em vez de objetos do ORM (uma base de 10 anos tem ~1 milhão de resultados)
+    q = (select(Resultado.tipo_linha, Resultado.codigo_laboratorio, Resultado.linha_origem, Resultado.unidade,
+                Resultado.qualificador, Resultado.valor_texto, Resultado.valor_num, Analito.codigo, Certificado.codigo, Amostra.codigo)
+         .join(Analito, Analito.id == Resultado.analito_id).join(Certificado, Certificado.id == Resultado.certificado_id)
+         .outerjoin(Amostra, Amostra.id == Resultado.amostra_id)
          .where(Certificado.mina_id == mina_id))
     if certificado_id:
         q = q.where(Resultado.certificado_id == certificado_id)
@@ -257,12 +270,13 @@ def _tabela(db: Session, mina_id: uuid.UUID, analitos: list[str] | None, certifi
     ordem_analitos = [a.codigo for a in db.scalars(select(Analito).order_by(Analito.tipo, Analito.ordem, Analito.codigo))]
     linhas: dict[tuple, dict] = {}
     presentes = set()
-    for r, an, cert, cod in db.execute(q):
-        chave = (cert, r.tipo_linha, r.codigo_laboratorio, r.linha_origem if certificado_id else 0)
-        ln = linhas.setdefault(chave, {"amostra": cod, "codigo_laboratorio": r.codigo_laboratorio, "tipo": r.tipo_linha,
-                                       "certificado": cert, "valores": {}})
-        col = f"{an} ({r.unidade})"
-        ln["valores"][col] = _fmt(r)
+    for tipo, cod_lab, linha, unid, qual, vtexto, vnum, an, cert, cod in db.execute(q):
+        chave = (cert, tipo, cod_lab, linha if certificado_id else 0)
+        ln = linhas.get(chave)
+        if ln is None:
+            ln = linhas[chave] = {"amostra": cod, "codigo_laboratorio": cod_lab, "tipo": tipo, "certificado": cert, "valores": {}}
+        col = f"{an} ({unid})"
+        ln["valores"][col] = vtexto if qual != "=" else f"{vnum:g}"
         presentes.add((an, col))
     colunas = [col for a in ordem_analitos for (an, col) in sorted(presentes) if an == a]
     return colunas, sorted(linhas.values(), key=lambda x: (x["certificado"], x["amostra"] or x["codigo_laboratorio"]))
@@ -270,10 +284,12 @@ def _tabela(db: Session, mina_id: uuid.UUID, analitos: list[str] | None, certifi
 
 @router.get("/minas/{mina_id}/resultados/tabela")
 def tabela(mina_id: uuid.UUID, analitos: str | None = None, certificado_id: uuid.UUID | None = None,
-           incluir_controles: bool = False, _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
-    """Uma linha por amostra (resultados preferidos) ou, com certificado_id, uma linha por linha do laudo."""
+           incluir_controles: bool = False, limite: int = Query(default=500, ge=1, le=5000),
+           _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
+    """Uma linha por amostra (resultados preferidos) ou, com certificado_id, uma linha por linha do laudo.
+    A tela mostra no máximo `limite` linhas (o CSV traz todas)."""
     colunas, linhas = _tabela(db, mina_id, analitos.split(",") if analitos else None, certificado_id, incluir_controles)
-    return {"colunas": colunas, "linhas": linhas}
+    return {"colunas": colunas, "linhas": linhas[:limite], "total": len(linhas)}
 
 
 @router.get("/minas/{mina_id}/resultados/tabela.csv")

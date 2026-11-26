@@ -47,7 +47,7 @@ function Resultados({ mina, certificadoId }: { mina: Mina; certificadoId?: strin
   if (sel.length) p.set("analitos", sel.join(","));
   if (certificadoId) p.set("certificado_id", certificadoId);
   if (controles) p.set("incluir_controles", "true");
-  const t = useQuery({ queryKey: ["tabela", mina.id, p.toString()], queryFn: () => api<{ colunas: string[]; linhas: { amostra: string | null; codigo_laboratorio: string; tipo: string; certificado: string; valores: Record<string, string> }[] }>(`/minas/${mina.id}/resultados/tabela?${p}`) });
+  const t = useQuery({ queryKey: ["tabela", mina.id, p.toString()], queryFn: () => api<{ colunas: string[]; total: number; linhas: { amostra: string | null; codigo_laboratorio: string; tipo: string; certificado: string; valores: Record<string, string> }[] }>(`/minas/${mina.id}/resultados/tabela?${p}`) });
   return (
     <Stack gap="sm">
       <Group align="flex-end">
@@ -61,6 +61,9 @@ function Resultados({ mina, certificadoId }: { mina: Mina; certificadoId?: strin
         {certificadoId ? "Todas as linhas deste certificado, como vieram do laudo." : "Um valor por amostra e analito: o resultado preferido (amostra do certificado mais recente)."}
         {" "}Valores abaixo/acima do limite aparecem como no laudo (ex.: &lt;0,5) — nunca são convertidos em zero.
       </Text>
+      {t.data && t.data.total > t.data.linhas.length && (
+        <Text size="sm" c="orange" data-testid="tabela-limitada">Mostrando {t.data.linhas.length.toLocaleString("pt-BR")} de {t.data.total.toLocaleString("pt-BR")} linhas. Use "Exportar CSV" para ter todas, ou a Geoquímica operacional para filtrar.</Text>
+      )}
       {t.isLoading ? <Loader size="sm" /> : !t.data?.linhas.length ? <Text size="sm" c="dimmed">Nenhum resultado.</Text> : (
         <ScrollArea h={520}>
           <Table striped stickyHeader miw={Math.max(600, 180 + t.data.colunas.length * 80)} fz="xs">

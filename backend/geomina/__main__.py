@@ -96,7 +96,21 @@ def main() -> None:
                 servidor.should_exit = True
             time.sleep(2)
 
+    def _preparar_consultas() -> None:
+        # monta em segundo plano a base da Geoquímica operacional (em minas grandes leva alguns segundos)
+        try:
+            from sqlalchemy import select
+
+            from geomina.modules.estrutura.models import Mina
+            from geomina.modules.geoop.servico import registros
+            with app.state.fabrica_sessoes() as db:
+                for mina_id in db.scalars(select(Mina.id)).all():
+                    registros(db, mina_id)
+        except Exception:  # noqa: BLE001 — só desempenho; a consulta monta a base quando for pedida
+            log.exception("Falha ao preparar a base da geoquímica")
+
     threading.Thread(target=_abrir_quando_pronto, daemon=True).start()
+    threading.Thread(target=_preparar_consultas, daemon=True).start()
     threading.Thread(target=_vigiar_presenca, daemon=True).start()
     servidor.run()
 

@@ -80,7 +80,7 @@ export function App() {
           <Route path="/auditoria" element={<Auditoria podeVerUsuarios={usuario.permissoes.includes("usuario:gerenciar")} />} />
         )}
         {usuario.permissoes.includes("sistema:backup") && <Route path="/backup" element={<Backup aoRestaurar={sair} />} />}
-        <Route path="/sistema" element={<Sistema />} />
+        <Route path="/sistema" element={<Sistema podeVerificar={usuario.permissoes.includes("sistema:backup")} />} />
         <Route path="/senha" element={<TrocarSenha aoConcluir={sair} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

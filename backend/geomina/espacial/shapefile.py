@@ -46,6 +46,8 @@ class Camada:
     encoding: str
 
 
+LIMITE_MEMBRO = 2 * 2**30  # 2 GB por arquivo dentro do zip (proteção contra zip malformado)
+
 def listar_camadas(dados_zip: bytes) -> list[str]:
     with zipfile.ZipFile(_bytes_io(dados_zip)) as z:
         return sorted(n for n in z.namelist() if n.lower().endswith(".shp") and not n.startswith("__MACOSX"))
@@ -67,6 +69,11 @@ def ler_do_zip(dados_zip: bytes, membro_shp: str) -> Camada:
                 if obrigatorio:
                     raise ShapefileInvalido(f"Falta o arquivo {PurePosixPath(base).name}{ext} no zip.")
                 return None
+            info = z.getinfo(n)
+            if info.file_size > LIMITE_MEMBRO:
+                raise ShapefileInvalido(f"{PurePosixPath(n).name} tem mais de {LIMITE_MEMBRO // 2**20} MB descompactado.")
+            if info.compress_size and info.file_size / info.compress_size > 1000:
+                raise ShapefileInvalido(f"{PurePosixPath(n).name}: taxa de compressão suspeita (arquivo malformado).")
             return z.read(n)
         return ler_bytes(PurePosixPath(base).name, ler(".shp"), ler(".dbf"), ler(".prj", False), ler(".cpg", False))
 

@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from geomina.config import VERSAO_APP
-from geomina.core.dependencias import obter_sessao
+from geomina.core.dependencias import obter_sessao, requer
 from geomina.core.erros import ErroAplicacao
 
 router = APIRouter(tags=["sistema"])
@@ -66,3 +66,11 @@ def presenca(request: Request) -> None:
 def fechando(request: Request) -> None:
     """A janela está sendo fechada ou recarregada; se nenhum sinal chegar em seguida, o aplicativo encerra."""
     request.app.state.presenca.fechando()
+
+
+@router.post("/sistema/integridade")
+def verificar_integridade(request: Request, completa: bool = True, _u=Depends(requer("sistema:backup")),
+                          db: Session = Depends(obter_sessao)) -> dict:
+    """Confere o banco, as regras de proteção, o índice espacial e os arquivos originais (somente leitura)."""
+    from geomina.modules.sistema.integridade import verificar
+    return verificar(db, request.app.state.armazenamento, conferir_conteudo=completa)

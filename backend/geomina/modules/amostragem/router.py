@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import date
 
@@ -459,6 +460,11 @@ def gerar_da_ficha(ficha_id: uuid.UUID, u: Usuario = Depends(EDITAR), db: Sessio
 
 
 # ------------------------------------------------------------------ importação de planilha
+def _chave_unidade(texto: str | None) -> str:
+    """Código de unidade para comparação: sem espaços, hífens e maiúsculas/minúsculas ("1F 5" = "1f5" = "1F-5")."""
+    return re.sub(r"[\s\-_.]", "", (texto or "").upper())
+
+
 def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
     try:
         campos, linhas = planilha.ler_tabela(caminho, nome)
@@ -469,6 +475,8 @@ def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
     dic_lito = db.scalar(select(Dicionario).where(Dicionario.codigo == "LITOLOGIA"))
     dic_dest = db.scalar(select(Dicionario).where(Dicionario.codigo == "DESTINO_AMOSTRA"))
     existentes = {c.upper() for c in db.scalars(select(Amostra.codigo).where(Amostra.mina_id == mina_id))}
+    unidades_mina = {_chave_unidade(cod): (uid, cod) for uid, cod in db.execute(
+        select(UnidadeOperacional.id, UnidadeOperacional.codigo).where(UnidadeOperacional.mina_id == mina_id))}
     vistos: set[str] = set()
     resultado, nao_reconhecidas = [], {}
     ponto = None
@@ -513,6 +521,10 @@ def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
         if lito_txt and lito is None:
             nao_reconhecidas[str(lito_txt).strip()] = nao_reconhecidas.get(str(lito_txt).strip(), 0) + 1
         destino = _reconhecer(db, dic_dest, str(v["destino"])) if v.get("destino") else None
+        un_txt = str(v["unidade"]).strip() if v.get("unidade") not in (None, "") else None
+        un = unidades_mina.get(_chave_unidade(un_txt)) if un_txt else None
+        if un_txt and un is None:
+            msgs.append(f"Unidade '{un_txt}' não cadastrada: fica como texto do local (ligue depois em \"Ligar às galerias\").")
         resultado.append({
             "linha": ln.numero, "original": str(bruto), "codigo": codigo, "sugestao": c.sugestao, "status": status,
             "mensagens": msgs, "ponto": str(ponto) if ponto is not None else None, "local": v.get("local"),
@@ -522,6 +534,7 @@ def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
             "descricao": v.get("descricao") or v.get("designacao"), "data": data.isoformat() if data else None,
             "x": x, "y": y, "z": z if x is not None else None, "destino_id": str(destino.id) if destino else None,
             "furo": v.get("furo"), "observacoes": v.get("observacoes"),
+            "unidade_texto": un_txt, "unidade_id": str(un[0]) if un else None, "unidade": un[1] if un else None,
         })
     resumo = {s: sum(1 for r in resultado if r["status"] == s) for s in ("ok", "sugestao", "erro", "repetido", "existente")}
     return {"campos": campos, "total": len(resultado), "resumo": resumo, "linhas": resultado,
@@ -579,7 +592,9 @@ def confirmar(imp_id: uuid.UUID, e: Confirmacao, u: Usuario = Depends(IMPORTAR),
         if r["status"] == "sugestao":
             obs.append(f"Código original na planilha: {r['original']}")
         a = Amostra(mina_id=imp.mina_id, codigo=codigo, serie=serie_de(codigo), campanha_id=e.campanha_id,
-                    data_coleta=date.fromisoformat(r["data"]) if r["data"] else None, local_descricao=r["local"],
+                    data_coleta=date.fromisoformat(r["data"]) if r["data"] else None,
+                    local_descricao=r["local"] or (r.get("unidade_texto") if not r.get("unidade_id") else None),
+                    unidade_id=uuid.UUID(r["unidade_id"]) if r.get("unidade_id") else None,
                     ponto_campo=r["ponto"], secao_de_m=r["de"], secao_ate_m=r["ate"],
                     litologia_id=uuid.UUID(str(lito)) if lito else None,
                     destino_id=uuid.UUID(r["destino_id"]) if r["destino_id"] else None, descricao=r["descricao"],

@@ -7,11 +7,12 @@ resultado do laudo — amostras cadastradas e também códigos que só existem n
 from __future__ import annotations
 
 import re
+import threading
 import uuid
 from collections import defaultdict
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import text, select
 from sqlalchemy.orm import Session, aliased
 
 from geomina.modules.amostragem.models import Amostra, Campanha, TipoAmostra
@@ -55,7 +56,41 @@ def _unidades(db: Session, mina_id: uuid.UUID) -> dict[uuid.UUID, dict]:
     return out
 
 
+# Cache dos registros: montar a base leva ~2 s numa mina com 1 milhão de resultados, e a tela consulta a cada filtro.
+# A assinatura muda a cada alteração cadastral (todo cadastro gera linha no histórico), a cada laudo importado e a cada
+# conciliação (resultado ligado a amostra). A restauração de backup limpa o cache (limpar_cache).
+_cache: dict[uuid.UUID, tuple[tuple, list[dict], dict]] = {}
+_facetas_cache: dict[tuple, dict] = {}  # chave do registro → valores de cada faceta (da última base montada)
+_trava_cache = threading.Lock()
+
+
+def limpar_cache() -> None:
+    with _trava_cache:
+        _cache.clear()
+        _facetas_cache.clear()
+
+
+def _assinatura(db: Session) -> tuple:
+    return tuple(db.execute(text(
+        "SELECT (SELECT max(id) FROM auditoria), (SELECT count(*) FROM resultado), (SELECT count(amostra_id) FROM resultado), "
+        "(SELECT count(*) FROM amostra)")).one())
+
+
 def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
+    """Um registro por amostra analítica (cópias: quem chama pode acrescentar campos)."""
+    sig = _assinatura(db)
+    with _trava_cache:
+        em_cache = _cache.get(mina_id)
+    if em_cache is None or em_cache[0] != sig:
+        regs = _montar_registros(db, mina_id)
+        em_cache = (sig, regs, {r["chave"]: {f: _valores_faceta(r, f) for f in FACETAS} for r in regs})
+        with _trava_cache:
+            _cache[mina_id] = em_cache
+            _facetas_cache.update({(mina_id, k): v for k, v in em_cache[2].items()})
+    return [dict(r) for r in em_cache[1]]
+
+
+def _montar_registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
     """Um registro por amostra analítica: cadastrada (com ou sem resultado) ou código que só aparece no laudo."""
     uni = _unidades(db, mina_id)
     Lit, Alt, Mi = aliased(Termo), aliased(Termo), aliased(Termo)
@@ -65,21 +100,25 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
          .outerjoin(TipoAmostra, TipoAmostra.id == Amostra.tipo_id).outerjoin(Usuario, Usuario.id == Amostra.geologo_id)
          .outerjoin(Mapeamento, Mapeamento.id == Amostra.mapeamento_id).outerjoin(Furo, Furo.id == Amostra.furo_id)
          .where(Amostra.mina_id == mina_id))
-    # resumo dos resultados SMP por amostra ligada e por código não ligado
-    rq = (select(Resultado.amostra_id, Resultado.codigo_canonico, Resultado.codigo_laboratorio, Laboratorio.id, Laboratorio.nome,
-                 Certificado.id, Certificado.codigo, Analito.codigo)
-          .join(Certificado, Certificado.id == Resultado.certificado_id).join(Laboratorio, Laboratorio.id == Certificado.laboratorio_id)
-          .join(Analito, Analito.id == Resultado.analito_id)
-          .where(Certificado.mina_id == mina_id, Resultado.tipo_linha == "SMP"))
-    res: dict = defaultdict(lambda: {"n": 0, "lab": {}, "cert": {}, "analitos": set(), "codigo_lab": None})
-    for aid, canon, cod_lab, lid, lnome, cid, ccod, an in db.execute(rq):
-        chave = aid or ("laudo:" + (canon or cod_lab).upper())
-        r = res[chave]
-        r["n"] += 1
-        r["lab"][str(lid)] = lnome
-        r["cert"][str(cid)] = ccod
-        r["analitos"].add(an)
-        r["codigo_lab"] = r["codigo_lab"] or (canon or cod_lab)
+    # resumo dos resultados SMP por amostra ligada e por código não ligado — agregado no próprio SQLite
+    # (percorrer em Python ~1 milhão de resultados levava ~10 s numa base de 10 anos)
+    res: dict = {}
+    chave_sql = ("CASE WHEN r.amostra_id IS NOT NULL THEN r.amostra_id "
+                 "ELSE 'laudo:' || upper(coalesce(r.codigo_canonico, r.codigo_laboratorio)) END")
+    filtro = "c.mina_id = :mina AND r.tipo_linha = 'SMP'"
+    mina_hex = mina_id.hex
+    for k, n, analitos, cod in db.execute(text(
+            f"SELECT {chave_sql} AS k, count(*), group_concat(DISTINCT a.codigo), min(coalesce(r.codigo_canonico, r.codigo_laboratorio)) "
+            f"FROM resultado r JOIN certificado c ON c.id = r.certificado_id JOIN analito a ON a.id = r.analito_id "
+            f"WHERE {filtro} GROUP BY k"), {"mina": mina_hex}):
+        chave = uuid.UUID(k) if not k.startswith("laudo:") else k
+        res[chave] = {"n": n, "lab": {}, "cert": {}, "analitos": set(analitos.split(",")) if analitos else set(), "codigo_lab": cod}
+    for k, lid, lnome, cid, ccod in db.execute(text(
+            f"SELECT {chave_sql} AS k, l.id, l.nome, c.id, c.codigo FROM resultado r JOIN certificado c ON c.id = r.certificado_id "
+            f"JOIN laboratorio l ON l.id = c.laboratorio_id WHERE {filtro} GROUP BY k, c.id"), {"mina": mina_hex}):
+        r = res[uuid.UUID(k) if not k.startswith("laudo:") else k]
+        r["lab"][str(uuid.UUID(lid))] = lnome
+        r["cert"][str(uuid.UUID(cid))] = ccod
     termo = lambda t: {"id": str(t.id), "nome": t.nome, "cor": t.cor} if t else None  # noqa: E731
     out = []
     for a, lit, alt, mi, camp, tid, tnome, geo, ficha, furo_cod in db.execute(q):
@@ -116,6 +155,11 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
     return out
 
 
+def _ordem_natural(texto: str) -> list:
+    """Ordem "natural": N2 antes de N10, G1-3 antes de G1-12 (números comparados como números)."""
+    return [(0, int(t), "") if t.isdigit() else (1, 0, t.lower()) for t in re.split(r"(\d+)", texto or "") if t]
+
+
 def _valores_faceta(r: dict, f: str) -> list[tuple[str, str]]:
     if f in ("nivel", "galeria", "trecho"):
         u = r[f]
@@ -146,28 +190,29 @@ def valores(db: Session, mina_id: uuid.UUID, regs: list[dict], analitos: list[st
     """Resultado de cada analito por registro: o preferido (amostra cadastrada) ou o do certificado mais recente (só no laudo)."""
     if not analitos or not regs:
         return {}
-    q = (select(Resultado, Analito.codigo, Certificado.codigo, Certificado.emitido_em, Certificado.criado_em)
-         .join(Analito).join(Certificado)
-         .where(Certificado.mina_id == mina_id, Resultado.tipo_linha == "SMP", Analito.codigo.in_(analitos)))
+    # colunas (não objetos do ORM) e só o preferido das amostras cadastradas: ~10× mais rápido em bases grandes
+    q = (select(Resultado.amostra_id, Resultado.codigo_canonico, Resultado.codigo_laboratorio, Resultado.qualificador,
+                Resultado.valor_num, Resultado.limite, Resultado.valor_texto, Resultado.unidade,
+                Analito.codigo, Certificado.codigo, Certificado.emitido_em, Certificado.criado_em)
+         .join(Analito, Analito.id == Resultado.analito_id).join(Certificado, Certificado.id == Resultado.certificado_id)
+         .where(Certificado.mina_id == mina_id, Resultado.tipo_linha == "SMP", Analito.codigo.in_(analitos),
+                (Resultado.amostra_id.is_(None)) | (Resultado.preferido.is_(True))))
     out: dict[str, dict] = defaultdict(dict)
     ordem: dict = {}
     chaves = {r["chave"] for r in regs}
-    for r, an, cert, emit, criado in db.execute(q):
-        if r.amostra_id is not None:
-            if not r.preferido:
-                continue
-            k = str(r.amostra_id)
+    for aid, canon, cod_lab, qual, num, lim, vtexto, unid, an, cert, emit, criado in db.execute(q):
+        if aid is not None:
+            k = str(aid)
         else:
-            k = "laudo:" + (r.codigo_canonico or r.codigo_laboratorio).upper()
+            k = "laudo:" + (canon or cod_lab).upper()
             o = (emit or criado, criado)
             if (k, an) in ordem and ordem[(k, an)] >= o:
                 continue
             ordem[(k, an)] = o
         if k not in chaves:
             continue
-        y, sit = valor_grafico(r.qualificador, r.valor_num, r.limite, regra_ld)
-        out[k][an] = {"y": y, "texto": r.valor_texto if r.qualificador != "=" else f"{r.valor_num:g}", "situacao": sit,
-                      "unidade": r.unidade, "certificado": cert}
+        y, sit = valor_grafico(qual, num, lim, regra_ld)
+        out[k][an] = {"y": y, "texto": vtexto if qual != "=" else f"{num:g}", "situacao": sit, "unidade": unid, "certificado": cert}
     return out
 
 
@@ -190,28 +235,23 @@ def filtrar(db: Session, mina_id: uuid.UUID, regs: list[dict], filtros: dict[str
             v = vals.get(r["chave"], {}).get(teor[0])
             return bool(v and v["y"] is not None and (teor[1] is None or v["y"] >= teor[1]) and (teor[2] is None or v["y"] <= teor[2]))
         base = [r for r in base if no_teor(r)]
-    valores_r = {id(r): {f: _valores_faceta(r, f) for f in FACETAS} for r in base}
-
-    def passa(r: dict, exceto: str | None = None) -> bool:
-        for f, sel in filtros.items():
-            if f == exceto or not sel:
-                continue
-            if not any(v in sel for v, _ in valores_r[id(r)][f]):
-                return False
-        return True
-
+    valores_r = [_facetas_cache.get((mina_id, r["chave"])) or {f: _valores_faceta(r, f) for f in FACETAS} for r in base]
+    ativos = {f: sel for f, sel in filtros.items() if sel}
+    # facetas em que cada registro NÃO passa; a contagem de uma faceta usa os OUTROS filtros, então o registro conta
+    # na faceta f quando não falha em nenhuma, ou só falha na própria f
+    falhas = [[f for f, sel in ativos.items() if not any(v in sel for v, _ in vr[f])] for vr in valores_r]
     opcoes = {}
     for f in FACETAS:
         cont: dict[str, list] = {}
-        for r in base:
-            if passa(r, f):
-                for v, rot in valores_r[id(r)][f]:
+        for vr, fl in zip(valores_r, falhas, strict=True):
+            if not fl or (len(fl) == 1 and fl[0] == f):
+                for v, rot in vr[f]:
                     cont.setdefault(v, [rot, 0])[1] += 1
         selecionados = filtros.get(f, set())
-        opcoes[f] = sorted(({"valor": v, "rotulo": rot, "n": n} for v, (rot, n) in cont.items()), key=lambda o: (o["valor"] == "_nenhum", o["rotulo"]))
+        opcoes[f] = sorted(({"valor": v, "rotulo": rot, "n": n} for v, (rot, n) in cont.items()), key=lambda o: (o["valor"] == "_nenhum", _ordem_natural(o["rotulo"])))
         for v in selecionados - set(cont):  # selecionado que ficou sem registros continua visível (n = 0)
             opcoes[f].append({"valor": v, "rotulo": v, "n": 0})
-    return [r for r in base if passa(r)], opcoes
+    return [r for r, fl in zip(base, falhas, strict=True) if not fl], opcoes
 
 
 # ------------------------------------------------------------------ conciliação laudo × cadastro

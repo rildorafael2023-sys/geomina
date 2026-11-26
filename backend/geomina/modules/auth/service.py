@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import timedelta
+import threading
+from datetime import datetime, timedelta
 
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
@@ -50,13 +51,44 @@ def criar_usuario(db: Session, *, login: str, nome: str, email: str | None, senh
     return u
 
 
+# Proteção contra tentativa de senhas: depois de MAX_FALHAS erros seguidos no mesmo login, novas tentativas ficam
+# bloqueadas por BLOQUEIO. Fica só na memória (reiniciar o aplicativo libera) — suficiente para um servidor local.
+MAX_FALHAS = 5
+BLOQUEIO = timedelta(minutes=5)
+_falhas: dict[str, tuple[int, datetime]] = {}
+_trava_falhas = threading.Lock()
+
+
+def _verificar_bloqueio(chave: str) -> None:
+    with _trava_falhas:
+        n, ultima = _falhas.get(chave, (0, agora()))
+        if n >= MAX_FALHAS and agora() - ultima < BLOQUEIO:
+            minutos = max(1, int((BLOQUEIO - (agora() - ultima)).total_seconds() // 60) + 1)
+            raise ErroAplicacao(429, "login_bloqueado",
+                                f"Muitas tentativas com senha errada. Aguarde {minutos} minuto(s) e tente de novo.")
+        if n >= MAX_FALHAS:
+            _falhas.pop(chave, None)
+
+
+def _registrar_falha(chave: str) -> None:
+    with _trava_falhas:
+        n, _ = _falhas.get(chave, (0, agora()))
+        _falhas[chave] = (n + 1, agora())
+
+
 def autenticar(db: Session, login: str, senha: str, horas: int) -> tuple[str, Sessao, Usuario]:
+    chave = login.strip().lower()
+    _verificar_bloqueio(chave)
     u = db.scalar(select(Usuario).where(Usuario.login == login))
     if u is None:
         verificar_senha(senha, _HASH_FALSO)
+        _registrar_falha(chave)
         raise ErroAplicacao(401, "credenciais_invalidas", "Login ou senha incorretos.")
     if not verificar_senha(senha, u.senha_hash) or not u.ativo:
+        _registrar_falha(chave)
         raise ErroAplicacao(401, "credenciais_invalidas", "Login ou senha incorretos.")
+    with _trava_falhas:
+        _falhas.pop(chave, None)
     token = gerar_token()
     s = Sessao(usuario_id=u.id, token_hash=hash_token(token), expira_em=agora() + timedelta(hours=horas))
     db.add(s)

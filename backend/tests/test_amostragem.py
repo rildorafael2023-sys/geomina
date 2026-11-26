@@ -188,3 +188,18 @@ def test_permissoes(cliente, token_admin, mina):
     assert cliente.post(f"{API}/minas/{mina['id']}/amostras", headers=cab(t), json={"codigo": "BS-RP-1"}).status_code == 201
     assert cliente.post(f"{API}/minas/{mina['id']}/amostras/importacoes", headers=cab(t),
                         files={"arquivo": ("p.csv", b"codigo\nBS-RP-2\n")}).status_code == 403
+
+
+def test_planilha_com_coluna_de_galeria_liga_a_unidade(cliente, h, mina):
+    """E18: a coluna "galeria/unidade" da planilha liga a amostra à unidade cadastrada (antes era descartada)."""
+    n = cliente.post(f"{API}/unidades", headers=h, json={"mina_id": mina["id"], "tipo": "NIVEL", "codigo": "N9", "nome": "N9"}).json()
+    g = cliente.post(f"{API}/unidades", headers=h, json={"mina_id": mina["id"], "tipo": "GALERIA", "codigo": "1F-5", "nome": "g", "pai_id": n["id"]}).json()
+    csv = "codigo;galeria;local\nBS-RP-700;1f 5;\nBS-RP-701;GAL-NAO-EXISTE;\nBS-RP-702;1F5;parede esquerda\n"
+    p = cliente.post(f"{API}/minas/{mina['id']}/amostras/importacoes", headers=h, files={"arquivo": ("a.csv", csv.encode())}).json()
+    linhas = {x["codigo"]: x for x in p["linhas"]}
+    assert linhas["BS-RP-700"]["unidade"] == "1F-5" and linhas["BS-RP-702"]["unidade_id"] == g["id"]
+    assert linhas["BS-RP-701"]["unidade_id"] is None and any("não cadastrada" in m for m in linhas["BS-RP-701"]["mensagens"])
+    assert cliente.post(f"{API}/importacoes/{p['id']}/confirmar-amostras", headers=h, json={}).json()["gravadas"] == 3
+    am = {a["codigo"]: a for a in cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()}
+    assert am["BS-RP-700"]["unidade_id"] == g["id"] and am["BS-RP-702"]["local_descricao"] == "parede esquerda"
+    assert am["BS-RP-701"]["unidade_id"] is None and am["BS-RP-701"]["local_descricao"] == "GAL-NAO-EXISTE"

@@ -37,6 +37,9 @@ from geomina.modules.topografia.router import router as topografia_router
 PASTA_INTERFACE = Path(__file__).parent / "static"
 
 
+
+HOSTS_PERMITIDOS = {"127.0.0.1", "localhost", "::1", "testserver"}
+
 def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> FastAPI:
     cfg = cfg or Config()
     cfg.preparar_pastas()
@@ -57,6 +60,24 @@ def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> Fast
     app.state.restaurando = False
     registrar_listeners(app.state.fabrica_sessoes)
     registrar_tratadores(app)
+
+    @app.middleware("http")
+    async def _seguranca(request: Request, chamar):
+        # Só atende pelo nome da própria máquina: impede que uma página da internet use "DNS rebinding" para
+        # falar com o GeoMina pelo navegador do usuário (o servidor escuta só em 127.0.0.1).
+        host = (request.headers.get("host") or "").rsplit(":", 1)[0].strip("[]").lower()
+        if host not in HOSTS_PERMITIDOS:
+            return JSONResponse(status_code=421, content={"codigo": "host_invalido", "detalhes": None,
+                                                          "mensagem": "Acesse o GeoMina pelo endereço 127.0.0.1 ou localhost."})
+        resposta = await chamar(request)
+        resposta.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resposta.headers.setdefault("X-Frame-Options", "DENY")
+        resposta.headers.setdefault("Referrer-Policy", "no-referrer")
+        if request.url.path.startswith("/api/"):
+            # arquivos enviados pelos usuários nunca executam script na origem do aplicativo
+            resposta.headers.setdefault("Content-Security-Policy", "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox")
+            resposta.headers.setdefault("Cache-Control", "no-store")
+        return resposta
 
     @app.middleware("http")
     async def _bloquear_durante_restauracao(request: Request, chamar):

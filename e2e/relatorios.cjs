@@ -105,7 +105,15 @@ const BASE = URL.replace(/\/$/, "");
   assert.match(h.dados.toString("utf-8"), /^﻿Quando;Usuário;Operação;Tabela/);
   await shot("e17-02-historico");
 
-  // 4. Celular: sem rolagem lateral
+  // 4. Sistema: verificação de integridade (E18)
+  await page.getByRole("link", { name: "Sistema" }).click();
+  const integ = page.getByTestId("integridade");
+  await integ.getByRole("button", { name: "Verificar agora" }).click();
+  await integ.getByTestId("integridade-resultado").filter({ hasText: "Tudo certo." }).waitFor();
+  assert.match(await integ.innerText(), /Arquivos originais[\s\S]*1 arquivo\(s\), conteúdo conferido pelo hash/);
+  await page.getByRole("link", { name: "Relatórios" }).click();
+
+  // 5. Celular: sem rolagem lateral
   await page.setViewportSize({ width: 390, height: 800 });
   await page.getByRole("tab", { name: "Produção por período" }).click();
   await page.getByTestId("rel-producao").waitFor();
@@ -113,6 +121,6 @@ const BASE = URL.replace(/\/$/, "");
   assert.ok(larg <= 390, `sem rolagem lateral no celular (${larg})`);
 
   assert.deepStrictEqual(erros, []);
-  console.log("E2E RELATÓRIOS (E17) OK: 4 cenários aprovados");
+  console.log("E2E RELATÓRIOS (E17) OK: 5 cenários aprovados");
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -208,3 +208,11 @@ Three.js 0.186.1 carregado sob demanda (chunk próprio). Coordenadas da cena = c
 ## DT-041 — GeoPackage escrito sem GDAL; Excel com metadados; relatório pela impressão do navegador
 **Estado:** Aceita (Geoquímica Operacional, Etapa 9)
 GDAL complicaria o pacote offline no Windows; o GeoPackage é SQLite com tabelas e cabeçalho de geometria definidos pela especificação OGC (application_id 'GPKG', user_version 10300, gpkg_spatial_ref_sys/contents/geometry_columns, blob 'GP' + srs_id + WKB ISO). A conformidade foi verificada lendo o arquivo com GDAL fora do aplicativo. O Excel separa o valor do laudo (texto, ex. "<10") do valor numérico usado nos gráficos, e leva os metadados da exportação. O PDF continua pela impressão do navegador (DT-028).
+
+## DT-042 — Servidor local atende só pelo nome da própria máquina; bloqueio de senhas em memória
+**Estado:** Aceita (E18)
+Ouvir só em 127.0.0.1 não basta: uma página da internet pode resolver um nome próprio para 127.0.0.1 ("DNS rebinding") e falar com o GeoMina pelo navegador. O servidor recusa (421) qualquer pedido cujo `Host` não seja `127.0.0.1`, `localhost` ou `::1`. Depois de 5 senhas erradas seguidas, o login fica bloqueado 5 minutos; o contador fica na memória (servidor de uma só máquina, reiniciar libera).
+
+## DT-043 — Base da Geoquímica operacional agregada no SQLite e guardada em memória
+**Estado:** Aceita (E18)
+Com ~1 milhão de resultados, montar a base por amostra em Python levava ~10 s por pedido. O resumo é agregado pelo SQLite (`GROUP BY`) e guardado em memória junto com uma assinatura barata (último registro do histórico, total de resultados, total de resultados ligados, total de amostras); qualquer cadastro, laudo, conciliação ou restauração muda a assinatura e a base é refeita. Ao abrir o aplicativo a base é preparada em segundo plano. Atualizações em massa de resultados vão direto ao banco (`synchronize_session=False`) e os resultados de laudo são gravados em lote.
