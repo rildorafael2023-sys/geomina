@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.5.0 · **Etapa atual:** E5 concluída, aguardando validação
+**Última atualização:** 2026-11-26 · **Versão:** 0.6.0 · **Etapa atual:** E6+E7 concluídas; seguindo para a E8 (pedido do usuário: executar as etapas em sequência)
 
 ## Etapas
 
@@ -11,8 +11,20 @@
 | E3 Estrutura operacional da mina + janela própria | ✅ Usuário autorizou prosseguir (validação no Windows da janela própria ainda pendente) |
 | E4 Painel, histórico de alterações, backup e restauração | ✅ Usuário autorizou prosseguir |
 | E5 Mapeamento geológico (ficha digital) | 🟡 **Concluída e testada, aguardando validação do usuário** (feita com a proposta da ficha como estava, a pedido do usuário: "comece") |
-| E6 Croquis e documentos | ⚪ Próxima |
+| E6+E7 Croquis, documentos e fotografias | ✅ Concluídas e testadas (v0.6.0) |
+| E8 Amostragem | 🔵 Em andamento |
 | E5 – E21 | ⚪ Pendentes |
+
+## Entregue nas E6+E7 (versão 0.6.0)
+| Funcionalidade | Teste |
+|---|---|
+| Documentos com **versões** (originais imutáveis, garantido por trigger), vínculos com unidade da mina ou ficha, arquivamento | API + banco |
+| Croquis: PDF, JPG, PNG, TIFF; visualização no navegador (TIFF por prévia PNG gerada no computador) | API + E2E |
+| Tipo conferido pelo conteúdo **e** pela extensão (extensão falsa recusada) | API |
+| **Separar PDF em páginas** (ex.: fichas escaneadas em lote): um croqui por página, mesmos vínculos, original mantido | API + E2E com o **PDF real de 23 páginas** |
+| Fotos: envio em lote, **EXIF** (data, câmera, GPS), data da foto pela EXIF, miniaturas, legenda e identificação, **Tirar foto** (câmera do tablet/celular) | API + E2E |
+| Galeria e lista com busca e filtros (categoria, local com sub-árvore, ficha, período, autor, texto) | API + E2E |
+| Anexos na ficha (seção E) e aba "Fotos e croquis" em cada unidade; anexo de ficha não rascunho não pode ser retirado (trigger) | API + banco + E2E |
 
 ## Entregue na E5 (versão 0.5.0)
 | Funcionalidade | Teste |
@@ -104,7 +116,7 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - **Janela própria e atalho não testados no Windows** (testados em Linux com Chromium). Se a janela não abrir, use `GeoMina.bat` (modo diagnóstico) e envie a mensagem.
 - O instalador exige Python 3.12/3.13 (instalador .exe único previsto para a E19).
 - Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
-- Ficha: croquis e fotos ainda não podem ser anexados (E6). A amostra citada na ficha é ligada pelo código; o cadastro completo de amostras é da E8.
+- Visualização de PDF depende do leitor de PDF do Edge (o navegador de teste automatizado não exibe PDF; conferido só o carregamento). A amostra citada na ficha é ligada pelo código; o cadastro completo de amostras é da E8.
 - Medidas estruturais ficam como medidas (norte magnético + declinação registrada); a conversão para o norte da quadrícula será oferecida quando houver uso espacial (E13).
 - Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
 - Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").

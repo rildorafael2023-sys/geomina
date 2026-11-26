@@ -10,6 +10,7 @@ import { Estrutura } from "./paginas/estrutura/Estrutura";
 import { Auditoria } from "./paginas/Auditoria";
 import { Backup } from "./paginas/Backup";
 import { Dicionarios } from "./paginas/Dicionarios";
+import { Documentos } from "./paginas/documentos/Documentos";
 import { Inicio } from "./paginas/Inicio";
 import { Mapeamento } from "./paginas/mapeamento/Mapeamento";
 import { Instalacao } from "./paginas/Instalacao";
@@ -61,6 +62,7 @@ export function App() {
         {usuario.permissoes.includes("estrutura:ler") && <Route path="/estrutura" element={<Estrutura eu={usuario} />} />}
         {usuario.permissoes.includes("estrutura:configurar") && <Route path="/configuracao/estrutura" element={<ConfiguracaoEstrutura />} />}
         {usuario.permissoes.includes("mapeamento:ler") && <Route path="/mapeamento/*" element={<Mapeamento eu={usuario} />} />}
+        {usuario.permissoes.includes("arquivo:ler") && <Route path="/documentos" element={<Documentos eu={usuario} />} />}
         <Route path="/dicionarios" element={<Dicionarios podeEditar={usuario.permissoes.includes("dicionario:configurar")} />} />
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}
         {usuario.permissoes.includes("auditoria:ler") && (

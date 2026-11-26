@@ -37,6 +37,7 @@ import {
   type UnidadeDetalhe,
   type UnidadeResumo,
 } from "../../api/cliente";
+import { PainelDocumentos } from "../documentos/PainelDocumentos";
 import { ListaFichas } from "../mapeamento/Mapeamento";
 import { Avancos } from "./Avancos";
 import { FormUnidade } from "./FormUnidade";
@@ -156,6 +157,7 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
             <Tabs.Tab value="dados">Dados</Tabs.Tab>
             {tipo?.e_frente && <Tabs.Tab value="avancos">Avanços</Tabs.Tab>}
             {eu.permissoes.includes("mapeamento:ler") && <Tabs.Tab value="mapeamentos">Mapeamentos</Tabs.Tab>}
+            {eu.permissoes.includes("arquivo:ler") && <Tabs.Tab value="documentos">Fotos e croquis</Tabs.Tab>}
             <Tabs.Tab value="historico">Histórico</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="dados" pt="sm">
@@ -202,6 +204,11 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
                 )}
                 <ListaFichas mina={mina} unidadeId={d.id} compacta />
               </Stack>
+            </Tabs.Panel>
+          )}
+          {eu.permissoes.includes("arquivo:ler") && (
+            <Tabs.Panel value="documentos" pt="sm">
+              <PainelDocumentos minaId={mina.id} unidadeId={d.id} podeEnviar={eu.permissoes.includes("arquivo:enviar") && d.ativo} compacto />
             </Tabs.Panel>
           )}
           <Tabs.Panel value="historico" pt="sm">

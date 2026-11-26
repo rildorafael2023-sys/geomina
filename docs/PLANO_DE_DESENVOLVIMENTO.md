@@ -76,11 +76,11 @@
 **Escopo:** **ficha digital nova (`FICHA_MAPEAMENTO.md`, sem RQD)**; dicionários configuráveis com sinônimos (grafias da planilha de campo); estereograma automático; ficha em PDF e ficha em branco para impressão; mapeamento com observações e medidas estruturais; conversões de orientação; validações; fluxo rascunho→submetido→aprovado; revisões; consulta cronológica por unidade.
 **Aceitação:** conversão rumo(RHR)/mergulho → dip-direction/dip testada com casos de referência; valores fora de faixa rejeitados; aprovação bloqueia edição direta e gera revisão; histórico reconstrói versões anteriores; termo inativo não aparece para novos registros mas permanece nos antigos.
 
-## E6 — Serviço de arquivos, croquis e documentos
+## E6 — Serviço de arquivos, croquis e documentos ✅ (junto com a E7, v0.6.0)
 **Escopo:** documentos versionados, vínculos com integridade, visualização PDF/imagens, pré-visualização de TIFF gerada no servidor, consulta por localização/data/geólogo.
 **Aceitação:** envio de PDF, JPG, PNG, TIFF (multipágina) testado; nova versão preserva a anterior; hash verificado na leitura; vínculo a unidade/mapeamento testado; arquivo com extensão falsa rejeitado.
 
-## E7 — Fotografias
+## E7 — Fotografias ✅ (v0.6.0)
 **Escopo:** envio em lote, EXIF, miniaturas, captura por câmera do navegador, galeria com filtros, vínculos a amostra/medida/mapeamento.
 **Aceitação:** lote de N fotos com EXIF extraído e miniaturas geradas; filtros retornam o conjunto correto; captura testada em navegador móvel (registro manual).
 

@@ -374,3 +374,66 @@ export const ESTADOS_FICHA: Record<EstadoFicha, { rotulo: string; cor: string }>
   aprovado: { rotulo: "Aprovada", cor: "teal" },
   cancelado: { rotulo: "Cancelada", cor: "red" },
 };
+
+// ---- Documentos, croquis e fotos (Etapas 6 e 7) ----
+export interface DocVersao {
+  numero: number;
+  nome_original: string;
+  paginas: number | null;
+  largura_px: number | null;
+  altura_px: number | null;
+  motivo: string | null;
+  criado_em: string;
+  mime: string;
+  tamanho: number;
+  sha256: string;
+}
+export interface DocVinculo {
+  id: string;
+  tipo: "unidade" | "mapeamento";
+  alvo_id: string;
+  rotulo: string;
+  removivel: boolean;
+}
+export interface Documento {
+  id: string;
+  mina_id: string;
+  categoria: string;
+  titulo: string;
+  descricao: string | null;
+  data_documento: string | null;
+  autor: string;
+  legenda: string | null;
+  identificador: string | null;
+  exif: Record<string, string | number> | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  origem_id: string | null;
+  origem_pagina: number | null;
+  arquivado: boolean;
+  paginas_separadas: boolean;
+  versao: number;
+  criado_em: string;
+  versoes: DocVersao[];
+  vinculos: DocVinculo[];
+}
+export const CATEGORIAS_DOC: Record<string, string> = {
+  croqui: "Croqui", foto: "Foto", relatorio: "Relatório", planilha: "Planilha", gis: "Arquivo GIS",
+  topografia: "Topografia", campo: "Documento de campo", outro: "Outro",
+};
+
+/** Envia arquivos (multipart) com o token da sessão. */
+export async function enviarArquivos<T>(caminho: string, campos: Record<string, string | null | undefined>, arquivos: File[], nomeCampo = "arquivos"): Promise<T> {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(campos)) if (v !== null && v !== undefined && v !== "") fd.append(k, v);
+  for (const a of arquivos) fd.append(nomeCampo, a);
+  return api<T>(caminho, { method: "POST", body: fd });
+}
+
+/** URL local (blob) de um arquivo protegido por login, para <img> e visualizador de PDF. */
+export async function urlArquivo(caminho: string): Promise<string> {
+  const r = await fetch(`/api/v1${caminho}`, { headers: { Authorization: `Bearer ${tokenMemoria ?? ""}` } });
+  if (!r.ok) throw new ErroApi(r.status, "arquivo", "Falha ao carregar o arquivo.");
+  return URL.createObjectURL(await r.blob());
+}

@@ -48,6 +48,7 @@ def registrar_tratadores(app: FastAPI) -> None:
 # Prefixos das mensagens RAISE(ABORT, ...) dos triggers (migrações): são regras de negócio
 # garantidas pelo banco e podem ser mostradas ao usuário como estão.
 PREFIXOS_REGRAS = ("hierarquia:", "multinível:", "avanço:", "tipo de unidade:", "regra de hierarquia:", "mapeamento:",
+                   "documento:",
                    "auditoria:")
 
 

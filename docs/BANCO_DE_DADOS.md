@@ -84,7 +84,8 @@
 | `observacao_geologica` | id, mapeamento_id, categoria (`litologia`/`contato`/`alteracao`/`mineralizacao`/`mineralogia`/`outra`), termo_id, intensidade_termo_id, posicao_de, posicao_ate, posicao_referencia (`chainage`/`face_esquerda`/`face_direita`/`teto`/`frente`), percentual, descricao, atributos JSONB | termo deve pertencer ao dicionário da categoria |
 | `medida_estrutural` | id, mapeamento_id, tipo_termo_id, classe (`planar`/`linear`), dip_dir, dip, trend, plunge, valor_digitado JSONB, convencao_entrada, norte_referencia (`magnetico`/`quadricula`/`verdadeiro`), declinacao_aplicada, plano_hospedeiro_id, geom PointZ, descricao | CHECK dip ∈ [0,90], dip_dir/trend ∈ [0,360), plunge ∈ [0,90]; planar exige dip_dir+dip; linear exige trend+plunge |
 
-## 6. Arquivos, croquis, fotos, documentos (Etapas 6–7)
+## 6. Arquivos, croquis, fotos, documentos (Etapas 6–7) **[IMPLEMENTADO — migração 0005]**
+> Implementação: `documento` (inclui campos de foto: legenda, identificador, exif, x/y/z; `origem_id`/`origem_pagina` para páginas separadas de PDF; `arquivado`), `documento_versao` (imutável por trigger; páginas, largura/altura), `documento_vinculo` (unidade **ou** ficha; amostra entra na E8). `foto` não virou tabela separada: é a categoria `foto`. Derivados (miniaturas, prévias) ficam em `arquivos/derivados`, fora do banco.
 
 | Tabela | Colunas principais | Observações |
 |--------|--------------------|-------------|

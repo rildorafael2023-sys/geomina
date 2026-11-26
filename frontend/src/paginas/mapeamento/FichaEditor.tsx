@@ -36,6 +36,7 @@ import {
 } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
 import { ColunaSecao, Estereograma } from "../../geologia/Graficos";
+import { PainelDocumentos } from "../documentos/PainelDocumentos";
 
 type Num = number | string;
 interface IntervaloF {
@@ -488,7 +489,11 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
             </Secao>
 
             <Secao titulo="E. Croqui e fotos">
-              <Text size="sm" c="dimmed">Anexar croquis e fotos à ficha será possível na Etapa 6 (croquis e documentos).</Text>
+              {d ? (
+                <PainelDocumentos minaId={mina.id} mapeamentoId={d.id} podeEnviar={eu.permissoes.includes("arquivo:enviar") && d.estado !== "cancelado"} compacto />
+              ) : (
+                <Text size="sm" c="dimmed">Crie a ficha (rascunho) para anexar croquis e fotos.</Text>
+              )}
             </Secao>
 
             <Secao titulo="F. Descrição e interpretação">

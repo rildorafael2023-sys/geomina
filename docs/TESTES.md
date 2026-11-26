@@ -87,7 +87,11 @@
 | 2026-11-26 | E5 | E2E de regressão: estrutura, painel/backup, básico | **aprovados** | |
 | 2026-11-26 | E5 | Atualização real 0.4.0 → 0.5.0 (pacote linux) com mina e nível já cadastrados | **aprovado** | banco 0003 → 0004; dicionários criados; ficha nova no nível antigo |
 
+| 2026-11-26 | E6+E7 | `pytest`: 136 testes (+10 documentos, incluindo o PDF real de 23 páginas via `GEOMINA_PDF_FICHAS`) | **136 aprovados** | |
+| 2026-11-26 | E6+E7 | E2E `e2e/documentos.cjs` (6 cenários: fotos em lote com EXIF e miniaturas, legenda, croqui PDF real e separação em 23 páginas, anexo na ficha, busca, celular) + regressão das outras 4 suítes | **aprovados** | defeito corrigido: botão "Separar" continuava visível após separar |
+
 ### Ainda não testado
+- Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).
 - Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
 - "Abrir pasta de backups" no Windows (E4).

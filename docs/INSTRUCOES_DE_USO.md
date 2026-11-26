@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.5.0
+# INSTRUÇÕES DE USO — versão 0.6.0
 
-> Descreve apenas o que está implementado e testado. Croquis, amostras, laudos e topografia ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. Amostras, laudos e topografia ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -82,7 +82,14 @@ Menu **Mapeamento geológico** → **Nova ficha** (ou, na Estrutura da mina, aba
 8. **Imprimir / PDF**: versão A4 da ficha (na janela de impressão, escolha "Salvar como PDF"). Na lista, **Ficha em branco para imprimir** gera a ficha vazia para campo.
 9. **Dicionários** (menu): litologias, estruturas, alterações… O revisor/administrador pode incluir termos, siglas, cores e sinônimos e inativar termos.
 
-## 12. Segurança dos dados
+## 12. Fotos, croquis e documentos
+- **Onde enviar**: na ficha (seção E), na unidade da mina (aba "Fotos e croquis") ou no menu **Fotos e croquis**.
+- **Fotos**: "Enviar arquivos" (várias de uma vez) ou **Tirar foto** (abre a câmera no tablet/celular). Data e câmera vêm da própria foto (EXIF). Clique na foto para ver, pôr legenda e identificação (ex.: F-001).
+- **Croquis**: PDF, JPG, PNG ou TIFF. Um PDF com várias páginas (ex.: fichas escaneadas) pode ser **separado em páginas**: cada página vira um croqui, e o PDF original continua guardado.
+- **Nova versão**: informe o motivo e envie o arquivo novo; as versões anteriores nunca são apagadas.
+- Arquivos anexados a uma ficha já submetida/aprovada não podem ser retirados (só acrescentados).
+
+## 13. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.
