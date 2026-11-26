@@ -11,7 +11,7 @@ import { SemLocal } from "./SemLocal";
 
 interface UnidadeLong { id: string; codigo: string; nome: string; tipo: string; amostras: number; eixo_versao: number | null }
 interface TermoRef { id: string; nome: string; cor: string | null }
-interface Valor { y: number | null; texto: string; situacao: "medido" | "abaixo_ld" | "acima_ld" | "sem_valor" | "omitido"; unidade: string; certificado: string }
+export interface Valor { y: number | null; texto: string; situacao: "medido" | "abaixo_ld" | "acima_ld" | "sem_valor" | "omitido"; unidade: string; certificado: string }
 interface Amostra {
   id: string; codigo: string; chainage_m: number; ponto: number; x: number; y: number; z: number | null; data: string | null;
   responsavel: string | null; responsavel_id: string | null; litologia: TermoRef | null; secao_de_m: number | null; secao_ate_m: number | null;
@@ -19,7 +19,7 @@ interface Amostra {
 }
 interface Serie { chave: string; analito: string; unidade: string | null; pontos: number; abaixo_ld?: number; acima_ld?: number; sem_valor?: number; omitido?: number }
 interface Referencia { tipo: "eixo" | "amostras"; inicio: string; invertido: boolean; percurso: number[][]; pontos: number; saltos: { depois_de: string; trecho_m: number }[]; irregular: { caminho_m: number; entre_pontas_m: number } | null }
-interface Dados { unidade: { id: string; codigo: string; nome: string }; referencia: Referencia; regra_ld_descricao: string; series: Serie[]; avisos: string[]; amostras: Amostra[]; sem_posicao: { codigo: string; motivo: string }[] }
+export interface Dados { unidade: { id: string; codigo: string; nome: string }; referencia: Referencia; regra_ld_descricao: string; series: Serie[]; avisos: string[]; amostras: Amostra[]; sem_posicao: { codigo: string; motivo: string }[] }
 interface Filtros { litologias: string[]; alteracoes: string[]; mineralizacoes: string[]; estruturas: string[]; data_de: string; data_ate: string; responsaveis: string[]; tipos: string[]; campanhas: string[]; teor_analito: string | null; teor_min: string; teor_max: string; incluir_duplicatas: boolean }
 interface Classes { metodo: Metodo; n: number; paleta: string; manuais: Record<string, string> }
 
@@ -41,7 +41,7 @@ function parametros(analitos: string[], regra: string, f: Filtros, inverter: boo
 }
 
 /** Valor que define a cor: medido ou limite (conforme a regra escolhida); sem valor → null. */
-const valorCor = (v?: Valor) => (v && v.y != null ? v.y : null);
+export const valorCor = (v?: Valor) => (v && v.y != null ? v.y : null);
 
 export function AnaliseLongitudinal({ eu }: { eu: Eu }) {
   const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
@@ -172,7 +172,7 @@ function Tela({ mina, eu }: { mina: Mina; eu: Eu }) {
   );
 }
 
-function Legenda({ analitos, classes, metodo }: { analitos: string[]; classes: Record<string, { lim: number[]; cores: string[]; unidade: string }>; metodo: Metodo }) {
+export function Legenda({ analitos, classes, metodo }: { analitos: string[]; classes: Record<string, { lim: number[]; cores: string[]; unidade: string }>; metodo: Metodo }) {
   return (
     <Paper withBorder p="xs" data-testid="legenda">
       <Group gap="xl" align="flex-start" wrap="wrap">
@@ -199,7 +199,7 @@ function Legenda({ analitos, classes, metodo }: { analitos: string[]; classes: R
   );
 }
 
-function PainelGaleria({ mina, d, soComResultado, analitos, classes, params, aoInverter, aoAbrir }: {
+export function PainelGaleria({ mina, d, soComResultado, analitos, classes, params, aoInverter, aoAbrir }: {
   mina: Mina; d: Dados; soComResultado: boolean; analitos: string[]; classes: Record<string, { lim: number[]; cores: string[]; unidade: string }>; params: URLSearchParams;
   aoInverter: () => void; aoAbrir: (id: string) => void;
 }) {

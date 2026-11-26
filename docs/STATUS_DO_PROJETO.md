@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.11.0 · **Etapa atual:** E11 concluída (2ª revisão a pedido do usuário); próxima: E12 sondagem
+**Última atualização:** 2026-11-26 · **Versão:** 0.12.0 · **Etapa atual:** Geoquímica Operacional — Etapa 2 concluída; próxima: Etapa 3 (tracks das galerias). Usuário autorizou executar todas as etapas em sequência.
 
 ## Etapas
 
@@ -16,7 +16,11 @@
 | E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
 | E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
 | E11 Teores na galeria | ✅ Concluída e testada (v0.11.0) |
-| E12 – E21 (replanejadas com a Seção 27) | ⚪ Pendentes — ver PLANO_DE_DESENVOLVIMENTO |
+| **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | 🔵 Etapas 1–2 concluídas (v0.12.0) — ver GEOQUIMICA_OPERACIONAL.md |
+| E12 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+
+## Geoquímica Operacional — Etapa 2 (versão 0.12.0)
+Detalhes em `GEOQUIMICA_OPERACIONAL.md`. Resumo: área de trabalho em tela inteira (abas, filtros encadeados com contagens, área analítica, painel de contexto), base da análise por **resultado do laudo** (todos os resultados utilizáveis, inclusive de amostras não cadastradas), conciliação laudo × cadastro (sub-amostras herdam o ponto). Com os laudos reais: 66 amostras, 3.168 resultados e 48 analitos agora visíveis (antes: 17 amostras).
 
 ## Revisão da E11 (versão 0.11.0) — faixa de teores
 **2ª avaliação do usuário:** não quer gráfico teor × distância; quer algo como um *drillhole ribbon* para comparar as amostras da galeria (ex.: 1F5) entre si. Feito:
@@ -215,6 +219,8 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | P4 | Lista de níveis, galerias, travessas e rampas (posso preparar uma importação por planilha se for longa) | uso real da E3 |
 | P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
 | P6 | Existe arquivo de eixos de galeria? (hoje: definidos no GeoMina) | uso real do chainage |
+| P10 | Sufixos A/B/C são sub-amostras do mesmo ponto? (adotado: sim, com confirmação na conciliação) | conciliação |
+| P11 | Há planilha de campo de BS-RP-462…470? | local/geologia dessas amostras |
 | P9 | Nomes dos ramos das travessas (ex.: 1F2 Direita/Esquerda/Subindo): cadastrar como unidades para ligar as amostras da planilha | uso real da E11 |
 | P8 | Dados de sondagem: enviar exemplos de collar, survey, litologia e amostras dos furos (CSV/Excel) | módulo de sondagens (Seção 27) |
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |

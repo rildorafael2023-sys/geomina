@@ -179,3 +179,16 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 ## DT-034 — Faixa de teores ("ribbon") em SVG próprio, classes comuns entre galerias
 **Estado:** Aceita (E11 rev. 2, pedido do usuário)
 **Decisão.** A comparação de teores na galeria é uma faixa: colunas = amostras na ordem da galeria (sem escala de distância), linhas = analitos, cor = classe. Desenho em SVG próprio (sem biblioteca): leve, exportável (SVG/PNG) e com controle total do layout. Classificação em `geologia/classes.ts` (quantis por interpolação linear, intervalos iguais, limites do usuário; classe k = (lim[k−1], lim[k]]), calculada sobre todas as galerias mostradas para que a mesma cor signifique o mesmo teor. Valor no limite entra na cor conforme a regra escolhida, com contorno tracejado; média/mediana só com valores medidos.
+
+## DT-035 — Base da análise geoquímica = resultado do laudo (decisão U2 do usuário)
+**Estado:** Aceita (Geoquímica Operacional, Etapa 2)
+**Contexto.** Nos laudos reais, 74% dos resultados de amostras não estavam ligados a amostras cadastradas e não apareciam em nenhuma análise.
+**Decisão.** O conjunto analisado é montado a partir dos resultados SMP: cada amostra cadastrada (com ou sem resultado) e cada código que só existe no laudo vira um registro, com status explícito. Valores de códigos só no laudo = certificado mais recente. Padrões e brancos do laboratório ficam no QA/QC. A conciliação cria sub-amostras (sufixo A/B/C com o ponto cadastrado) herdando local/XYZ/galeria/ficha/data/campanha — nunca a litologia — e cadastra em lote as demais, sempre por ação do usuário; tudo auditado.
+
+## DT-036 — Filtros encadeados (facetas) calculados no servidor; estado compartilhado com Zustand
+**Estado:** Aceita (Geoquímica Operacional, Etapa 2)
+Cada faceta mostra opções e contagens calculadas com os **demais** filtros (padrão de busca facetada), o que dá o encadeamento mina → nível → galeria → trecho sem regras especiais. O estado da área de trabalho (filtros, analitos, regra de LD, seleção) fica num store Zustand 5.0.16 (~1 KB), compartilhado entre as abas. Desempenho: o conjunto é montado em memória a partir de 3 consultas; adequado para milhares de amostras (medido: 318 amostras reais instantâneo); paginação no servidor para a tabela.
+
+## DT-037 — Sem eixo de distância na análise das galerias (decisão U1 do usuário)
+**Estado:** Aceita
+As amostras ficam lado a lado na sequência da galeria (faixa/tracks), sem escala de metros e sem gráfico teor × distância. Substitui os itens de distância longitudinal do prompt de reestruturação. O chainage continua calculado e guardado (topografia, 3D).

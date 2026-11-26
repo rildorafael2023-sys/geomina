@@ -1,4 +1,4 @@
-# INSTRUÇÕES DE USO — versão 0.11.0
+# INSTRUÇÕES DE USO — versão 0.12.0
 
 > Descreve apenas o que está implementado e testado. O 3D e a sondagem ainda não estão disponíveis.
 
@@ -120,16 +120,15 @@ Na **Estrutura da mina**, selecione a galeria → aba **Eixo e chainage**.
 3. Amostras em SAD69 só entram se houver transformação aprovada; senão aparecem na lista "sem posição" com o motivo.
 4. Corrigir o eixo cria uma **nova versão** (as anteriores ficam guardadas); depois, calcule as posições de novo.
 
-## 17. Teores na galeria
-Menu **Teores na galeria**.
-1. Escolha a **galeria** (ou várias, para comparar) e os **analitos** (ex.: Cr, Be, F). Não é preciso desenhar eixo.
-2. **Faixa de teores**: cada coluna é uma amostra, na ordem da galeria (pontos numerados do início ao fim; amostras do mesmo ponto — parede baixa e alta — ficam lado a lado). Cada linha é um analito, com a cor da classe e o valor. Hachurado = sem resultado; contorno tracejado = abaixo/acima do limite (ex.: <10). Clique numa coluna para ver a amostra completa.
-3. **Classes e cores**: quantis (cada cor com quantidade parecida de amostras), intervalos iguais, ou os seus limites (ex.: "500; 1000; 1500"). Escolha o número de classes e as cores (há tons de cinza para impressão). A legenda mostra os intervalos. As classes valem para todas as galerias mostradas.
-4. **Planta**: a galeria como uma fita colorida pelo teor de cada ponto, com as paredes da topografia.
-5. **Comparação entre as amostras**: menor e maior valor (com a amostra), média e mediana.
-6. **Inverter início ⇄ fim** se o início escolhido (ponta com a amostra mais antiga) não for o emboque. **Só amostras com resultado** esconde as que ainda não têm laudo.
-7. **Exportar**: tabela (CSV), faixa (SVG ou PNG).
-8. **Ligar às galerias…** (amostras vindas da planilha só com o texto do local): busque o local (ex.: "1F5"), marque as variações de escrita do mesmo lugar, escolha a unidade e ligue. Lados e ramos diferentes (Direita, Esquerda, Subindo, Câmara) devem ir para unidades diferentes; se juntar ramos, o GeoMina avisa.
+## 17. Geoquímica operacional
+Menu **Geoquímica operacional**. A tela usa toda a largura: o botão ☰ no topo recolhe o menu do GeoMina e o botão ⟨ recolhe o painel de seleção.
+- **Topo**: onde você está (mina › nível › galeria), quantas amostras estão selecionadas, os **analitos** (qualquer analito dos laudos), como tratar valores abaixo do limite e **Exportar CSV** (com os filtros escritos no arquivo).
+- **Painel de seleção (esquerda)**: marque nível, galeria, trecho, geologia, campanha, responsável, status, laboratório, certificado; busque por código ou local; datas; faixa de teor. O número ao lado de cada opção é quantas amostras ela tem **com os outros filtros**: ao escolher o nível, só aparecem as galerias dele.
+- **Painel de contexto (direita)**: clique numa amostra (tabela ou faixa) para ver local, coordenadas, geologia, ficha, fotos e **todos os resultados do laudo**, com a duplicata do laboratório ao lado.
+- **Consulta de amostras**: tabela com todas as amostras e resultados, inclusive códigos que só existem no laudo ("só no laudo"). **Conciliar laudo × cadastro…**: cria as sub-amostras (ex.: BS-RP-428A/B herdam local e coordenadas do ponto BS-RP-428) e cadastra em lote as amostras que só estão no laudo. **Ligar às galerias…**: liga amostras da planilha (texto do local) às galerias.
+- **Galerias e frentes**: escolha a galeria; as amostras aparecem lado a lado, do início ao fim, numa faixa por analito colorida pela classe de teor (sem eixo de distância). Clique numa coluna para ver a amostra.
+- **Sondagens, Comparação, Visualização espacial**: em construção (próximas etapas).
+- **Laboratório (laudos)** (menu): importação de laudos, certificados e QA/QC (antiga tela "Geoquímica").
 
 ## 18. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.

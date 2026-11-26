@@ -1,6 +1,6 @@
 import { AppShell, Burger, Button, Group, NavLink, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import type { Eu } from "../api/cliente";
@@ -8,13 +8,16 @@ import type { Eu } from "../api/cliente";
 export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () => void; children: ReactNode }) {
   const [aberto, { toggle, close }] = useDisclosure();
   const local = useLocation();
+  const trabalho = local.pathname.startsWith("/geoop"); // áreas de trabalho usam a tela inteira
+  const [recolhido, setRecolhido] = useState<boolean>(() => { try { return localStorage.getItem("geomina.menu") === "recolhido"; } catch { return false; } });
+  const alternarMenu = () => setRecolhido((r) => { try { localStorage.setItem("geomina.menu", r ? "aberto" : "recolhido"); } catch { /* sem armazenamento */ } return !r; });
   const itens = [
     { para: "/", rotulo: "Painel", visivel: true },
     { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
     { para: "/mapeamento", rotulo: "Mapeamento geológico", visivel: usuario.permissoes.includes("mapeamento:ler") },
     { para: "/amostras", rotulo: "Amostras", visivel: usuario.permissoes.includes("amostra:ler") },
-    { para: "/geoquimica", rotulo: "Geoquímica", visivel: usuario.permissoes.includes("geoquimica:ler") },
-    { para: "/longitudinal", rotulo: "Teores na galeria", visivel: usuario.permissoes.includes("geoquimica:ler") },
+    { para: "/geoop", rotulo: "Geoquímica operacional", visivel: usuario.permissoes.includes("geoquimica:ler") },
+    { para: "/geoquimica", rotulo: "Laboratório (laudos)", visivel: usuario.permissoes.includes("geoquimica:ler") },
     { para: "/topografia", rotulo: "Topografia", visivel: usuario.permissoes.includes("topografia:ler") },
     { para: "/documentos", rotulo: "Fotos e croquis", visivel: usuario.permissoes.includes("arquivo:ler") },
     { para: "/dicionarios", rotulo: "Dicionários", visivel: true },
@@ -26,11 +29,12 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/senha", rotulo: "Trocar minha senha", visivel: true },
   ];
   return (
-    <AppShell header={{ height: 56 }} navbar={{ width: 230, breakpoint: "sm", collapsed: { mobile: !aberto } }} padding="md">
+    <AppShell header={{ height: 48 }} navbar={{ width: 220, breakpoint: "sm", collapsed: { mobile: !aberto, desktop: recolhido } }} padding={trabalho ? 0 : "md"}>
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger opened={aberto} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Menu" />
+            <Burger opened={!recolhido} onClick={alternarMenu} visibleFrom="sm" size="sm" aria-label={recolhido ? "Mostrar menu" : "Recolher menu"} />
             <Title order={4}>GeoMina</Title>
           </Group>
           <Group gap="sm" wrap="nowrap">

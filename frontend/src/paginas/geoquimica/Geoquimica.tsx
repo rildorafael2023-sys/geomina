@@ -24,7 +24,7 @@ export function Geoquimica({ eu }: { eu: Eu }) {
   if (!mina) return <Alert color="yellow">Cadastre a mina primeiro.</Alert>;
   return (
     <Stack>
-      <Title order={3}>Geoquímica</Title>
+      <Title order={3}>Laboratório — laudos e QA/QC</Title>
       <Tabs defaultValue="resultados" keepMounted={false}>
         <Tabs.List>
           <Tabs.Tab value="resultados">Resultados</Tabs.Tab>

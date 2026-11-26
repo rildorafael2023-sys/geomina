@@ -32,7 +32,7 @@ const SENHA = "senhaForte123";
   await chamar("POST", `/lotes/${lote.id}/enviar`, { data_envio: "2026-09-24" });
 
   // 1. Importar o laudo: prévia e confirmação
-  await page.getByRole("navigation").getByRole("link", { name: "Geoquímica" }).click();
+  await page.getByRole("navigation").getByRole("link", { name: "Laboratório (laudos)" }).click();
   await page.getByRole("tab", { name: "Importar laudo" }).click();
   await page.locator('input[type="file"]').setInputFiles(LAUDO);
   await page.getByText(/formato SGS · certificado GQ2613496/).waitFor();

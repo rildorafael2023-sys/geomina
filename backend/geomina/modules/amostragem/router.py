@@ -329,7 +329,8 @@ def sem_local(mina_id: uuid.UUID, _u: Usuario = Depends(LER), db: Session = Depe
     """Amostras ainda não ligadas a uma unidade da mina, agrupadas pelo texto de local que vieram (ex.: da planilha de campo)."""
     q = (select(Amostra.local_descricao, func.count(), func.sum(case((Amostra.x.is_not(None), 1), else_=0)), func.min(Amostra.codigo),
                 func.max(Amostra.codigo))
-         .where(Amostra.mina_id == mina_id, Amostra.unidade_id.is_(None), Amostra.estado != "cancelada")
+         .where(Amostra.mina_id == mina_id, Amostra.unidade_id.is_(None), Amostra.estado != "cancelada",
+                Amostra.serie != "BMT-TS")  # testemunho de sondagem é ligado ao furo, não a uma galeria
          .group_by(Amostra.local_descricao).order_by(func.count().desc()))
     return [{"local": loc, "amostras": n, "com_coordenadas": int(xy or 0), "exemplo": f"{c1} … {c2}" if c1 != c2 else c1}
             for loc, n, xy, c1, c2 in db.execute(q)]

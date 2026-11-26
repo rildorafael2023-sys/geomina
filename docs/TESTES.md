@@ -107,6 +107,9 @@
 | 2026-11-26 | E11 rev. 2 | E2E `e2e/longitudinal.cjs` reescrito para a faixa (8 cenários: ordem das colunas pela galeria, sub-pontos, <LD tracejado, sem gráfico teor × distância, comparação numérica, inverter, clique na coluna, limites informados mudando as cores, filtros, ligação em lote, 2 galerias com as mesmas classes, CSV/SVG/PNG, celular) + regressão das outras 8 suítes; `pytest` 177 | **aprovados** | defeitos corrigidos: clique no vão entre linhas da faixa (coluna inteira clicável), `ref` sem forwardRef (download da faixa), planta quadrada vazia para galeria comprida |
 | 2026-11-26 | E11 rev. 2 | Dados reais: travessa 1F2 (22 amostras, 5 com laudo) | **conferido** | → opção "Só amostras com resultado" |
 
+| 2026-11-26 | GO-2 | `pytest`: 182 (+6 geoquímica operacional, incluindo os **laudos reais**: 66 amostras, 3.168 resultados SMP e 48 analitos representados) | **182 aprovados, 1 pulado** | busca não ignorava hífens (corrigido) |
+| 2026-11-26 | GO-2 | E2E `e2e/geoop.cjs` (8 cenários: abas e total, filtros encadeados com contagens, consulta com resultados só no laudo, painel de contexto com duplicata ao lado, conciliação de sub-amostras e cadastro, faixa de teor, galeria → faixa → contexto, recolher filtros/menu e CSV, abas pendentes sem dados de exemplo) + regressão das outras 8 suítes; `e2e/longitudinal.cjs` retirado (tela substituída) | **aprovados** | painel de contexto travava depois de conciliar (corrigido); teste de laudos atualizado para o menu "Laboratório (laudos)" |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

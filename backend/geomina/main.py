@@ -25,6 +25,7 @@ from geomina.modules.backup.service import backup_diario_se_necessario
 from geomina.modules.dicionarios.router import router as dicionarios_router
 from geomina.modules.documentos.router import router as documentos_router
 from geomina.modules.estrutura.router import router as estrutura_router
+from geomina.modules.geoop.router import router as geoop_router
 from geomina.modules.geoquimica.router import router as geoquimica_router
 from geomina.modules.mapeamento.router import router as mapeamento_router
 from geomina.modules.painel.router import router as painel_router
@@ -65,7 +66,7 @@ def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> Fast
     api = APIRouter(prefix="/api/v1")
     for r in (sistema_router, auth_router, arquivos_router, estrutura_router, painel_router, backup_router,
               dicionarios_router, mapeamento_router, documentos_router, amostragem_router,
-              geoquimica_router, topografia_router, analise_router):
+              geoquimica_router, topografia_router, analise_router, geoop_router):
         api.include_router(r)
     app.include_router(api)
 
