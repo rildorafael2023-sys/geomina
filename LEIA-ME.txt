@@ -2,32 +2,42 @@ GeoMina — aplicativo local de gestão de dados geológicos
 =========================================================
 
 O aplicativo roda somente neste computador. Ele não usa internet e não aceita
-conexões de outros computadores (escuta apenas em 127.0.0.1).
+conexões de outros computadores (atende apenas em 127.0.0.1).
 
-INSTALAÇÃO (uma vez)
-1. Instale o Python 3.12 ou 3.13 (python.org). Na primeira tela do instalador,
-   marque "Add python.exe to PATH".
-2. Descompacte esta pasta onde quiser (ex.: C:\GeoMina).
-3. Dê dois cliques em instalar.bat. Todas as bibliotecas estão na pasta "pacotes";
-   nada é baixado da internet.
+INSTALAÇÃO
+- Dê dois cliques em GeoMina-Setup-<versão>.exe e siga as telas.
+  NÃO é preciso instalar Python nem nada mais: tudo vem dentro do instalador.
+  Não pede senha de administrador (instala só para o seu usuário do Windows).
+- O Windows pode mostrar "O Windows protegeu o computador" (instalador sem
+  assinatura digital): clique em "Mais informações" e depois "Executar assim mesmo".
+- São criados atalhos na área de trabalho e no menu Iniciar (pasta GeoMina).
+
+ATUALIZAÇÃO
+- Feche o GeoMina e rode o instalador da versão nova. Os dados são mantidos e o
+  banco recebe backup automático antes de qualquer atualização.
+- Quem usava a versão antiga (instalar.bat com Python): basta rodar o instalador
+  novo. Os dados são os mesmos (%LOCALAPPDATA%\GeoMina). A pasta antiga pode ser
+  apagada depois de conferir que tudo abriu.
 
 USO
-- Abra pelo ícone "GeoMina" na área de trabalho (criado pelo instalar.bat).
-  O GeoMina abre em janela própria (usa o Microsoft Edge já existente no Windows,
-  sem barra de endereço). Ao fechar a janela, o programa se encerra sozinho
-  (em alguns segundos).
+- Abra pelo ícone "GeoMina". Ele abre em janela própria (usa o Microsoft Edge já
+  existente no Windows). Ao fechar a janela, o programa se encerra sozinho.
 - No primeiro acesso, crie o usuário administrador.
-- GeoMina.bat é o "modo diagnóstico": abre mostrando as mensagens numa janela
+- "GeoMina (diagnóstico)", no menu Iniciar, abre mostrando as mensagens numa janela
   preta. Use se algo der errado e envie a mensagem ao suporte.
 - Registro de funcionamento: %LOCALAPPDATA%\GeoMina\logs\geomina.log
 
-ATUALIZAÇÃO
-Descompacte a versão nova por cima da pasta antiga e execute instalar.bat de novo.
-Os dados não são afetados (ficam em %LOCALAPPDATA%\GeoMina) e o banco recebe
-backup automático antes de qualquer atualização.
-
 ONDE FICAM OS DADOS
   %LOCALAPPDATA%\GeoMina   (banco geomina.db, arquivos originais e backups)
-Para fazer backup, copie essa pasta com o aplicativo fechado.
-Antes de cada atualização do banco, o aplicativo cria automaticamente uma cópia em
-%LOCALAPPDATA%\GeoMina\backups.
+  Atalho: menu Iniciar > GeoMina > "Pasta de dados e backups".
+
+BACKUP
+- Automático: diário (só o banco, guarda 14) e semanal completo (com fotos,
+  croquis e laudos, guarda 4), cada um testado com uma restauração simulada.
+- Configure em Backup > "Segunda pasta para cópia automática" um pendrive, HD
+  externo ou pasta da rede: cada backup automático é copiado para lá.
+- Backup completo manual e restauração: menu Backup.
+
+DESINSTALAR
+  Menu Iniciar > GeoMina > "Desinstalar o GeoMina" (ou Configurações > Aplicativos).
+  Os dados em %LOCALAPPDATA%\GeoMina NÃO são apagados.
