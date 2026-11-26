@@ -122,6 +122,9 @@
 | 2026-11-26 | GO-7 | `pytest`: 200 (+1 cena espacial); desempenho medido com dados reais (topografia 193 ms, consulta 74 ms, cena 50 ms, comparação 185 ms) | **aprovados** | |
 | 2026-11-26 | GO-7 | E2E `geoop_espacial.cjs` (5 cenários, topografia real de fundo, WebGL por software) + regressão das outras 12 suítes | **aprovados** | coordenada da amostra de furo ausente no painel (acrescentada); legenda da coordenada cortada (altura ajustada) |
 
+| 2026-11-26 | GO-8/9 | `pytest`: 201 (+1 consulta/exportações lidas de volta); GeoPackage e GeoJSON validados com GDAL/pyogrio fora do aplicativo (POINT Z / LINESTRING Z, EPSG:31983) | **aprovados** | |
+| 2026-11-26 | GO-8/9 | E2E `geoop_consulta.cjs` (5 cenários) + regressão das outras 13 suítes (seletores de "Exportar" atualizados) | **aprovados** | |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

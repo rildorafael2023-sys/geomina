@@ -9,7 +9,7 @@ export function PainelFiltros({ dados, carregando }: { dados?: Pagina; carregand
   const grupos = [...new Set(FACETAS.map((f) => f.grupo))];
   const ativos = Object.values(s.filtros).reduce((t, v) => t + (v?.length ?? 0), 0) + (s.texto ? 1 : 0) + (s.dataDe || s.dataAte ? 1 : 0) + (s.teor.analito && (s.teor.min || s.teor.max) ? 1 : 0);
   return (
-    <aside data-testid="painel-filtros" style={{ borderRight: "1px solid var(--mantine-color-gray-3)", display: "flex", flexDirection: "column", minHeight: 0, background: "#fcfcfc" }}>
+    <aside className="nao-imprimir" data-testid="painel-filtros" style={{ borderRight: "1px solid var(--mantine-color-gray-3)", display: "flex", flexDirection: "column", minHeight: 0, background: "#fcfcfc" }}>
       <Group px="sm" py={6} justify="space-between" style={{ borderBottom: "1px solid var(--mantine-color-gray-2)" }}>
         <Text size="xs" fw={700} tt="uppercase" c="dimmed">Seleção {ativos > 0 && <Badge size="xs" ml={4}>{ativos}</Badge>}</Text>
         <Group gap={4}>{carregando && <Loader size={12} />}<Button size="compact-xs" variant="subtle" onClick={s.limpar} disabled={!ativos}>Limpar</Button></Group>

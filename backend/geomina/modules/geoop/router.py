@@ -50,7 +50,12 @@ def listar(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str 
     contagem calculada com os demais filtros (por isso escolher o nível restringe as galerias)."""
     regs, opcoes = _consulta(request, db, mina_id, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
     chave_ordem = {"codigo": lambda r: (r["codigo"] or ""), "data": lambda r: (r["data"] or ""), "local": lambda r: (r["galeria"] or {}).get("codigo") or r["local"] or "~"}
-    regs.sort(key=chave_ordem.get(ordem, chave_ordem["codigo"]))
+    if ordem.startswith("valor:"):  # maior teor primeiro; sem valor no fim
+        an = ordem[6:]
+        todos = S.valores(db, mina_id, regs, [an], regra_ld)
+        regs.sort(key=lambda r: (todos.get(r["chave"], {}).get(an, {}).get("y") is None, -(todos.get(r["chave"], {}).get(an, {}).get("y") or 0), r["codigo"] or ""))
+    else:
+        regs.sort(key=chave_ordem.get(ordem, chave_ordem["codigo"]))
     total = len(regs)
     pag = regs[(pagina - 1) * tamanho: pagina * tamanho]
     lista = [a for a in analitos.split(",") if a]
@@ -278,6 +283,10 @@ def comparar(mina_id: uuid.UUID, e: PedidoComparacao, _u: Usuario = Depends(LER)
 def espacial(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str | None = None, data_de: date | None = None,
              data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
              regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
+    return _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+
+
+def _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld) -> dict:
     """Amostras da seleção com posição no sistema da mina: frente = ponto (X/Y/Z medidos); furo = segmento de/até sobre a
     trajetória. Conversão de sistema só com transformação aprovada; nada sem posição é inventado (lista à parte)."""
     import numpy as np
@@ -341,3 +350,46 @@ def espacial(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: st
             unidades.setdefault(an, x["unidade"])
     return {"srid": mina.srid_trabalho, "origem": origem, "pontos": pontos, "segmentos": segmentos, "trajetorias": trajetorias,
             "sem_posicao": sem_pos, "unidades": unidades, "total": len(regs)}
+
+
+# ------------------------------------------------------------------ exportações (Excel, GeoJSON, GeoPackage)
+def _filtros_texto(request: Request) -> str:
+    q = request.query_params
+    partes = [f"{k}={v}" for k, v in q.items() if v and k not in ("analitos", "regra_ld", "pagina", "tamanho", "ordem")]
+    return "; ".join(partes) or "nenhum (todas as amostras)"
+
+
+def _anexo(conteudo: bytes, nome: str, tipo: str) -> Response:
+    return Response(conteudo, media_type=tipo, headers={"Content-Disposition": f'attachment; filename="{nome}"'})
+
+
+@router.get("/minas/{mina_id}/geoop/registros.xlsx")
+def exportar_xlsx(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str | None = None, data_de: date | None = None,
+                  data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
+                  regra_ld: str = "limite", u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> Response:
+    from geomina.modules.geoop import exportacao as X
+    regs, _ = _consulta(request, db, mina_id, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    regs.sort(key=lambda r: r["codigo"] or "")
+    lista = [a for a in analitos.split(",") if a]
+    mina = db.get(Mina, mina_id)
+    meta = {"mina": f"{mina.codigo} — {mina.nome}", "srid": mina.srid_trabalho, "filtros": _filtros_texto(request), "regra_ld": regra_ld, "usuario": u.nome}
+    return _anexo(X.xlsx(regs, S.valores(db, mina_id, regs, lista, regra_ld), lista, meta, S.STATUS), "geoquimica_amostras.xlsx",
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@router.get("/minas/{mina_id}/geoop/espacial.geojson")
+def exportar_geojson(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str | None = None, data_de: date | None = None,
+                     data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
+                     regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> Response:
+    from geomina.modules.geoop import exportacao as X
+    c = _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    return _anexo(X.geojson(c, [a for a in analitos.split(",") if a], _filtros_texto(request)), "geoquimica_amostras.geojson", "application/geo+json")
+
+
+@router.get("/minas/{mina_id}/geoop/espacial.gpkg")
+def exportar_gpkg(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str | None = None, data_de: date | None = None,
+                  data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
+                  regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> Response:
+    from geomina.modules.geoop import exportacao as X
+    c = _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    return _anexo(X.gpkg(c, [a for a in analitos.split(",") if a], _filtros_texto(request)), "geoquimica_amostras.gpkg", "application/geopackage+sqlite3")

@@ -268,7 +268,13 @@ function Visor({ cena, topo, camadas, corDe, selecionado, aoSelecionar, aoCoorde
     <>
       {erro && <Alert color="orange" m="sm">{erro}</Alert>}
       <div ref={caixa} data-testid="visor-3d" style={{ width: "100%", height: "calc(100vh - 330px)", minHeight: 400 }} />
-      <Button size="compact-xs" variant="default" style={{ position: "absolute", right: 8, bottom: 6 }} onClick={() => motor.current?.reenquadrar()}>Enquadrar</Button>
+      <Group gap={4} style={{ position: "absolute", right: 8, bottom: 6 }}>
+        <Button size="compact-xs" variant="default" onClick={() => motor.current?.reenquadrar()}>Enquadrar</Button>
+        <Button size="compact-xs" variant="default" onClick={() => {
+          const cv = caixa.current?.querySelector("canvas");
+          cv?.toBlob((b) => { if (!b) return; const u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = "vista_3d.png"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 1000); });
+        }}>Imagem (PNG)</Button>
+      </Group>
     </>
   );
 }

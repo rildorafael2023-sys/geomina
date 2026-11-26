@@ -83,3 +83,54 @@ def test_espacial_frente_e_furo(cliente, h):
     assert "sem cota" in motivos["BS-RP-2"] and "nenhuma transformação aprovada" in motivos["BS-RP-3"] and motivos["BS-RP-77"].startswith("só no laudo")
     assert d["trajetorias"][0]["codigo"] == "F1" and d["trajetorias"][0]["pontos"][-1] == [500100, 7800000, 550]
     assert d["unidades"] == {"Cr": "ppm"} and d["srid"] == 31983
+
+
+def test_consulta_ordem_por_valor_faceta_elemento_e_exportacoes(cliente, h, tmp_path):
+    import io
+    import json
+    import sqlite3
+    import struct
+
+    import openpyxl
+    import shapely
+    m = cliente.post(f"{API}/minas", headers=h, json={"codigo": "MINA01", "nome": "Mina", "srid_trabalho": 31983}).json()
+    for i, z in enumerate([500, 501, None]):
+        cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": f"BS-RP-{i + 1}", "x": 500000 + i, "y": 7800000, "z": z, "srid": 31983})
+    collar = "furo;x;y;z;azimute;dip;eoh\nF1;500100;7800000;600;0;-90;50\n"
+    files = {"collar": ("c.csv", collar.encode()), "amostras": ("a.csv", b"furo;amostra;de;ate\nF1;BMT-TS-1;10;12\n")}
+    p = cliente.post(f"{API}/minas/{m['id']}/sondagem/importacoes", headers=h, files=files, data={"srid": "31983"}).json()
+    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-sondagem", headers=h, json={})
+    laudo = "Amostra;Tipo;Cr (ppm);Be (ppm)\nBS-RP-1;SMP;500;1\nBS-RP-2;SMP;<10;2\nBMT-TS-1;SMP;900;\n"
+    q = cliente.post(f"{API}/minas/{m['id']}/laudos", headers=h, files={"arquivo": ("l.csv", laudo.encode())}).json()
+    cliente.post(f"{API}/importacoes/{q['id']}/confirmar-laudo", headers=h, json={"certificado": "C"})
+    base = f"{API}/minas/{m['id']}/geoop"
+    d = cliente.get(f"{base}/registros", headers=h, params={"ordem": "valor:Cr", "analitos": "Cr"}).json()
+    assert [x["codigo"] for x in d["itens"]] == ["BMT-TS-1", "BS-RP-1", "BS-RP-2", "BS-RP-3"], "maior teor primeiro; sem valor no fim"
+    assert {o["valor"]: o["n"] for o in d["opcoes"]["analito"]} == {"Cr": 3, "Be": 2, "_nenhum": 1}
+    assert cliente.get(f"{base}/registros", headers=h, params={"analito": "Be"}).json()["total"] == 2
+    # Excel com metadados
+    r = cliente.get(f"{base}/registros.xlsx", headers=h, params={"analitos": "Cr", "serie": "BS-RP"})
+    wb = openpyxl.load_workbook(io.BytesIO(r.content))
+    linhas = list(wb["Amostras"].iter_rows(values_only=True))
+    assert linhas[0][:3] == ("Amostra", "Cadastrada", "Status") and linhas[0][-2:] == ("Cr (ppm) — laudo", "Cr (ppm) — valor numérico")
+    assert {x[0]: x[-2:] for x in linhas[1:]} == {"BS-RP-1": ("500", 500), "BS-RP-2": ("<10", 10), "BS-RP-3": (None, None)}
+    meta = dict(wb["Metadados"].iter_rows(values_only=True))
+    assert "serie=BS-RP" in meta["Filtros aplicados"] and meta["Sistema de coordenadas da mina"] == "EPSG:31983"
+    # GeoJSON
+    g = json.loads(cliente.get(f"{base}/espacial.geojson", headers=h, params={"analitos": "Cr"}).content)
+    tipos = sorted((f["geometry"]["type"], f["properties"]["amostra"]) for f in g["features"])
+    assert tipos == [("LineString", "BMT-TS-1"), ("Point", "BS-RP-1"), ("Point", "BS-RP-2")]
+    assert g["crs"]["properties"]["name"].endswith("31983") and g["geomina"]["sem_posicao"] == 1
+    # GeoPackage: estrutura OGC e geometrias lidas de volta
+    arq = tmp_path / "x.gpkg"
+    arq.write_bytes(cliente.get(f"{base}/espacial.gpkg", headers=h, params={"analitos": "Cr"}).content)
+    db = sqlite3.connect(arq)
+    assert db.execute("PRAGMA application_id").fetchone()[0] == 0x47504B47
+    assert {r[0] for r in db.execute("SELECT table_name FROM gpkg_contents")} == {"amostras_frente", "intervalos_furo"}
+    assert db.execute("SELECT geometry_type_name, srs_id, z FROM gpkg_geometry_columns WHERE table_name='intervalos_furo'").fetchone() == ("LINESTRING", 31983, 1)
+    assert "SIRGAS 2000" in db.execute("SELECT definition FROM gpkg_spatial_ref_sys WHERE srs_id=31983").fetchone()[0]
+    blob, cod, cr = db.execute('SELECT geom, amostra, "Cr_valor" FROM intervalos_furo').fetchone()
+    assert blob[:2] == b"GP" and struct.unpack("<i", blob[4:8])[0] == 31983
+    assert shapely.from_wkb(blob[8:]).coords[:] == [(500100, 7800000, 590), (500100, 7800000, 588)] and (cod, cr) == ("BMT-TS-1", 900)
+    pts = {c: shapely.from_wkb(b[8:]).coords[0] for b, c in db.execute("SELECT geom, amostra FROM amostras_frente")}
+    assert pts == {"BS-RP-1": (500000, 7800000, 500), "BS-RP-2": (500001, 7800000, 501)}

@@ -155,7 +155,7 @@ const X0 = 500000, Y0 = 7800000;
     ["amostras", "litologia", "Be", "Cr", "F", "estruturas", "descricao", "fotos", "alteracao"]);
 
   // 7. Exportar tracks em SVG
-  await page.getByRole("button", { name: "Exportar", exact: true }).click();
+  await page.getByTestId("area-analitica").getByRole("button", { name: "Exportar", exact: true }).click();
   const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: /^Tracks \(SVG\)/ }).click()]);
   assert.match(fs.readFileSync(await dl2.path(), "utf-8"), /<svg[^>]*xmlns="http:\/\/www.w3.org\/2000\/svg"[\s\S]*BS-RP-706/, "exporta a janela visível (trecho ampliado)");
 

@@ -1,7 +1,7 @@
 import { ActionIcon, Badge, Button, Group, Loader, ScrollArea, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { api, ErroApi, type Eu, type Mina } from "../../api/cliente";
 import { PainelDocumentos } from "../documentos/PainelDocumentos";
@@ -15,6 +15,7 @@ interface Detalhe extends Registro {
 /** Painel de contexto da seleção: identificação, local, geologia, TODOS os resultados do laudo, fotos e croquis. */
 export function PainelContexto({ mina, eu, chave }: { mina: Mina; eu: Eu; chave: string }) {
   const set = useGeo((s) => s.set);
+  const ir = useNavigate();
   const q = useQuery({ queryKey: ["geoop-registro", mina.id, chave], queryFn: () => api<Detalhe>(`/minas/${mina.id}/geoop/registros/${encodeURIComponent(chave)}`) });
   const d = q.data;
   useEffect(() => { if (d && d.chave !== chave) set({ selecionado: d.chave }); }, [d, chave, set]);
@@ -24,7 +25,7 @@ export function PainelContexto({ mina, eu, chave }: { mina: Mina; eu: Eu; chave:
   const grupos = new Map<string, Detalhe["resultados"]>();
   for (const r of d?.resultados ?? []) grupos.set(r.tipo_analito, [...(grupos.get(r.tipo_analito) ?? []), r]);
   return (
-    <aside data-testid="painel-contexto" style={{ borderLeft: "1px solid var(--mantine-color-gray-3)", display: "flex", flexDirection: "column", minHeight: 0, background: "#fff" }}>
+    <aside className="nao-imprimir" data-testid="painel-contexto" style={{ borderLeft: "1px solid var(--mantine-color-gray-3)", display: "flex", flexDirection: "column", minHeight: 0, background: "#fff" }}>
       <Group px="sm" py={6} justify="space-between" style={{ borderBottom: "1px solid var(--mantine-color-gray-2)" }} wrap="nowrap">
         <Text fw={700} size="sm">{d?.codigo ?? "…"}</Text>
         <ActionIcon variant="subtle" onClick={() => set({ selecionado: null })} aria-label="Fechar painel">✕</ActionIcon>
@@ -103,7 +104,14 @@ export function PainelContexto({ mina, eu, chave }: { mina: Mina; eu: Eu; chave:
                 <PainelDocumentos minaId={mina.id} mapeamentoId={d.ficha.id} podeEnviar={false} compacto />
               </>
             )}
-            {d.amostra_id && <Button component={Link} to="/amostras" size="compact-xs" variant="light" w="fit-content">Abrir no cadastro de amostras</Button>}
+            <Text size="xs" fw={700} tt="uppercase" c="dimmed" mt={4}>Ir para</Text>
+            <Group gap={4}>
+              {d.galeria && <Button size="compact-xs" variant="light" onClick={() => { const s = useGeo.getState(); s.set({ filtros: { ...s.filtros, galeria: [d.galeria!.id] } }); ir("/geoop/galerias"); }}>Tracks da galeria {d.galeria.codigo}</Button>}
+              {d.furo_ref && <Button size="compact-xs" variant="light" onClick={() => { const s = useGeo.getState(); if (!s.furos.includes(d.furo_ref!.id)) s.set({ furos: [...s.furos, d.furo_ref!.id] }); ir("/geoop/sondagens"); }}>Perfil do furo {d.furo_ref.codigo}</Button>}
+              {(d.x != null || d.furo_ref) && <Button size="compact-xs" variant="light" onClick={() => ir("/geoop/espacial")}>Ver no 3D</Button>}
+              {d.ficha && <Button component={Link} to={`/mapeamento/${d.ficha.id}`} size="compact-xs" variant="light">Ficha {d.ficha.numero}</Button>}
+              {d.amostra_id && <Button component={Link} to="/amostras" size="compact-xs" variant="light">Cadastro de amostras</Button>}
+            </Group>
           </Stack>
         </ScrollArea>
       )}

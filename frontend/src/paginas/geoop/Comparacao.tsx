@@ -1,9 +1,10 @@
 import { Alert, Badge, Button, Checkbox, CloseButton, Group, Loader, Menu, Paper, ScrollArea, SegmentedControl, Select, Stack, Table, Text, TextInput } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api, ErroApi, json, type Mina } from "../../api/cliente";
 import { FACETAS, parametrosGeo, useGeo, type Faceta, type Pagina } from "./estado";
+import { baixarSvg } from "./Galerias";
 import { Boxplot, CORES_GRUPO, Dispersao, Histograma, MatrizCorrelacao } from "./graficos/Graficos";
 
 interface GrupoDef { nome: string; filtros: Partial<Record<Faceta, string[]>>; texto: string; data_de: string; data_ate: string; descricao: string }
@@ -24,6 +25,7 @@ export function Comparacao({ mina }: { mina: Mina }) {
   const [log, setLog] = useState(false);
   const [incluirLimite, setIncluirLimite] = useState(false);
   const [par, setPar] = useState<[string | null, string | null]>([null, null]);
+  const painel = useRef<HTMLDivElement>(null);
   const p = parametrosGeo(s, { tamanho: "1" });
   const resumo = useQuery({ queryKey: ["geoop", mina.id, p.toString()], queryFn: () => api<Pagina>(`/minas/${mina.id}/geoop/registros?${p}`), placeholderData: (a) => a });
   const rotulo = (f: Faceta, v: string) => resumo.data?.opcoes[f]?.find((o) => o.valor === v)?.rotulo ?? v;
@@ -88,7 +90,13 @@ export function Comparacao({ mina }: { mina: Mina }) {
             {d && <Text size="xs" c="dimmed">{d.observacao}.</Text>}
           </Group>
           {q.isLoading ? <Loader size="sm" /> : q.error ? <Alert color="orange">{q.error instanceof ErroApi ? q.error.message : String(q.error)}</Alert> : d && (
-            <Paper withBorder p="sm">
+            <Paper withBorder p="sm" ref={painel}>
+              {vista !== "estatisticas" && (
+                <Group gap={4} mb={6} className="nao-imprimir">
+                  <Button size="compact-xs" variant="default" onClick={() => painel.current?.querySelectorAll("svg").forEach((el, i) => baixarSvg(el, `comparacao_${vista}_${i + 1}`, "svg"))}>Exportar gráficos (SVG)</Button>
+                  <Button size="compact-xs" variant="default" onClick={() => painel.current?.querySelectorAll("svg").forEach((el, i) => baixarSvg(el, `comparacao_${vista}_${i + 1}`, "png"))}>Exportar gráficos (PNG)</Button>
+                </Group>
+              )}
               {vista === "estatisticas" && (
                 <ScrollArea type="auto">
                   <Table fz={11} verticalSpacing={2} striped withTableBorder data-testid="tabela-estatisticas">

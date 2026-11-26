@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Badge, Button, Group, Loader, MultiSelect, Select, Tabs, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, Alert, Badge, Button, Group, Loader, Menu, MultiSelect, Select, Tabs, Text, Tooltip } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
@@ -6,6 +6,7 @@ import { api, baixar, type Eu, type Mina } from "../../api/cliente";
 import { Comparacao } from "./Comparacao";
 import { Consulta } from "./Consulta";
 import { Espacial } from "./Espacial";
+import { Relatorio } from "./Relatorio";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 import { Galerias } from "./Galerias";
 import { PainelContexto } from "./PainelContexto";
@@ -45,9 +46,9 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
     return sel.map((v) => ops.find((o) => o.valor === v)?.rotulo ?? "…").join(", ");
   }).filter(Boolean);
   return (
-    <div style={{ display: "grid", gridTemplateRows: "auto auto 1fr", height: "calc(100vh - 48px)", minHeight: 480 }}>
+    <div className="geoop-trabalho" style={{ display: "grid", gridTemplateRows: "auto auto 1fr", height: "calc(100vh - 48px)", minHeight: 480 }}>
       {/* cabeçalho compacto: contexto da análise, variáveis e exportação */}
-      <Group px="sm" py={6} gap="sm" wrap="nowrap" style={{ borderBottom: "1px solid var(--mantine-color-gray-3)", background: "var(--mantine-color-gray-0)" }}>
+      <Group className="nao-imprimir" px="sm" py={6} gap="sm" wrap="nowrap" style={{ borderBottom: "1px solid var(--mantine-color-gray-3)", background: "var(--mantine-color-gray-0)" }}>
         <Text fw={700} size="sm" style={{ whiteSpace: "nowrap" }}>Geoquímica operacional</Text>
         <Text size="sm" c="dimmed" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="caminho">
           {mina.codigo}{caminho.length ? " › " + caminho.join(" › ") : " · toda a mina"}
@@ -60,9 +61,21 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
           <Select size="xs" w={170} allowDeselect={false} value={s.regraLd} onChange={(v) => s.set({ regraLd: (v ?? "limite") as "limite" })} aria-label="Limite de detecção"
             data={[{ value: "limite", label: "<LD = valor do limite" }, { value: "metade", label: "<LD = metade" }, { value: "omitir", label: "<LD = sem valor" }]} />
         </Tooltip>
-        <Button size="compact-sm" variant="default" onClick={() => baixar(`/minas/${mina.id}/geoop/registros.csv?${parametrosGeo(s)}`, "geoquimica_amostras.csv")}>Exportar CSV</Button>
+        <Menu position="bottom-end" withinPortal>
+          <Menu.Target><Button size="compact-sm" variant="default">Exportar</Button></Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Label>Amostras e resultados (seleção atual)</Menu.Label>
+            <Menu.Item onClick={() => baixar(`/minas/${mina.id}/geoop/registros.csv?${parametrosGeo(s)}`, "geoquimica_amostras.csv")}>Tabela CSV</Menu.Item>
+            <Menu.Item onClick={() => baixar(`/minas/${mina.id}/geoop/registros.xlsx?${parametrosGeo(s)}`, "geoquimica_amostras.xlsx")}>Planilha Excel (com metadados)</Menu.Item>
+            <Menu.Label>GIS (amostras com posição; furos como linhas 3D)</Menu.Label>
+            <Menu.Item onClick={() => baixar(`/minas/${mina.id}/geoop/espacial.gpkg?${parametrosGeo(s)}`, "geoquimica_amostras.gpkg")}>GeoPackage (.gpkg)</Menu.Item>
+            <Menu.Item onClick={() => baixar(`/minas/${mina.id}/geoop/espacial.geojson?${parametrosGeo(s)}`, "geoquimica_amostras.geojson")}>GeoJSON</Menu.Item>
+            <Menu.Label>Relatório</Menu.Label>
+            <Menu.Item onClick={() => ir("/geoop/relatorio")}>Relatório da seleção (imprimir / PDF)</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       </Group>
-      <Tabs value={aba} onChange={(v) => ir(`/geoop/${v}`)} variant="outline" px="sm" pt={4} styles={{ tab: { padding: "6px 14px", fontSize: 13 } }}>
+      <Tabs className="nao-imprimir" value={aba} onChange={(v) => ir(`/geoop/${v}`)} variant="outline" px="sm" pt={4} styles={{ tab: { padding: "6px 14px", fontSize: 13 } }}>
         <Tabs.List>
           <ActionIcon variant="subtle" size="md" mr={6} mt={2} onClick={() => s.set({ filtrosAbertos: !s.filtrosAbertos })} aria-label={s.filtrosAbertos ? "Recolher filtros" : "Mostrar filtros"}>
             {s.filtrosAbertos ? "⟨" : "⟩"}
@@ -80,6 +93,7 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
             <Route path="comparacao" element={<Comparacao mina={mina} />} />
             <Route path="espacial" element={<Espacial mina={mina} />} />
             <Route path="consulta" element={<Consulta mina={mina} eu={eu} />} />
+            <Route path="relatorio" element={<Relatorio mina={mina} eu={eu} />} />
             <Route path="*" element={<Navigate to="galerias" replace />} />
           </Routes>
         </main>

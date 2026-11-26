@@ -19,6 +19,7 @@ export const FACETAS = [
   { chave: "cadastro", rotulo: "Cadastro", grupo: "Laboratório" },
   { chave: "laboratorio", rotulo: "Laboratório", grupo: "Laboratório" },
   { chave: "certificado", rotulo: "Certificado", grupo: "Laboratório" },
+  { chave: "analito", rotulo: "Elemento analisado", grupo: "Laboratório" },
 ] as const;
 export type Faceta = (typeof FACETAS)[number]["chave"];
 
@@ -80,7 +81,7 @@ export interface Registro {
   x: number | null; y: number | null; z: number | null; srid: number | null; data: string | null;
   campanha: { id: string; codigo: string } | null; responsavel: { id: string; nome: string } | null; tipo: { id: string; nome: string } | null;
   litologia: Termo | null; alteracao: Termo | null; mineralizacao: Termo | null; ficha: { id: string; numero: string } | null;
-  secao_de_m: number | null; secao_ate_m: number | null; furo: string | null; prof_de_m: number | null; prof_ate_m: number | null;
+  secao_de_m: number | null; secao_ate_m: number | null; furo: string | null; furo_ref: { id: string; codigo: string } | null; prof_de_m: number | null; prof_ate_m: number | null;
   descricao: string | null; laboratorios: Record<string, string>; certificados: Record<string, string>; analitos: string[]; n_resultados: number;
   valores?: Record<string, { y: number | null; texto: string; situacao: string; unidade: string; certificado: string }>;
 }

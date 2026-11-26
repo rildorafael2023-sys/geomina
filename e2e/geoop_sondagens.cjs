@@ -124,7 +124,7 @@ const X0 = 500000, Y0 = 7800000;
   await page.getByRole("dialog").getByText("Barras").click();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Furo inteiro" }).click();
-  await page.getByRole("button", { name: "Exportar", exact: true }).click();
+  await page.getByTestId("area-analitica").getByRole("button", { name: "Exportar", exact: true }).click();
   const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("menuitem", { name: "Intervalos e resultados (CSV)" }).click()]);
   const csv = fs.readFileSync(await dl.path(), "utf-8").trim().split("\n");
   assert.strictEqual(csv.length, 1 + 16);

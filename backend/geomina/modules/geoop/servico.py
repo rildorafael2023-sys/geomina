@@ -29,7 +29,7 @@ SUFIXO = re.compile(r"^((?:BS-RP|BMT-TS)-\d+)([A-Z]{1,3})$")
 
 # facetas: nome → (rótulo, função que devolve [(valor, rótulo)] do registro)
 FACETAS = ("nivel", "galeria", "trecho", "furo", "campanha", "responsavel", "litologia", "alteracao", "mineralizacao", "tipo",
-           "laboratorio", "certificado", "status", "serie", "cadastro")
+           "laboratorio", "certificado", "status", "serie", "cadastro", "analito")
 
 
 def _serie(codigo: str) -> str:
@@ -135,6 +135,8 @@ def _valores_faceta(r: dict, f: str) -> list[tuple[str, str]]:
         return [(r["status"], STATUS[r["status"]])]
     if f == "serie":
         return [(r["serie"], r["serie"])]
+    if f == "analito":
+        return [(a, a) for a in r["analitos"]] or [("_nenhum", "(sem resultado)")]
     if f == "cadastro":
         return [("sim", "Cadastrada")] if r["cadastrada"] else [("nao", "Só no laudo")]
     return []

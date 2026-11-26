@@ -204,3 +204,7 @@ Guardada sempre como graus da horizontal, negativo = para baixo. Na importação
 ## DT-040 — Visor 3D em Three.js com origem local, instâncias e recoloração sem reconstrução
 **Estado:** Aceita (Geoquímica Operacional, Etapa 7) — confirma DT-005
 Three.js 0.186.1 carregado sob demanda (chunk próprio). Coordenadas da cena = coordenada − origem (média dos objetos), evitando perda de precisão de float32 com UTM; a coordenada real é reconstruída ao clicar. Amostras e intervalos em `InstancedMesh` (uma chamada de desenho por camada); cor por instância — trocar analito/classe só reescreve as cores. Topografia em `LineSegments` recortada pela vizinhança da seleção. Amostra de furo = segmento entre as posições de "de" e "até" na trajetória (DT-038). Gancho `window.geomina3d` (contagem, projeção, cor) para testes e suporte.
+
+## DT-041 — GeoPackage escrito sem GDAL; Excel com metadados; relatório pela impressão do navegador
+**Estado:** Aceita (Geoquímica Operacional, Etapa 9)
+GDAL complicaria o pacote offline no Windows; o GeoPackage é SQLite com tabelas e cabeçalho de geometria definidos pela especificação OGC (application_id 'GPKG', user_version 10300, gpkg_spatial_ref_sys/contents/geometry_columns, blob 'GP' + srs_id + WKB ISO). A conformidade foi verificada lendo o arquivo com GDAL fora do aplicativo. O Excel separa o valor do laudo (texto, ex. "<10") do valor numérico usado nos gráficos, e leva os metadados da exportação. O PDF continua pela impressão do navegador (DT-028).

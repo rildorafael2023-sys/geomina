@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Checkbox, Group, Loader, Modal, Pagination, ScrollArea, SegmentedControl, Stack, Table, Text } from "@mantine/core";
+import { Alert, Badge, Button, Checkbox, Group, Loader, Menu, Modal, Pagination, ScrollArea, Select, Stack, Table, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -9,12 +9,15 @@ import { parametrosGeo, useGeo, type Pagina } from "./estado";
 
 const COR_STATUS: Record<string, string> = { com_resultado: "teal", aguardando: "yellow", sem_envio: "gray", so_laudo: "orange", cancelada: "red" };
 const TAMANHO = 200;
+const COLUNAS = { nivel: "Nível", galeria: "Galeria", trecho: "Trecho / local", furo: "Furo e profundidade", coords: "Coordenadas", data: "Coleta", litologia: "Litologia", alteracao: "Alteração", mineralizacao: "Mineralização", laboratorio: "Laboratório / certificado" };
 
 /** Tabela de amostras e resultados (cadastradas e só no laudo) com os filtros do painel; clique seleciona. */
 export function Consulta({ mina, eu }: { mina: Mina; eu: Eu }) {
   const s = useGeo();
   const [pagina, setPagina] = useState(1);
   const [ordem, setOrdem] = useState("codigo");
+  const [colunas, setColunas] = useState<(keyof typeof COLUNAS)[]>(["nivel", "galeria", "trecho", "data", "litologia"]);
+  const ver = (c: keyof typeof COLUNAS) => colunas.includes(c);
   const p = parametrosGeo(s, { pagina: String(pagina), tamanho: String(TAMANHO), ordem });
   const q = useQuery({ queryKey: ["geoop", mina.id, p.toString()], queryFn: () => api<Pagina>(`/minas/${mina.id}/geoop/registros?${p}`), placeholderData: (a) => a });
   const d = q.data;
@@ -29,7 +32,16 @@ export function Consulta({ mina, eu }: { mina: Mina; eu: Eu }) {
         </Group>
         <Group gap="xs">
           <Text size="xs" c="dimmed">Ordenar</Text>
-          <SegmentedControl size="xs" value={ordem} onChange={(v) => { setOrdem(v); setPagina(1); }} data={[{ value: "codigo", label: "Código" }, { value: "local", label: "Local" }, { value: "data", label: "Data" }]} />
+          <Select size="xs" w={190} allowDeselect={false} value={ordem} onChange={(v) => { setOrdem(v ?? "codigo"); setPagina(1); }} aria-label="Ordenar por"
+            data={[{ value: "codigo", label: "Código" }, { value: "local", label: "Local" }, { value: "data", label: "Data de coleta" }, ...s.analitos.map((a) => ({ value: `valor:${a}`, label: `Maior teor de ${a}` }))]} />
+          <Menu withinPortal closeOnItemClick={false}>
+            <Menu.Target><Button size="compact-xs" variant="default">Colunas</Button></Menu.Target>
+            <Menu.Dropdown>
+              {(Object.keys(COLUNAS) as (keyof typeof COLUNAS)[]).map((k) => (
+                <Menu.Item key={k}><Checkbox size="xs" label={COLUNAS[k]} checked={colunas.includes(k)} onChange={(e) => setColunas(e.currentTarget.checked ? [...colunas, k] : colunas.filter((c) => c !== k))} /></Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </Group>
       {!d ? <Loader size="sm" /> : (
@@ -37,8 +49,8 @@ export function Consulta({ mina, eu }: { mina: Mina; eu: Eu }) {
           <Table fz={12} verticalSpacing={2} horizontalSpacing={6} striped highlightOnHover stickyHeader withTableBorder data-testid="tabela-consulta" miw={760 + s.analitos.length * 74}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Amostra</Table.Th><Table.Th>Status</Table.Th><Table.Th>Nível</Table.Th><Table.Th>Galeria</Table.Th><Table.Th>Trecho / local</Table.Th>
-                <Table.Th>Coleta</Table.Th><Table.Th>Litologia</Table.Th>
+                <Table.Th>Amostra</Table.Th><Table.Th>Status</Table.Th>
+                {(Object.keys(COLUNAS) as (keyof typeof COLUNAS)[]).filter(ver).map((c) => <Table.Th key={c}>{COLUNAS[c]}</Table.Th>)}
                 {s.analitos.length ? s.analitos.map((a) => <Table.Th key={a} ta="right">{a}</Table.Th>) : <Table.Th>Analitos no laudo</Table.Th>}
               </Table.Tr>
             </Table.Thead>
@@ -48,11 +60,16 @@ export function Consulta({ mina, eu }: { mina: Mina; eu: Eu }) {
                   onClick={() => s.set({ selecionado: r.chave })} data-chave={r.chave}>
                   <Table.Td fw={600} style={{ whiteSpace: "nowrap" }}>{r.codigo}</Table.Td>
                   <Table.Td><Badge size="xs" variant="dot" color={COR_STATUS[r.status]}>{d.status_rotulos[r.status]?.split(" (")[0]}</Badge></Table.Td>
-                  <Table.Td>{r.nivel?.codigo ?? ""}</Table.Td>
-                  <Table.Td>{r.galeria?.codigo ?? ""}</Table.Td>
-                  <Table.Td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.trecho?.codigo ?? r.local ?? ""}</Table.Td>
-                  <Table.Td style={{ whiteSpace: "nowrap" }}>{r.data ? new Date(r.data + "T00:00").toLocaleDateString("pt-BR") : ""}</Table.Td>
-                  <Table.Td style={{ whiteSpace: "nowrap" }}>{r.litologia ? <><span style={{ display: "inline-block", width: 8, height: 8, background: r.litologia.cor ?? "#ccc", marginRight: 4 }} />{r.litologia.nome}</> : ""}</Table.Td>
+                  {ver("nivel") && <Table.Td>{r.nivel?.codigo ?? ""}</Table.Td>}
+                  {ver("galeria") && <Table.Td>{r.galeria?.codigo ?? ""}</Table.Td>}
+                  {ver("trecho") && <Table.Td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.trecho?.codigo ?? r.local ?? ""}</Table.Td>}
+                  {ver("furo") && <Table.Td style={{ whiteSpace: "nowrap" }}>{r.furo_ref ? `${r.furo_ref.codigo} · ${r.prof_de_m}–${r.prof_ate_m} m` : ""}</Table.Td>}
+                  {ver("coords") && <Table.Td style={{ whiteSpace: "nowrap" }}>{r.x != null ? `${r.x.toFixed(1)} / ${r.y?.toFixed(1)} / ${r.z?.toFixed(1) ?? "—"}` : ""}</Table.Td>}
+                  {ver("data") && <Table.Td style={{ whiteSpace: "nowrap" }}>{r.data ? new Date(r.data + "T00:00").toLocaleDateString("pt-BR") : ""}</Table.Td>}
+                  {ver("litologia") && <Table.Td style={{ whiteSpace: "nowrap" }}>{r.litologia ? <><span style={{ display: "inline-block", width: 8, height: 8, background: r.litologia.cor ?? "#ccc", marginRight: 4 }} />{r.litologia.nome}</> : ""}</Table.Td>}
+                  {ver("alteracao") && <Table.Td>{r.alteracao?.nome ?? ""}</Table.Td>}
+                  {ver("mineralizacao") && <Table.Td>{r.mineralizacao?.nome ?? ""}</Table.Td>}
+                  {ver("laboratorio") && <Table.Td style={{ whiteSpace: "nowrap" }}>{[...Object.values(r.laboratorios), ...Object.values(r.certificados)].join(" · ")}</Table.Td>}
                   {s.analitos.length ? s.analitos.map((a) => {
                     const v = r.valores?.[a];
                     return <Table.Td key={a} ta="right" c={v && v.situacao !== "medido" ? "dimmed" : undefined}>{v?.texto ?? ""}</Table.Td>;

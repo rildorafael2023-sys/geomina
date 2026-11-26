@@ -25,7 +25,7 @@ export function Boxplot({ titulo, unidade, series, log }: { titulo: string; unid
   const y = (v: number) => H - B - e.pos(v);
   const larg = (W - M - 10) / series.length;
   return (
-    <svg width={W} height={H} data-testid={`boxplot-${titulo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width={W} height={H} data-testid={`boxplot-${titulo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
       <text x={M} y={14} fontSize={12} fontWeight={700}>{titulo} <tspan fontWeight={400} fill="#868e96">{unidade}{log ? " · log" : ""}</tspan></text>
       {e.marcas.map((m) => <g key={m}><line x1={M} x2={W - 10} y1={y(m)} y2={y(m)} stroke="#f1f3f5" /><text x={M - 4} y={y(m) + 3} fontSize={9} textAnchor="end" fill="#868e96">{fmt(m)}</text></g>)}
       {series.map((s, i) => {
@@ -58,7 +58,7 @@ export function Histograma({ titulo, unidade, series, log }: { titulo: string; u
   const maxC = Math.max(1, ...contagens.flat());
   const W = 320, Hs = 90, M = 34;
   return (
-    <svg width={W} height={20 + series.length * (Hs + 18) + 18} data-testid={`histograma-${titulo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width={W} height={20 + series.length * (Hs + 18) + 18} data-testid={`histograma-${titulo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
       <text x={4} y={14} fontSize={12} fontWeight={700}>{titulo} <tspan fontWeight={400} fill="#868e96">{unidade}{log ? " · classes log" : ""}</tspan></text>
       {series.map((s, i) => {
         const y0 = 22 + i * (Hs + 18), bw = (W - M - 8) / contagens[i].length;
@@ -87,7 +87,7 @@ export function Dispersao({ ax, ay, ux, uy, pontos, log, r }: {
   if (!vx.length) return <svg width={W} height={60}><text x={8} y={30} fontSize={12} fill="#868e96">Sem amostras com {ax} e {ay}.</text></svg>;
   const ex = eixo(Math.min(...vx), Math.max(...vx), log, W - M - 12), ey = eixo(Math.min(...vy), Math.max(...vy), log, H - T - B);
   return (
-    <svg width={W} height={H + 20 * r.length} data-testid="dispersao" style={{ fontFamily: "Inter, Arial, sans-serif" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width={W} height={H + 20 * r.length} data-testid="dispersao" style={{ fontFamily: "Inter, Arial, sans-serif" }}>
       {ex.marcas.map((m) => <g key={"x" + m}><line x1={M + ex.pos(m)} x2={M + ex.pos(m)} y1={T} y2={H - B} stroke="#f1f3f5" /><text x={M + ex.pos(m)} y={H - B + 12} fontSize={9} textAnchor="middle" fill="#868e96">{fmt(m)}</text></g>)}
       {ey.marcas.map((m) => <g key={"y" + m}><line x1={M} x2={W - 12} y1={H - B - ey.pos(m)} y2={H - B - ey.pos(m)} stroke="#f1f3f5" /><text x={M - 4} y={H - B - ey.pos(m) + 3} fontSize={9} textAnchor="end" fill="#868e96">{fmt(m)}</text></g>)}
       <rect x={M} y={T} width={W - M - 12} height={H - T - B} fill="none" stroke="#dee2e6" />
@@ -109,7 +109,7 @@ export function MatrizCorrelacao({ grupo, analitos, corr }: { grupo: string; ana
     return `rgb(${base.map((x) => Math.round(255 - (255 - x) * k)).join(",")})`;
   };
   return (
-    <svg width={M + c * analitos.length + 4} height={M + c * analitos.length + 20} data-testid={`correlacao-${grupo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width={M + c * analitos.length + 4} height={M + c * analitos.length + 20} data-testid={`correlacao-${grupo}`} style={{ fontFamily: "Inter, Arial, sans-serif" }}>
       <text x={4} y={12} fontSize={11} fontWeight={700}>{grupo}</text>
       {analitos.map((a, i) => <text key={"c" + a} x={M + c * i + c / 2} y={M - 6} fontSize={10} textAnchor="middle" fontWeight={600}>{a}</text>)}
       {analitos.map((a, i) => (

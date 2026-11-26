@@ -29,8 +29,8 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 | 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | ✅ v0.14.0 |
 | 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | ✅ v0.15.0 |
 | 7 | Visualização espacial 3D integrada | ✅ v0.16.0 |
-| 8 | Consulta completa | pendente (base pronta na Etapa 2) |
-| 9 | Exportação (CSV/Excel/PDF/imagens/GIS) | pendente |
+| 8 | Consulta completa | ✅ v0.17.0 |
+| 9 | Exportação (CSV/Excel/PDF/imagens/GIS) | ✅ v0.17.0 |
 | 10 | Testes e auditoria final | pendente |
 
 ## Etapa 2 — Área de trabalho (v0.12.0)
@@ -113,3 +113,18 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Testes**: `test_comparacao.py::test_espacial_frente_e_furo` (ponto, segmento do furo calculado, motivos de "sem posição", trajetória, unidades); E2E `geoop_espacial.cjs` com a **topografia real** como fundo (coordenadas calculadas da extensão, nenhuma no código): contagem de objetos, cor por classe, troca de analito sem reconstruir, clique em amostra de frente e em intervalo de furo → contexto e coordenada, camada desligada não seleciona, filtro do painel vale no 3D.
 
 **Limitações**: topografia no 3D limitada à vizinhança da seleção (desempenho); sem desenho de polígono para seleção espacial (filtros do painel cobrem nível/galeria/furo); testado com WebGL por software (SwiftShader) — conferir no PC do usuário.
+
+## Etapas 8 e 9 — Consulta e exportação (v0.17.0)
+**Etapa 8 — Consulta**
+- Nova faceta **Elemento analisado** (amostras com resultado de um analito); ordenação pelo **maior teor** de qualquer analito escolhido (no servidor, sem valor no fim); **colunas configuráveis** (nível, galeria, trecho/local, furo e profundidade, coordenadas, coleta, litologia, alteração, mineralização, laboratório/certificado).
+- **Navegação a partir da amostra** (painel de contexto → "Ir para"): tracks da galeria (aplica o filtro da galeria e mantém a amostra destacada), perfil do furo, 3D, ficha de mapeamento, cadastro de amostras. A seleção continua a mesma em todas as abas.
+
+**Etapa 9 — Exportação** (menu "Exportar" no topo; sempre com a seleção atual)
+- **Tabela CSV** (filtros no cabeçalho) e **Excel** com aba "Amostras" (valor como no laudo + valor numérico da regra de LD em colunas separadas) e aba **"Metadados"** (GeoMina e versão, data, usuário, mina, sistema de coordenadas, filtros, regra de LD, observações).
+- **GeoPackage** (OGC 1.3, escrito direto em SQLite, sem GDAL) e **GeoJSON**: amostras de frente como POINT Z e amostras de furo como LINESTRING Z (de → até na trajetória), no sistema da mina, com atributos e os analitos (laudo, valor, unidade). Validado com GDAL (pyogrio) fora do aplicativo: tipos, CRS EPSG:31983 e campos lidos corretamente.
+- **Relatório da seleção** para imprimir ou salvar como PDF: cabeçalho (mina, data, usuário, sistema), filtros, contagem por status, estatísticas por analito e tabela das amostras (até 1.000; a lista completa vai no Excel). Na impressão só o relatório aparece.
+- **Imagens**: tracks e perfis (SVG/PNG, já existiam), gráficos da comparação (SVG/PNG) e vista 3D (PNG).
+
+**Testes**: `test_comparacao.py` +1 (ordem por valor, faceta elemento, Excel lido de volta com metadados, GeoJSON e GeoPackage lidos de volta — cabeçalho GP, SRS, geometrias Z e atributos); E2E `geoop_consulta.cjs` (5 cenários: ordenação/colunas/elemento; navegação galeria → furo → 3D; CSV, Excel, GeoPackage, GeoJSON e PNG do 3D; SVG da comparação; relatório com impressão).
+
+**Limitações**: Shapefile não é gerado (GeoPackage é o formato recomendado; o QGIS converte se precisar); o relatório em PDF usa a impressão do navegador (sem gráficos embutidos — exporte as imagens).
