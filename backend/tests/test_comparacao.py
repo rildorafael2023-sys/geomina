@@ -134,3 +134,22 @@ def test_consulta_ordem_por_valor_faceta_elemento_e_exportacoes(cliente, h, tmp_
     assert shapely.from_wkb(blob[8:]).coords[:] == [(500100, 7800000, 590), (500100, 7800000, 588)] and (cod, cr) == ("BMT-TS-1", 900)
     pts = {c: shapely.from_wkb(b[8:]).coords[0] for b, c in db.execute("SELECT geom, amostra FROM amostras_frente")}
     assert pts == {"BS-RP-1": (500000, 7800000, 500), "BS-RP-2": (500001, 7800000, 501)}
+
+
+def test_exportacao_ignora_analito_inexistente_ou_malicioso(cliente, h, tmp_path):
+    import sqlite3
+    m = cliente.post(f"{API}/minas", headers=h, json={"codigo": "MINA01", "nome": "Mina", "srid_trabalho": 31983}).json()
+    cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": "BS-RP-1", "x": 1, "y": 2, "z": 3, "srid": 31983})
+    q = cliente.post(f"{API}/minas/{m['id']}/laudos", headers=h, files={"arquivo": ("l.csv", b"Amostra;Tipo;Cr (ppm)\nBS-RP-1;SMP;5\n")}).json()
+    cliente.post(f"{API}/importacoes/{q['id']}/confirmar-laudo", headers=h, json={"certificado": "C"})
+    malicioso = 'Cr,x" TEXT); DROP TABLE gpkg_contents; --'
+    r = cliente.get(f"{API}/minas/{m['id']}/geoop/espacial.gpkg", headers=h, params={"analitos": malicioso})
+    assert r.status_code == 200
+    arq = tmp_path / "a.gpkg"
+    arq.write_bytes(r.content)
+    db = sqlite3.connect(arq)
+    assert db.execute("SELECT count(*) FROM gpkg_contents").fetchone()[0] == 2
+    colunas = [c[1] for c in db.execute("PRAGMA table_info(amostras_frente)")]
+    assert "Cr_valor" in colunas and not any("DROP" in c for c in colunas)
+    r = cliente.get(f"{API}/minas/{m['id']}/geoop/registros.xlsx", headers=h, params={"analitos": "Cr,NaoExiste"})
+    assert r.status_code == 200

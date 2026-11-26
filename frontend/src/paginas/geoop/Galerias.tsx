@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api, baixar, ErroApi, json, type Mina } from "../../api/cliente";
 import { classe, coresClasses, limites, rotulos } from "../../geologia/classes";
-import { valorCor, type Dados } from "../analise/Longitudinal";
+import { valorCor, type Dados } from "./tipos";
 import { PlantaGaleria } from "./PlantaGaleria";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 import { ConfigTrack } from "./tracks/ConfigTrack";

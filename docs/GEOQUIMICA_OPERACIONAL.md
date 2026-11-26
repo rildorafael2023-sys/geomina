@@ -31,7 +31,7 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 | 7 | Visualização espacial 3D integrada | ✅ v0.16.0 |
 | 8 | Consulta completa | ✅ v0.17.0 |
 | 9 | Exportação (CSV/Excel/PDF/imagens/GIS) | ✅ v0.17.0 |
-| 10 | Testes e auditoria final | pendente |
+| 10 | Testes e auditoria final | ✅ v0.18.0 |
 
 ## Etapa 2 — Área de trabalho (v0.12.0)
 **Desenvolvido**
@@ -128,3 +128,33 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Testes**: `test_comparacao.py` +1 (ordem por valor, faceta elemento, Excel lido de volta com metadados, GeoJSON e GeoPackage lidos de volta — cabeçalho GP, SRS, geometrias Z e atributos); E2E `geoop_consulta.cjs` (5 cenários: ordenação/colunas/elemento; navegação galeria → furo → 3D; CSV, Excel, GeoPackage, GeoJSON e PNG do 3D; SVG da comparação; relatório com impressão).
 
 **Limitações**: Shapefile não é gerado (GeoPackage é o formato recomendado; o QGIS converte se precisar); o relatório em PDF usa a impressão do navegador (sem gráficos embutidos — exporte as imagens).
+
+## Etapa 10 — Testes e auditoria final (v0.18.0)
+**Correções da auditoria**
+- Segurança: na exportação (GeoPackage/Excel/GeoJSON) os analitos pedidos passam a ser conferidos contra o cadastro de analitos — o código vira nome de coluna no GeoPackage e um texto malicioso podia corromper o arquivo exportado (o banco da mina nunca esteve exposto). Teste com nome malicioso acrescentado.
+- Limpeza: removida a tela antiga "Teores na galeria" (`analise/Longitudinal.tsx`, `ConsultaAmostra.tsx`), substituída pela área de trabalho; tipos movidos para `geoop/tipos.ts`; `SemLocal` movido para `geoop/`.
+- Todas as rotas novas (geoop, sondagem, layouts, topografia) exigem login e permissão (verificado por inspeção automática das rotas).
+
+**Critérios de aceitação do prompt (§22)**
+| Critério | Situação |
+|---|---|
+| Dados reais do banco | ✅ todas as telas leem o banco; laudos reais: 66 amostras / 3.168 resultados / 48 analitos visíveis |
+| Filtros funcionais (encadeados) | ✅ facetas calculadas no servidor com contagens |
+| Tracks configuráveis | ✅ faixa/barras/pontos, escala, limites, classes, cores, altura, ordem, layouts salvos |
+| Geometria real / distância longitudinal acumulada | ⚠️ **substituído pela decisão U1 do usuário** (sem eixo de distância; colunas na sequência da galeria). O chainage 3D continua calculado (E10) para topografia e 3D |
+| Sincronização entre tracks, escalas independentes | ✅ zoom/deslocamento/seleção comuns; escala própria por track |
+| Integra geologia, amostras, tabelas, consulta | ✅ tracks geológicos, painel de contexto, tabela integrada |
+| Análise de sondagens, profundidades reais, survey | ✅ curvatura mínima; estimada identificada |
+| Comparação | ✅ grupos, estatísticas, boxplot, histograma, dispersão, correlação |
+| Visualização espacial integrada | ✅ 3D com seleção sincronizada |
+| Exportação | ✅ CSV, Excel com metadados, GeoPackage, GeoJSON, relatório PDF, imagens |
+| Nada fictício | ✅ abas sem dados informam a falta; nenhum dado de exemplo |
+| Testes, funcionalidades anteriores preservadas, documentação | ✅ 202 testes de servidor, 13 de interface, 14 suítes ponta a ponta (todas as anteriores passando) |
+
+**Limitações conhecidas (documentadas)**
+- Sem dados reais de sondagem (importação genérica; ajustar ao formato da mina quando os arquivos chegarem).
+- Geologia ao longo da galeria é pontual (amostra/ficha); não há trechos mapeados contínuos.
+- Muitos locais da planilha de campo ainda precisam ser ligados às galerias e seus ramos (pendência P9).
+- 3D testado com WebGL por software; conferir no PC do usuário.
+- Shapefile não é exportado (GeoPackage recomendado).
+- Edição manual de survey/intervalos de furo pela tela ainda não existe (via importação).

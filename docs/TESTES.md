@@ -125,6 +125,8 @@
 | 2026-11-26 | GO-8/9 | `pytest`: 201 (+1 consulta/exportações lidas de volta); GeoPackage e GeoJSON validados com GDAL/pyogrio fora do aplicativo (POINT Z / LINESTRING Z, EPSG:31983) | **aprovados** | |
 | 2026-11-26 | GO-8/9 | E2E `geoop_consulta.cjs` (5 cenários) + regressão das outras 13 suítes (seletores de "Exportar" atualizados) | **aprovados** | |
 
+| 2026-11-26 | GO-10 | Auditoria final: `pytest` 202 (+1 analito malicioso na exportação); inspeção automática de permissões das rotas novas; regressão completa das 14 suítes ponta a ponta | **aprovados** | exportação aceitava nome de analito arbitrário como coluna (corrigido); código morto removido |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 
 import { classe, textoSobre } from "../../../geologia/classes";
-import type { Dados, Valor } from "../../analise/Longitudinal";
+import type { Dados, Valor } from "../tipos";
 import { ALTURA_PX, NOME_GEO, type Track, type TrackAnalito } from "./tipos";
 
 export type Amostra = Dados["amostras"][number] & {

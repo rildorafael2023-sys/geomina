@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, ErroApi, json, type Eu, type Mina } from "../../api/cliente";
-import { SemLocal } from "../analise/SemLocal";
+import { SemLocal } from "./SemLocal";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 
 const COR_STATUS: Record<string, string> = { com_resultado: "teal", aguardando: "yellow", sem_envio: "gray", so_laudo: "orange", cancelada: "red" };

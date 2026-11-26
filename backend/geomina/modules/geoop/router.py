@@ -353,6 +353,14 @@ def _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito
 
 
 # ------------------------------------------------------------------ exportações (Excel, GeoJSON, GeoPackage)
+def _analitos_validos(db: Session, analitos: str) -> list[str]:
+    """Só códigos de analitos que existem no cadastro (vindos dos laudos): o nome vira coluna no GeoPackage/Excel."""
+    from geomina.modules.geoquimica.models import Analito
+    pedidos = [a for a in analitos.split(",") if a]
+    existentes = set(db.scalars(select(Analito.codigo).where(Analito.codigo.in_(pedidos)))) if pedidos else set()
+    return [a for a in pedidos if a in existentes]
+
+
 def _filtros_texto(request: Request) -> str:
     q = request.query_params
     partes = [f"{k}={v}" for k, v in q.items() if v and k not in ("analitos", "regra_ld", "pagina", "tamanho", "ordem")]
@@ -370,7 +378,7 @@ def exportar_xlsx(mina_id: uuid.UUID, request: Request, analitos: str = "", text
     from geomina.modules.geoop import exportacao as X
     regs, _ = _consulta(request, db, mina_id, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
     regs.sort(key=lambda r: r["codigo"] or "")
-    lista = [a for a in analitos.split(",") if a]
+    lista = _analitos_validos(db, analitos)
     mina = db.get(Mina, mina_id)
     meta = {"mina": f"{mina.codigo} — {mina.nome}", "srid": mina.srid_trabalho, "filtros": _filtros_texto(request), "regra_ld": regra_ld, "usuario": u.nome}
     return _anexo(X.xlsx(regs, S.valores(db, mina_id, regs, lista, regra_ld), lista, meta, S.STATUS), "geoquimica_amostras.xlsx",
@@ -382,8 +390,9 @@ def exportar_geojson(mina_id: uuid.UUID, request: Request, analitos: str = "", t
                      data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
                      regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> Response:
     from geomina.modules.geoop import exportacao as X
-    c = _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
-    return _anexo(X.geojson(c, [a for a in analitos.split(",") if a], _filtros_texto(request)), "geoquimica_amostras.geojson", "application/geo+json")
+    lista = _analitos_validos(db, analitos)
+    c = _cena(mina_id, request, db, ",".join(lista), texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    return _anexo(X.geojson(c, lista, _filtros_texto(request)), "geoquimica_amostras.geojson", "application/geo+json")
 
 
 @router.get("/minas/{mina_id}/geoop/espacial.gpkg")
@@ -391,5 +400,6 @@ def exportar_gpkg(mina_id: uuid.UUID, request: Request, analitos: str = "", text
                   data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
                   regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> Response:
     from geomina.modules.geoop import exportacao as X
-    c = _cena(mina_id, request, db, analitos, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
-    return _anexo(X.gpkg(c, [a for a in analitos.split(",") if a], _filtros_texto(request)), "geoquimica_amostras.gpkg", "application/geopackage+sqlite3")
+    lista = _analitos_validos(db, analitos)
+    c = _cena(mina_id, request, db, ",".join(lista), texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    return _anexo(X.gpkg(c, lista, _filtros_texto(request)), "geoquimica_amostras.gpkg", "application/geopackage+sqlite3")
