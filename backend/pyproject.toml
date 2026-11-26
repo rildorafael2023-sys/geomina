@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "geomina"
-version = "0.18.0"
+version = "0.19.0"
 description = "GeoMina — gestão de dados geológicos de mina subterrânea (aplicativo local)"
 requires-python = ">=3.11"
 dependencies = [

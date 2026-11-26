@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.18.0 · **Etapa atual:** Geoquímica Operacional concluída (10 etapas); próximas: relatórios gerais, validação integrada, instalador .exe, captura offline no tablet. Usuário autorizou executar todas as etapas em sequência.
+**Última atualização:** 2026-11-26 · **Versão:** 0.19.0 · **Etapa atual:** E17 Relatórios gerais concluída; próximas: validação integrada (E18), instalador .exe e backup agendado (E19), captura offline no tablet (E20). Usuário autorizou executar todas as etapas em sequência.
 
 ## Etapas
 
@@ -17,7 +17,20 @@
 | E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
 | E11 Teores na galeria | ✅ Concluída e testada (v0.11.0) |
 | **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | ✅ Concluída (v0.18.0) — ver GEOQUIMICA_OPERACIONAL.md |
-| E12 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+| E17 Relatórios gerais | ✅ Concluída e testada (v0.19.0) |
+| E18 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+
+## Entregue na E17 (versão 0.19.0) — relatórios gerais
+Novo item de menu **Relatórios** (quem lê mapeamento ou o histórico):
+
+| Relatório | Formato | Teste |
+|---|---|---|
+| **Produção por período**: fichas, fichas aprovadas, amostras coletadas (e quantas já têm resultado), certificados e resultados recebidos, por mês; por geólogo/responsável; pendências atuais (fichas em rascunho, aguardando revisão, amostras sem resultado) | tela, Excel, imprimir/PDF | API + E2E |
+| **Fichas de mapeamento** com os mesmos filtros da lista (local com subunidades, situação, litologia, datas, texto) | Excel com abas Fichas, Intervalos, Estruturas, Amostras citadas e Metadados; CSV por tabela (`;` e vírgula decimal) | API + E2E |
+| **Histórico de alterações** (assunto, período) com valores antes/depois | CSV (até 50.000 linhas) | API + E2E |
+| Geoquímica | atalho para as exportações e o relatório da seleção da Geoquímica operacional | E2E |
+
+Datas usadas: ficha = data do mapeamento; amostra = data de coleta; laudo = emissão do certificado (ou a importação, quando o laudo não traz emissão). Amostras sem data de coleta são informadas à parte.
 
 ## Geoquímica Operacional — Etapa 2 (versão 0.12.0)
 Detalhes em `GEOQUIMICA_OPERACIONAL.md`. Resumo: área de trabalho em tela inteira (abas, filtros encadeados com contagens, área analítica, painel de contexto), base da análise por **resultado do laudo** (todos os resultados utilizáveis, inclusive de amostras não cadastradas), conciliação laudo × cadastro (sub-amostras herdam o ponto). Com os laudos reais: 66 amostras, 3.168 resultados e 48 analitos agora visíveis (antes: 17 amostras).

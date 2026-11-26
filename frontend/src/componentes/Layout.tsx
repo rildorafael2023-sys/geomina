@@ -19,6 +19,7 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/geoop", rotulo: "Geoquímica operacional", visivel: usuario.permissoes.includes("geoquimica:ler") },
     { para: "/geoquimica", rotulo: "Laboratório (laudos)", visivel: usuario.permissoes.includes("geoquimica:ler") },
     { para: "/topografia", rotulo: "Topografia", visivel: usuario.permissoes.includes("topografia:ler") },
+    { para: "/relatorios", rotulo: "Relatórios", visivel: usuario.permissoes.includes("mapeamento:ler") || usuario.permissoes.includes("auditoria:ler") },
     { para: "/documentos", rotulo: "Fotos e croquis", visivel: usuario.permissoes.includes("arquivo:ler") },
     { para: "/dicionarios", rotulo: "Dicionários", visivel: true },
     { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },

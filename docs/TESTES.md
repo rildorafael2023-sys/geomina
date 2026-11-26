@@ -135,3 +135,4 @@
 - Desempenho com volume real de dados: E2E completo da topografia real (incluindo a importação de 44 mil feições e o desenho de ~21 mil na planta) em 14 s no ambiente de testes; não medido em PC/tablet do usuário.
 - 3D com a placa de vídeo do PC do usuário (aqui só WebGL por software).
 - Topografia no Windows (Edge) e desenho da planta em tablet (toque/pinça ainda não tem zoom por gesto).
+| 2026-11-26 | E17 | `pytest` (inclui `test_relatorios.py`: fichas em Excel/CSV, produção por período, histórico CSV e permissões) + E2E `e2e/relatorios.cjs` (4 cenários: produção com período e impressão, fichas com filtro e CSV de estruturas, histórico CSV, celular 390 px) + regressão das outras 14 suítes + vitest 13 | **aprovados** | expectativa do teste ajustada: certificado sem data de emissão conta no mês da importação |

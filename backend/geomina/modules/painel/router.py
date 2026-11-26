@@ -174,19 +174,7 @@ class PaginaAuditoria(BaseModel):
     itens: list[dict]
 
 
-@router.get("/auditoria", response_model=PaginaAuditoria)
-def consultar_auditoria(
-    tabela: str | None = None,
-    operacao: str | None = Query(default=None, pattern="^[IUDBR]$"),
-    usuario_id: uuid.UUID | None = None,
-    de: date | None = None,
-    ate: date | None = None,
-    texto: str | None = Query(default=None, max_length=100),
-    pagina: int = Query(default=1, ge=1),
-    tamanho: int = Query(default=50, ge=1, le=200),
-    _u: Usuario = Depends(requer("auditoria:ler")),
-    db: Session = Depends(obter_sessao),
-):
+def _filtros_auditoria(tabela, operacao, usuario_id, de, ate, texto):
     filtros = []
     if tabela:
         filtros.append(Auditoria.tabela == tabela)
@@ -204,7 +192,23 @@ def consultar_auditoria(
         padrao = f"%{texto}%"
         filtros.append(or_(cast(Auditoria.depois, String).like(padrao), cast(Auditoria.antes, String).like(padrao),
                            Auditoria.registro_id.like(padrao)))
-    cond = and_(*filtros) if filtros else true()
+    return and_(*filtros) if filtros else true()
+
+
+@router.get("/auditoria", response_model=PaginaAuditoria)
+def consultar_auditoria(
+    tabela: str | None = None,
+    operacao: str | None = Query(default=None, pattern="^[IUDBR]$"),
+    usuario_id: uuid.UUID | None = None,
+    de: date | None = None,
+    ate: date | None = None,
+    texto: str | None = Query(default=None, max_length=100),
+    pagina: int = Query(default=1, ge=1),
+    tamanho: int = Query(default=50, ge=1, le=200),
+    _u: Usuario = Depends(requer("auditoria:ler")),
+    db: Session = Depends(obter_sessao),
+):
+    cond = _filtros_auditoria(tabela, operacao, usuario_id, de, ate, texto)
     total = db.scalar(select(func.count()).select_from(Auditoria).where(cond)) or 0
     linhas = db.execute(select(Auditoria, Usuario.nome).outerjoin(Usuario, Usuario.id == Auditoria.usuario_id)
                         .where(cond).order_by(Auditoria.id.desc()).offset((pagina - 1) * tamanho).limit(tamanho))
@@ -220,3 +224,34 @@ def consultar_auditoria(
 def tabelas_auditadas(_u: Usuario = Depends(requer("auditoria:ler")), db: Session = Depends(obter_sessao)):
     usadas = db.scalars(select(Auditoria.tabela).distinct()).all()
     return [{"valor": t, "rotulo": NOMES_TABELAS.get(t, t)} for t in sorted(usadas)]
+
+
+@router.get("/auditoria.csv")
+def exportar_auditoria(
+    tabela: str | None = None,
+    operacao: str | None = Query(default=None, pattern="^[IUDBR]$"),
+    usuario_id: uuid.UUID | None = None,
+    de: date | None = None,
+    ate: date | None = None,
+    texto: str | None = Query(default=None, max_length=100),
+    _u: Usuario = Depends(requer("auditoria:ler")),
+    db: Session = Depends(obter_sessao),
+):
+    """Histórico de alterações em CSV (no máximo 50.000 linhas, as mais recentes), com os mesmos filtros da tela."""
+    import csv
+    import io
+    import json
+
+    from fastapi.responses import Response
+    cond = _filtros_auditoria(tabela, operacao, usuario_id, de, ate, texto)
+    s = io.StringIO()
+    w = csv.writer(s, delimiter=";", lineterminator="\n")
+    w.writerow(["Quando", "Usuário", "Operação", "Tabela", "Registro", "Resumo", "Origem", "Antes", "Depois"])
+    linhas = db.execute(select(Auditoria, Usuario.nome).outerjoin(Usuario, Usuario.id == Auditoria.usuario_id)
+                        .where(cond).order_by(Auditoria.id.desc()).limit(50000))
+    for a, nome in linhas:
+        js = lambda v: json.dumps(v, ensure_ascii=False, default=str) if v is not None else ""  # noqa: E731
+        w.writerow([a.ocorrido_em.astimezone().strftime("%d/%m/%Y %H:%M:%S"), nome or "", OPERACOES.get(a.operacao, a.operacao),
+                    NOMES_TABELAS.get(a.tabela, a.tabela), a.registro_id or "", _resumo(a), a.origem or "", js(a.antes), js(a.depois)])
+    return Response(("\ufeff" + s.getvalue()).encode("utf-8"), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="historico_alteracoes.csv"'})

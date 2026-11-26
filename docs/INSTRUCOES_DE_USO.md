@@ -140,7 +140,14 @@ Menu **Geoquímica operacional**. A tela usa toda a largura: o botão ☰ no top
 - **Visualização espacial (3D)**: mostra a seleção do painel — amostras de frente (bolinhas), intervalos de furo (cilindros), trajetórias (tracejado = estimada) e a topografia em volta. Escolha o analito da cor, as classes e as cores; ligue/desligue camadas. Arrastar = girar, botão direito = deslocar, roda = zoom, **Enquadrar** volta. Clique numa amostra para abri-la no painel de contexto; a coordenada real do ponto clicado aparece embaixo. "Sem posição" lista o que não pôde ser desenhado e por quê.
 - **Laboratório (laudos)** (menu): importação de laudos, certificados e QA/QC (antiga tela "Geoquímica").
 
-## 18. Segurança dos dados
+## 18. Relatórios
+Menu **Relatórios**:
+- **Produção por período**: escolha "De" e "Até"; veja por mês as fichas, amostras coletadas (e quantas já têm resultado), certificados e resultados recebidos, o total por geólogo e as pendências (fichas em rascunho, aguardando revisão, amostras sem resultado). Botões **Planilha Excel** e **Imprimir / salvar PDF**.
+- **Fichas de mapeamento**: filtre por local, situação, litologia, datas ou texto; **Planilha Excel** traz fichas, intervalos, estruturas e amostras citadas em abas separadas; ou baixe uma dessas tabelas em CSV.
+- **Histórico de alterações**: CSV com quem alterou o quê e quando (valores antes e depois).
+- **Geoquímica**: as exportações ficam na Geoquímica operacional (usam os filtros de lá).
+
+## 19. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.

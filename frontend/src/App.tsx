@@ -20,6 +20,7 @@ import { Mapeamento } from "./paginas/mapeamento/Mapeamento";
 import { Instalacao } from "./paginas/Instalacao";
 import { Login } from "./paginas/Login";
 import { Sistema } from "./paginas/Sistema";
+import { Relatorios } from "./paginas/Relatorios";
 import { TrocarSenha } from "./paginas/TrocarSenha";
 import { Usuarios } from "./paginas/Usuarios";
 
@@ -71,6 +72,7 @@ export function App() {
         {usuario.permissoes.includes("geoquimica:ler") && <Route path="/geoop/*" element={<GeoOp eu={usuario} />} />}
         <Route path="/longitudinal" element={<Navigate to="/geoop/galerias" replace />} />
         {usuario.permissoes.includes("topografia:ler") && <Route path="/topografia" element={<Topografia eu={usuario} />} />}
+        {(usuario.permissoes.includes("mapeamento:ler") || usuario.permissoes.includes("auditoria:ler")) && <Route path="/relatorios" element={<Relatorios eu={usuario} />} />}
         {usuario.permissoes.includes("arquivo:ler") && <Route path="/documentos" element={<Documentos eu={usuario} />} />}
         <Route path="/dicionarios" element={<Dicionarios podeEditar={usuario.permissoes.includes("dicionario:configurar")} />} />
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}
