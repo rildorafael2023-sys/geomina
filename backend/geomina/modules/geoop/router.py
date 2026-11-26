@@ -205,3 +205,57 @@ def excluir_layout(layout_id: uuid.UUID, u: Usuario = Depends(LER), db: Session 
         raise ErroAplicacao(403, "sem_permissao", "Só quem criou o layout pode excluí-lo.")
     db.delete(x)
     db.flush()
+
+
+# ------------------------------------------------------------------ comparação (estatística por grupo)
+class Grupo(BaseModel):
+    nome: str = Field(min_length=1, max_length=80)
+    filtros: dict[str, list[str]] = {}
+    texto: str | None = None
+    data_de: date | None = None
+    data_ate: date | None = None
+
+
+class PedidoComparacao(BaseModel):
+    grupos: list[Grupo] = Field(min_length=1, max_length=12)
+    analitos: list[str] = Field(min_length=1, max_length=20)
+    regra_ld: str = "limite"
+    incluir_limite: bool = Field(False, description="incluir nas estatísticas os valores no limite (<LD/>LS) pela regra escolhida")
+
+
+@router.post("/minas/{mina_id}/geoop/comparacao")
+def comparar(mina_id: uuid.UUID, e: PedidoComparacao, _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
+    """Estatística por grupo e analito, com os valores de cada amostra (para histograma, boxplot e dispersão)."""
+    if db.get(Mina, mina_id) is None:
+        raise ErroAplicacao(404, "nao_encontrado", "Mina não encontrada.")
+    from geomina.modules.geoop import estatistica as E
+    regs = S.registros(db, mina_id)
+    saida = []
+    for g in e.grupos:
+        filtros = {f: set(g.filtros.get(f, [])) for f in S.FACETAS}
+        sel, _ = S.filtrar(db, mina_id, regs, filtros, g.texto, g.data_de, g.data_ate, None, e.regra_ld)
+        vals = S.valores(db, mina_id, sel, e.analitos, e.regra_ld)
+        por_an = {}
+        for a in e.analitos:
+            pontos, n_lim, n_sem = [], 0, 0
+            for r in sel:
+                v = vals.get(r["chave"], {}).get(a)
+                if not v or v["y"] is None:
+                    n_sem += 1
+                    continue
+                if v["situacao"] != "medido":
+                    n_lim += 1
+                    if not e.incluir_limite:
+                        continue
+                pontos.append({"chave": r["chave"], "codigo": r["codigo"], "y": v["y"], "texto": v["texto"], "limite": v["situacao"] != "medido"})
+            unidade = next((vals[r["chave"]][a]["unidade"] for r in sel if a in vals.get(r["chave"], {})), None)
+            por_an[a] = {"unidade": unidade, "estatistica": E.descrever([p["y"] for p in pontos]), "no_limite": n_lim, "sem_valor": n_sem,
+                         "pontos": pontos}
+        mapa = {a: {p["chave"]: p["y"] for p in por_an[a]["pontos"]} for a in e.analitos}
+        chaves = [r["chave"] for r in sel]
+        corr = {f"{a}|{b}": E.correlacao([mapa[a].get(k) for k in chaves], [mapa[b].get(k) for k in chaves])
+                for i, a in enumerate(e.analitos) for b in e.analitos[i + 1:]}
+        saida.append({"nome": g.nome, "filtros": {k: v for k, v in g.filtros.items() if v}, "texto": g.texto,
+                      "data_de": g.data_de, "data_ate": g.data_ate, "amostras": len(sel), "analitos": por_an, "correlacao": corr})
+    return {"grupos": saida, "regra_ld": e.regra_ld, "incluir_limite": e.incluir_limite,
+            "observacao": "Estatísticas só com valores medidos" if not e.incluir_limite else "Valores no limite incluídos pela regra escolhida"}

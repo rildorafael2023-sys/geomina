@@ -21,13 +21,14 @@ from geomina.modules.dicionarios.models import Termo
 from geomina.modules.estrutura.models import TipoUnidade, UnidadeOperacional
 from geomina.modules.geoquimica.models import Analito, Certificado, Laboratorio, Resultado
 from geomina.modules.mapeamento.models import Mapeamento
+from geomina.modules.sondagem.models import Furo
 
 STATUS = {"com_resultado": "Com resultado", "aguardando": "Enviada, aguardando laudo", "sem_envio": "Coletada, não enviada",
           "so_laudo": "Só no laudo (amostra não cadastrada)", "cancelada": "Cancelada"}
 SUFIXO = re.compile(r"^((?:BS-RP|BMT-TS)-\d+)([A-Z]{1,3})$")
 
 # facetas: nome → (rótulo, função que devolve [(valor, rótulo)] do registro)
-FACETAS = ("nivel", "galeria", "trecho", "campanha", "responsavel", "litologia", "alteracao", "mineralizacao", "tipo",
+FACETAS = ("nivel", "galeria", "trecho", "furo", "campanha", "responsavel", "litologia", "alteracao", "mineralizacao", "tipo",
            "laboratorio", "certificado", "status", "serie", "cadastro")
 
 
@@ -58,11 +59,12 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
     """Um registro por amostra analítica: cadastrada (com ou sem resultado) ou código que só aparece no laudo."""
     uni = _unidades(db, mina_id)
     Lit, Alt, Mi = aliased(Termo), aliased(Termo), aliased(Termo)
-    q = (select(Amostra, Lit, Alt, Mi, Campanha, TipoAmostra.id, TipoAmostra.nome, Usuario.nome, Mapeamento.numero)
+    q = (select(Amostra, Lit, Alt, Mi, Campanha, TipoAmostra.id, TipoAmostra.nome, Usuario.nome, Mapeamento.numero, Furo.codigo)
          .outerjoin(Lit, Lit.id == Amostra.litologia_id).outerjoin(Alt, Alt.id == Amostra.alteracao_id)
          .outerjoin(Mi, Mi.id == Amostra.mineralizacao_id).outerjoin(Campanha, Campanha.id == Amostra.campanha_id)
          .outerjoin(TipoAmostra, TipoAmostra.id == Amostra.tipo_id).outerjoin(Usuario, Usuario.id == Amostra.geologo_id)
-         .outerjoin(Mapeamento, Mapeamento.id == Amostra.mapeamento_id).where(Amostra.mina_id == mina_id))
+         .outerjoin(Mapeamento, Mapeamento.id == Amostra.mapeamento_id).outerjoin(Furo, Furo.id == Amostra.furo_id)
+         .where(Amostra.mina_id == mina_id))
     # resumo dos resultados SMP por amostra ligada e por código não ligado
     rq = (select(Resultado.amostra_id, Resultado.codigo_canonico, Resultado.codigo_laboratorio, Laboratorio.id, Laboratorio.nome,
                  Certificado.id, Certificado.codigo, Analito.codigo)
@@ -80,7 +82,7 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
         r["codigo_lab"] = r["codigo_lab"] or (canon or cod_lab)
     termo = lambda t: {"id": str(t.id), "nome": t.nome, "cor": t.cor} if t else None  # noqa: E731
     out = []
-    for a, lit, alt, mi, camp, tid, tnome, geo, ficha in db.execute(q):
+    for a, lit, alt, mi, camp, tid, tnome, geo, ficha, furo_cod in db.execute(q):
         r = res.pop(a.id, None)
         if a.estado == "cancelada":
             st = "cancelada"
@@ -98,7 +100,7 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
             "tipo": {"id": str(tid), "nome": tnome} if tid else None,
             "litologia": termo(lit), "alteracao": termo(alt), "mineralizacao": termo(mi),
             "ficha": {"id": str(a.mapeamento_id), "numero": ficha} if a.mapeamento_id else None,
-            "secao_de_m": a.secao_de_m, "secao_ate_m": a.secao_ate_m, "furo": a.furo, "prof_de_m": a.prof_de_m, "prof_ate_m": a.prof_ate_m,
+            "secao_de_m": a.secao_de_m, "secao_ate_m": a.secao_ate_m, "furo": a.furo, "furo_ref": {"id": str(a.furo_id), "codigo": furo_cod} if a.furo_id else None, "prof_de_m": a.prof_de_m, "prof_ate_m": a.prof_ate_m,
             "descricao": a.descricao, "estado": a.estado, "status": st,
             "laboratorios": r["lab"] if r else {}, "certificados": r["cert"] if r else {}, "analitos": sorted(r["analitos"]) if r else [],
             "n_resultados": r["n"] if r else 0, "codigo_laboratorio": r["codigo_lab"] if r else None})
@@ -108,7 +110,7 @@ def registros(db: Session, mina_id: uuid.UUID) -> list[dict]:
             "chave": chave, "amostra_id": None, "codigo": cod, "cadastrada": False, "serie": _serie(cod), "papel": "normal",
             "nivel": None, "galeria": None, "trecho": None, "unidade": None, "local": None, "x": None, "y": None, "z": None, "srid": None,
             "data": None, "campanha": None, "responsavel": None, "tipo": None, "litologia": None, "alteracao": None, "mineralizacao": None,
-            "ficha": None, "secao_de_m": None, "secao_ate_m": None, "furo": None, "prof_de_m": None, "prof_ate_m": None, "descricao": None,
+            "ficha": None, "secao_de_m": None, "secao_ate_m": None, "furo": None, "furo_ref": None, "prof_de_m": None, "prof_ate_m": None, "descricao": None,
             "estado": None, "status": "so_laudo", "laboratorios": r["lab"], "certificados": r["cert"], "analitos": sorted(r["analitos"]),
             "n_resultados": r["n"], "codigo_laboratorio": cod})
     return out
@@ -121,6 +123,8 @@ def _valores_faceta(r: dict, f: str) -> list[tuple[str, str]]:
     if f in ("litologia", "alteracao", "mineralizacao", "tipo", "responsavel"):
         t = r[f]
         return [(t["id"], t["nome"])] if t else [("_nenhum", "(não informado)")]
+    if f == "furo":
+        return [(r["furo_ref"]["id"], r["furo_ref"]["codigo"])] if r["furo_ref"] else [("_nenhum", "(sem furo)")]
     if f == "campanha":
         return [(r[f]["id"], r[f]["codigo"])] if r[f] else [("_nenhum", "(sem campanha)")]
     if f == "laboratorio":
