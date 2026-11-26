@@ -259,3 +259,73 @@ def comparar(mina_id: uuid.UUID, e: PedidoComparacao, _u: Usuario = Depends(LER)
                       "data_de": g.data_de, "data_ate": g.data_ate, "amostras": len(sel), "analitos": por_an, "correlacao": corr})
     return {"grupos": saida, "regra_ld": e.regra_ld, "incluir_limite": e.incluir_limite,
             "observacao": "Estatísticas só com valores medidos" if not e.incluir_limite else "Valores no limite incluídos pela regra escolhida"}
+
+
+# ------------------------------------------------------------------ visualização espacial
+@router.get("/minas/{mina_id}/geoop/espacial")
+def espacial(mina_id: uuid.UUID, request: Request, analitos: str = "", texto: str | None = None, data_de: date | None = None,
+             data_ate: date | None = None, teor_analito: str | None = None, teor_min: float | None = None, teor_max: float | None = None,
+             regra_ld: str = "limite", _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
+    """Amostras da seleção com posição no sistema da mina: frente = ponto (X/Y/Z medidos); furo = segmento de/até sobre a
+    trajetória. Conversão de sistema só com transformação aprovada; nada sem posição é inventado (lista à parte)."""
+    import numpy as np
+
+    from geomina.espacial import trajetoria as T
+    from geomina.modules.sondagem.models import Furo
+    from geomina.modules.sondagem.router import _trajetoria
+    from geomina.modules.topografia.router import _transformar_ponto
+    mina = db.get(Mina, mina_id)
+    regs, _ = _consulta(request, db, mina_id, texto, data_de, data_ate, teor_analito, teor_min, teor_max, regra_ld)
+    lista = [a for a in analitos.split(",") if a]
+    vals = S.valores(db, mina_id, regs, lista, regra_ld)
+    desloc_cache: dict = {}
+
+    def desloc(srid: int):
+        if srid not in desloc_cache:
+            d, _t, motivo = _transformar_ponto(db, mina, srid, [0.0, 0.0, 0.0])
+            desloc_cache[srid] = (np.array(d) if d is not None else None, motivo)
+        return desloc_cache[srid]
+    furos = {f.id: f for f in db.scalars(select(Furo).where(Furo.mina_id == mina_id))}
+    trajs = {}
+    for fid, f in furos.items():
+        t, falha = _trajetoria(db, f)
+        d, motivo = desloc(f.srid)
+        trajs[fid] = (t, d, falha or motivo)
+    ams = {a.id: a for a in db.scalars(select(Amostra).where(Amostra.mina_id == mina_id))}
+    pontos, segmentos, sem_pos = [], [], []
+    for r in regs:
+        base = {"chave": r["chave"], "codigo": r["codigo"], "valores": vals.get(r["chave"], {}), "status": r["status"],
+                "litologia": r["litologia"], "galeria": (r["galeria"] or {}).get("codigo")}
+        a = ams.get(uuid.UUID(r["amostra_id"])) if r["amostra_id"] else None
+        if a is not None and a.furo_id and a.prof_de_m is not None and a.prof_ate_m is not None and a.furo_id in trajs:
+            t, d, motivo = trajs[a.furo_id]
+            if t is None or d is None:
+                sem_pos.append({"codigo": r["codigo"], "motivo": motivo})
+                continue
+            p0, p1 = T.posicao(t, a.prof_de_m) + d, T.posicao(t, a.prof_ate_m) + d
+            segmentos.append({**base, "furo": furos[a.furo_id].codigo, "de": a.prof_de_m, "ate": a.prof_ate_m, "estimada": t.estimada,
+                              "xyz0": p0.round(3).tolist(), "xyz1": p1.round(3).tolist()})
+        elif a is not None and a.x is not None and a.y is not None:
+            d, motivo = desloc(a.srid or mina.srid_trabalho)
+            if d is None:
+                sem_pos.append({"codigo": r["codigo"], "motivo": motivo})
+                continue
+            if a.z is None:
+                sem_pos.append({"codigo": r["codigo"], "motivo": "sem cota (Z): não é posicionada em 3D"})
+                continue
+            pontos.append({**base, "xyz": (np.array([a.x, a.y, a.z]) + d).round(3).tolist()})
+        else:
+            sem_pos.append({"codigo": r["codigo"], "motivo": "sem coordenadas nem furo/profundidade" if r["cadastrada"] else "só no laudo (não cadastrada)"})
+    trajetorias = []
+    for fid, (t, d, _motivo) in trajs.items():
+        if t is not None and d is not None:
+            trajetorias.append({"id": str(fid), "codigo": furos[fid].codigo, "estimada": t.estimada, "motivo": t.motivo,
+                                "pontos": (T.densificar(t, 5.0) + d).round(3).tolist()})
+    todos = [p["xyz"] for p in pontos] + [s["xyz0"] for s in segmentos] + [q for t in trajetorias for q in t["pontos"][:1]]
+    origem = [round(float(np.mean([p[i] for p in todos]))) for i in range(3)] if todos else [0, 0, 0]
+    unidades = {}
+    for v in vals.values():
+        for an, x in v.items():
+            unidades.setdefault(an, x["unidade"])
+    return {"srid": mina.srid_trabalho, "origem": origem, "pontos": pontos, "segmentos": segmentos, "trajetorias": trajetorias,
+            "sem_posicao": sem_pos, "unidades": unidades, "total": len(regs)}

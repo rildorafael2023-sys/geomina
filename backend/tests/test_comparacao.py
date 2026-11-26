@@ -60,3 +60,26 @@ def test_comparacao_de_grupos_api(cliente, h):
     r = cliente.get(f"{API}/minas/{m['id']}/geoop/registros", headers=h).json()
     assert {o["rotulo"] for o in r["opcoes"]["furo"]} == {"(sem furo)"}, "faceta de furo existe"
     assert cliente.post(f"{API}/minas/{m['id']}/geoop/comparacao", headers=h, json={"analitos": [], "grupos": []}).status_code == 422
+
+
+def test_espacial_frente_e_furo(cliente, h):
+    m = cliente.post(f"{API}/minas", headers=h, json={"codigo": "MINA01", "nome": "Mina", "srid_trabalho": 31983}).json()
+    cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": "BS-RP-1", "x": 500000, "y": 7800000, "z": 500, "srid": 31983})
+    cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": "BS-RP-2", "x": 500010, "y": 7800000, "srid": 31983})  # sem Z
+    cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": "BS-RP-3", "x": 500046, "y": 7800044, "z": 500, "srid": 29193})
+    collar = "furo;x;y;z;azimute;dip;eoh\nF1;500100;7800000;600;0;-90;50\n"
+    am = "furo;amostra;de;ate\nF1;BMT-TS-1;10;12\n"
+    files = {"collar": ("c.csv", collar.encode()), "amostras": ("a.csv", am.encode())}
+    p = cliente.post(f"{API}/minas/{m['id']}/sondagem/importacoes", headers=h, files=files, data={"srid": "31983"}).json()
+    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-sondagem", headers=h, json={})
+    laudo = "Amostra;Tipo;Cr (ppm)\nBS-RP-1;SMP;500\nBMT-TS-1;SMP;900\nBS-RP-77;SMP;10\n"
+    q = cliente.post(f"{API}/minas/{m['id']}/laudos", headers=h, files={"arquivo": ("l.csv", laudo.encode())}).json()
+    cliente.post(f"{API}/importacoes/{q['id']}/confirmar-laudo", headers=h, json={"certificado": "C"})
+    d = cliente.get(f"{API}/minas/{m['id']}/geoop/espacial", headers=h, params={"analitos": "Cr"}).json()
+    assert [(x["codigo"], x["xyz"], x["valores"]["Cr"]["y"]) for x in d["pontos"]] == [("BS-RP-1", [500000, 7800000, 500], 500)]
+    s = d["segmentos"][0]
+    assert (s["codigo"], s["furo"], s["xyz0"], s["xyz1"], s["estimada"], s["valores"]["Cr"]["y"]) == ("BMT-TS-1", "F1", [500100, 7800000, 590], [500100, 7800000, 588], True, 900)
+    motivos = {x["codigo"]: x["motivo"] for x in d["sem_posicao"]}
+    assert "sem cota" in motivos["BS-RP-2"] and "nenhuma transformação aprovada" in motivos["BS-RP-3"] and motivos["BS-RP-77"].startswith("só no laudo")
+    assert d["trajetorias"][0]["codigo"] == "F1" and d["trajetorias"][0]["pontos"][-1] == [500100, 7800000, 550]
+    assert d["unidades"] == {"Cr": "ppm"} and d["srid"] == 31983
