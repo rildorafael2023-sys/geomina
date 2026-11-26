@@ -21,19 +21,20 @@ from geomina.modules.amostragem.models import Amostra
 from geomina.modules.arquivos.models import Arquivo
 from geomina.modules.auth.models import Usuario
 from geomina.modules.estrutura.models import FrenteAvanco, Mina, TipoUnidade, UnidadeOperacional
+from geomina.modules.geoquimica.models import Resultado
 from geomina.modules.mapeamento.models import Mapeamento
 
 router = APIRouter(tags=["painel e auditoria"])
 
 # Tabelas cujas alterações aparecem em "Atividades recentes" para qualquer usuário.
 TABELAS_PUBLICAS = ("mina", "unidade_operacional", "frente_avanco", "unidade_nivel", "arquivo", "mapeamento", "amostra",
-                    "lote_envio", "documento")
+                    "lote_envio", "documento", "certificado")
 NOMES_TABELAS = {
     "mina": "Mina", "unidade_operacional": "Unidade", "frente_avanco": "Avanço de frente",
     "unidade_nivel": "Vínculo de nível", "arquivo": "Arquivo", "usuario": "Usuário", "tipo_unidade": "Tipo de unidade",
     "regra_hierarquia": "Regra de hierarquia", "sistema": "Sistema", "mapeamento": "Ficha de mapeamento",
     "mapeamento_intervalo": "Intervalo de ficha", "medida_estrutural": "Medida estrutural",
-    "mapeamento_amostra": "Amostra de ficha", "amostra": "Amostra", "lote_envio": "Lote de envio", "importacao": "Importação",
+    "mapeamento_amostra": "Amostra de ficha", "amostra": "Amostra", "lote_envio": "Lote de envio", "importacao": "Importação", "certificado": "Certificado de laboratório",
     "documento": "Documento", "documento_versao": "Versão de documento", "documento_vinculo": "Vínculo de documento",
     "termo": "Termo de dicionário", "termo_sinonimo": "Sinônimo",
 }
@@ -150,6 +151,10 @@ def painel(u: Usuario = Depends(usuario_atual), db: Session = Depends(obter_sess
 
     if "amostra:ler" in perms:
         p.amostras = {e: n for e, n in db.execute(select(Amostra.estado, func.count()).group_by(Amostra.estado))}
+        com_resultado = select(Resultado.amostra_id).where(Resultado.amostra_id.is_not(None))
+        p.amostras["aguardando_resultado"] = db.scalar(select(func.count()).select_from(Amostra).where(
+            Amostra.estado == "enviada", Amostra.id.not_in(com_resultado))) or 0
+        p.amostras["com_resultado"] = db.scalar(select(func.count(func.distinct(Resultado.amostra_id)))) or 0
 
     if "arquivo:ler" in perms:
         n, tam = db.execute(select(func.count(), func.coalesce(func.sum(Arquivo.tamanho), 0))).one()

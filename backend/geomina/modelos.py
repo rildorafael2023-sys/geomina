@@ -14,6 +14,7 @@ from geomina.modules.estrutura.models import (  # noqa: F401
     UnidadeNivel,
     UnidadeOperacional,
 )
+from geomina.modules.geoquimica.models import Analito, Certificado, Laboratorio, MetodoAnalitico, Resultado  # noqa: F401
 from geomina.modules.mapeamento.models import (  # noqa: F401
     AmostraCitada,
     Intervalo,
