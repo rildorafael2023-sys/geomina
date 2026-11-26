@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.8.0
+# INSTRUÇÕES DE USO — versão 0.9.0
 
-> Descreve apenas o que está implementado e testado. Topografia e 3D ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. O 3D e os gráficos longitudinais ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -105,7 +105,29 @@ Menu **Geoquímica**.
 - **Certificados e QA/QC**: clique no certificado para ver a diferença entre duplicatas/replicatas e a amostra original (limite ajustável) e todas as linhas do laudo.
 - Na ficha de cada amostra (menu Amostras) aparecem os resultados do laboratório.
 
-## 15. Segurança dos dados
+## 15. Topografia
+Menu **Topografia**.
+- **Transformações de coordenadas** (fazer uma vez, antes de importar arquivos em SAD69): envie um .zip que tenha o **mesmo levantamento** nos dois sistemas (ex.: pastas SAD e SIRGAS). O GeoMina escolhe o par, calcula o deslocamento usado pela topografia da mina e mostra o resíduo. Um revisor clica em **Aprovar**.
+- **Importar shapefile**: envie o .zip (.shp, .shx, .dbf, .prj, .cpg). Escolha o arquivo, confira o sistema de coordenadas e as cotas, desmarque camadas do CAD que não quer, informe código e data e **Confirme**. Arquivo em SAD69: escolha a transformação (a calibrada vem marcada). Sem .prj: declare o sistema.
+- **Cota suspeita**: camadas com cota 0 ou muito diferente das demais (textos, cotas do desenho) são importadas, mas ficam ocultas na planta ("Mostrar tudo" para ver).
+- **Planta**: roda do mouse = zoom; arrastar = mover; duplo clique = ver tudo; clique = selecionar linha. A coordenada sob o cursor aparece embaixo.
+- **Levantamentos**: cada importação fica guardada; nenhuma substitui a outra. "Arquivar" tira da planta sem apagar.
+
+## 16. Eixo e chainage (galerias, travessas, rampas)
+Na **Estrutura da mina**, selecione a galeria → aba **Eixo e chainage**.
+1. **Definir eixo**: clique na linha do eixo na planta (de preferência uma linha 3D) **ou** digite os pontos X Y Z (um por linha). Informe onde fica o 0 m; marque "Inverter sentido" se o 0 m estiver na outra ponta.
+2. **Calcular posições**: amostras, fichas e avanços com coordenadas (desta unidade e das que estão dentro dela) recebem o **chainage** (distância ao longo do eixo, em 3D) e a distância ao eixo. Alertas: mais de 10 m do eixo, posição ambígua (galeria em U), sem cota.
+3. Amostras em SAD69 só entram se houver transformação aprovada; senão aparecem na lista "sem posição" com o motivo.
+4. Corrigir o eixo cria uma **nova versão** (as anteriores ficam guardadas); depois, calcule as posições de novo.
+
+## 17. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.
+
+### Topografia — permissões
+| Papel | Topografia |
+|---|---|
+| Administrador, Geólogo revisor | tudo, inclusive calibrar e aprovar transformações |
+| Geólogo | importar shapefile, definir eixos, calcular posições |
+| Técnico, Consulta | consultar planta, levantamentos, eixos e posições |

@@ -96,9 +96,13 @@
 | 2026-11-26 | E9 | `pytest`: 153 (+7 geoquímica, incluindo os **2 laudos SGS reais** via `GEOMINA_LAUDOS`) | **153 aprovados** | |
 | 2026-11-26 | E9 | E2E `e2e/geoquimica.cjs` (4 cenários com o laudo real: prévia e confirmação, tabela com analitos escolhidos, QA/QC, resultados na amostra e painel) + regressão das outras 6 suítes | **aprovados** | ajuste de expectativa no teste (DUP/REP também ligam à amostra) |
 
+| 2026-11-26 | E10 | `pytest`: 168 (+10 leitor de shapefile/chainage, +6 API de topografia, incluindo o **zip real** via `GEOMINA_TOPO_ZIP`: importação, calibração SAD→SIRGAS dx/dy ±1 cm, resíduo < 1 cm) | **168 aprovados, 1 pulado** (PDF real ausente) | defeitos corrigidos: encoding "UTF-8" × "utf-8" no .cpg; teste da calibração usava o arquivo SAD errado (o par correto é o "Piso") |
+| 2026-11-26 | E10 | E2E `e2e/topografia.cjs` (5 cenários com a topografia real: calibração com escolha automática do par e aprovação, importação de 44.273 feições em SAD69 com a translação aprovada, levantamentos e planta com coordenada do cursor, eixo por pontos e chainage conferido com cálculo independente, celular 390 px) + regressão das outras 7 suítes | **aprovados** | defeitos corrigidos: rolagem lateral no celular (tabelas), aviso de calibração continuava após aprovar, tabela de camadas CAD longa demais |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).
 - Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
 - "Abrir pasta de backups" no Windows (E4).
-- Desempenho com volume real de dados (não se aplica à E2).
+- Desempenho com volume real de dados: E2E completo da topografia real (incluindo a importação de 44 mil feições e o desenho de ~21 mil na planta) em 14 s no ambiente de testes; não medido em PC/tablet do usuário.
+- Topografia no Windows (Edge) e desenho da planta em tablet (toque/pinça ainda não tem zoom por gesto).

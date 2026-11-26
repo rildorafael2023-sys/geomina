@@ -46,7 +46,7 @@ export function EixoUnidade({ unidadeId, mina, pode }: { unidadeId: string; mina
         </Alert>
       ) : null}
       {!!pos.data?.length && (
-        <Table striped fz="sm">
+        <Table.ScrollContainer minWidth={560}><Table striped fz="sm">
           <Table.Thead><Table.Tr><Table.Th>Chainage (m)</Table.Th><Table.Th>Tipo</Table.Th><Table.Th>Item</Table.Th><Table.Th>Distância ao eixo (m)</Table.Th><Table.Th>Alertas</Table.Th></Table.Tr></Table.Thead>
           <Table.Tbody>
             {pos.data.map((p, i) => (
@@ -57,7 +57,7 @@ export function EixoUnidade({ unidadeId, mina, pode }: { unidadeId: string; mina
               </Table.Tr>
             ))}
           </Table.Tbody>
-        </Table>
+        </Table></Table.ScrollContainer>
       )}
       {vig && <Text size="xs" c="dimmed">O chainage é medido ao longo do eixo em 3D (inclui a inclinação de rampas). Cada cálculo é ligado à versão do eixo; ao criar nova versão, recalcule.</Text>}
       {eixos.data.length > 1 && (

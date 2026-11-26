@@ -92,7 +92,7 @@
 **Escopo:** leitor do layout SGS Geosol (.xls: certificado, método/analito/unidade por coluna, SMP/DUP/REP/STD); assistente de 12 passos; CSV (`;`/`,`, vírgula decimal, encoding) e Excel; mapeamento de colunas salvo por laboratório; parsing de `<LD`, `>`, `ND`, `IS`; unidades; certificado/bateria; resultado preferido; cancelamento de importação; QA/QC básico (desejável).
 **Aceitação:** arquivos de laboratório **reais** (ou anonimizados) importados com contagens conferidas; amostras não encontradas e duplicidades listadas antes da confirmação; nada é gravado antes da confirmação; reimportação do mesmo arquivo detectada; valor original sempre recuperável.
 
-## E10 — Importação topográfica, banco espacial, eixos e chainage
+## E10 — Importação topográfica, banco espacial, eixos e chainage ✅ (v0.9.0)
 **Escopo:** shapefiles CAD convertidos (layers, entidades, Z suspeito, cabeçalho inválido — DADOS_REAIS.md); validação SAD69 → SIRGAS com o piso fornecido nos dois sistemas; **eixos de galeria desenhados ou derivados com revisão** (não existem nos arquivos); configuração/validação do CRS; leitura de shapefile Z (linhas, polígonos, multi) via GDAL; relatório de validação (§12.4); levantamentos versionados; feições com atributos originais; criação de eixo de referência a partir de feição; chainage 3D; projeção de amostras/mapeamentos no eixo com afastamento.
 **Aceitação:** Z preservado vértice a vértice (comparação com o arquivo original); arquivo 2D identificado como 2D; arquivo sem `.prj` exige declaração; transformação registrada; chainage conferido com casos calculados à mão e com eixo real; dois levantamentos coexistem; desempenho medido com o maior arquivo disponível.
 

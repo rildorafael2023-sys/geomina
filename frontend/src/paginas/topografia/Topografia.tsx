@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, FileButton, Group, Loader, Paper, Radio, Select, Stack, Table, Tabs, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, FileButton, Group, Loader, Paper, Radio, ScrollArea, Select, Stack, Table, Tabs, Text, TextInput, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -60,6 +60,7 @@ function Levantamentos({ mina, podeArquivar }: { mina: Mina; podeArquivar: boole
   if (!l.data) return <Loader size="sm" />;
   if (!l.data.length) return <Text c="dimmed" size="sm">Nenhum levantamento importado.</Text>;
   return (
+    <Table.ScrollContainer minWidth={900}>
     <Table striped>
       <Table.Thead><Table.Tr><Table.Th>Código</Table.Th><Table.Th>Data</Table.Th><Table.Th>Arquivo / camada</Table.Th><Table.Th>Sistema original</Table.Th><Table.Th>Transformação</Table.Th><Table.Th>Feições</Table.Th><Table.Th>Cotas</Table.Th><Table.Th /></Table.Tr></Table.Thead>
       <Table.Tbody>
@@ -77,6 +78,7 @@ function Levantamentos({ mina, podeArquivar }: { mina: Mina; podeArquivar: boole
         ))}
       </Table.Tbody>
     </Table>
+    </Table.ScrollContainer>
   );
 }
 
@@ -164,7 +166,8 @@ function Importar({ mina }: { mina: Mina }) {
                   <Alert color="yellow">A topografia da mina costuma usar uma translação própria entre SAD69 e SIRGAS (aqui o PROJ padrão difere ~2 m). Se tiver o mesmo levantamento nos dois sistemas, faça a calibração na aba <b>Transformações de coordenadas</b> antes de importar.</Alert>
                 )}
                 <Text size="sm" fw={600}>Camadas do CAD (campo Layer)</Text>
-                <Table fz="xs" striped>
+                <ScrollArea.Autosize mah={320}>
+                <Table fz="xs" striped stickyHeader>
                   <Table.Thead><Table.Tr><Table.Th>Importar</Table.Th><Table.Th>Camada</Table.Th><Table.Th>Feições</Table.Th><Table.Th>Cota mín / mediana / máx</Table.Th><Table.Th>Situação</Table.Th></Table.Tr></Table.Thead>
                   <Table.Tbody>
                     {c.camadas_cad.map((k) => (
@@ -177,6 +180,7 @@ function Importar({ mina }: { mina: Mina }) {
                     ))}
                   </Table.Tbody>
                 </Table>
+                </ScrollArea.Autosize>
                 <Text size="xs" c="dimmed">"Cota suspeita": a maioria dos vértices tem cota 0 ou a cota está muito longe das demais camadas (ex.: textos e cotas do desenho). Elas são importadas, mas ficam ocultas na planta e fora do 3D, a menos que você escolha mostrá-las.</Text>
                 <Group align="flex-end">
                   <TextInput label="Código do levantamento" required placeholder="TOPO-2026-09" value={codigo} onChange={(e) => setCodigo(e.currentTarget.value)} />
@@ -205,7 +209,11 @@ function Transformacoes({ mina, pode }: { mina: Mina; pode: boolean }) {
     mutationFn: (f: File) => enviarArquivos<{ camadas: CamadaAnalise[] }>(`/minas/${mina.id}/topografia/importacoes`, {}, [f], "arquivo"),
     onSuccess: (p, f) => {
       setArquivo(f); setMembros(p.camadas.map((c) => c.membro));
-      setOrigem(p.camadas.find((c) => c.epsg === 29193)?.membro ?? null); setDestino(p.camadas.find((c) => c.epsg === 31983)?.membro ?? null);
+      // par provável: destino no sistema da mina e origem em outro sistema com o mesmo número de registros
+      const dest = p.camadas.find((c) => !c.erro && c.epsg === mina.srid_trabalho);
+      const orig = p.camadas.find((c) => !c.erro && c.epsg && c.epsg !== mina.srid_trabalho && c.feicoes === dest?.feicoes)
+        ?? p.camadas.find((c) => !c.erro && c.epsg && c.epsg !== mina.srid_trabalho);
+      setOrigem(orig?.membro ?? null); setDestino(dest?.membro ?? null);
     },
     onError: (e) => notifications.show({ color: "red", message: msg(e) }),
   });
@@ -213,15 +221,16 @@ function Transformacoes({ mina, pode }: { mina: Mina; pode: boolean }) {
     mutationFn: () => enviarArquivos<{ dx: number; dy: number; residuo_medio_m: number; proj_erro_medio_m?: number }>(`/minas/${mina.id}/transformacoes/calibrar`, { membro_origem: origem, membro_destino: destino, nome }, [arquivo!], "arquivo"),
     onSuccess: (r) => {
       qc.invalidateQueries();
-      notifications.show({ color: "teal", autoClose: 12000, message: `Translação: dx ${r.dx} m, dy ${r.dy} m. Resíduo médio ${r.residuo_medio_m} m (PROJ padrão erraria em média ${r.proj_erro_medio_m} m). Aprove para usar.` });
+      notifications.show({ id: "calibracao", color: "teal", autoClose: false, message: `Translação: dx ${r.dx} m, dy ${r.dy} m. Resíduo médio ${r.residuo_medio_m} m (PROJ padrão erraria em média ${r.proj_erro_medio_m} m). Aprove para usar.` });
       setArquivo(null);
     },
     onError: (e) => notifications.show({ color: "red", message: msg(e) }),
   });
-  const aprovar = useMutation({ mutationFn: (id: string) => api(`/transformacoes/${id}/aprovar`, { method: "POST" }), onSuccess: () => qc.invalidateQueries() });
+  const aprovar = useMutation({ mutationFn: (id: string) => api(`/transformacoes/${id}/aprovar`, { method: "POST" }), onSuccess: () => { notifications.hide("calibracao"); qc.invalidateQueries(); } });
   return (
     <Stack gap="sm">
       <Text size="sm">Uma transformação converte coordenadas de um sistema para o da mina ({epsg(mina.srid_trabalho)}). Sem transformação aprovada, dados em outro sistema não são convertidos — ficam de fora com aviso.</Text>
+      <Table.ScrollContainer minWidth={800}>
       <Table striped>
         <Table.Thead><Table.Tr><Table.Th>Nome</Table.Th><Table.Th>De → para</Table.Th><Table.Th>Parâmetros</Table.Th><Table.Th>Resíduo médio / máx.</Table.Th><Table.Th>Calibração</Table.Th><Table.Th /></Table.Tr></Table.Thead>
         <Table.Tbody>
@@ -236,6 +245,7 @@ function Transformacoes({ mina, pode }: { mina: Mina; pode: boolean }) {
           ))}
         </Table.Tbody>
       </Table>
+      </Table.ScrollContainer>
       {pode && (
         <Paper withBorder p="sm">
           <Stack gap="xs">

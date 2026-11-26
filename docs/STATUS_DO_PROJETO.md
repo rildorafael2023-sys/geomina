@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.8.0 · **Etapa atual:** E9 concluída; seguindo para a E10 (etapas em sequência, a pedido do usuário)
+**Última atualização:** 2026-11-26 · **Versão:** 0.9.0 · **Etapa atual:** E10 concluída; próxima: módulo integrado da Seção 27 do Prompt Mestre (E11 em diante, replanejadas)
 
 ## Etapas
 
@@ -14,8 +14,22 @@
 | E6+E7 Croquis, documentos e fotografias | ✅ Concluídas e testadas (v0.6.0) |
 | E8 Amostragem | ✅ Concluída e testada (v0.7.0) |
 | E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
-| E10 Topografia, eixos e chainage | 🔵 Em andamento |
-| E5 – E21 | ⚪ Pendentes |
+| E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
+| E11 – E21 (replanejadas com a Seção 27) | ⚪ Pendentes — ver PLANO_DE_DESENVOLVIMENTO |
+
+## Entregue na E10 (versão 0.9.0)
+| Funcionalidade | Teste |
+|---|---|
+| Importação de shapefile em .zip (PolyLineZ, PolygonZ, pontos, multi; leitor próprio, sem GDAL): prévia por arquivo e por camada CAD (campo Layer) antes de gravar | API + **topografia real (44.273 feições)** + E2E |
+| Cota preservada vértice a vértice; arquivo 2D identificado; camadas com **cota suspeita** (textos/cota 0) marcadas e ocultas por padrão | API |
+| Sistema de coordenadas lido do .prj; sem .prj o usuário declara; outro sistema exige **escolher a transformação** (nunca silenciosa) | API + E2E |
+| **Calibração SAD69 → SIRGAS** com o mesmo levantamento nos dois sistemas: translação dx −46,367 m, dy −43,899 m, resíduo médio 5 mm (o PROJ padrão erraria 2,2 m); aprovação por revisor | **arquivo real** + E2E |
+| Levantamentos coexistem (código único, arquivar/reativar); feições imutáveis; índice espacial R*Tree | API |
+| Planta 2D (zoom, arrastar, camadas, coordenada sob o cursor, seleção de linha) | E2E |
+| Eixo da galeria/travessa/rampa por pontos XYZ ou a partir de uma linha 3D da topografia; versões (a nova vira vigente); inverter sentido; descrição do 0 m | API + E2E |
+| **Chainage 3D** de amostras, fichas e avanços com distância ao eixo; alertas (> 10 m, posição ambígua em galeria em U, sem cota); amostras em SAD69 convertidas só com transformação aprovada | API + E2E |
+
+**Topografia real:** o zip de 28/09/2026 tem 3 arquivos: SAD principal (44.273 feições), SAD "Piso" (10.143) e SIRGAS (10.143, 5 vazios). O arquivo SIRGAS é o mesmo levantamento do "Piso" — foi esse par que permitiu a calibração.
 
 ## Entregue na E9 (versão 0.8.0)
 | Funcionalidade | Teste |
@@ -157,7 +171,10 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
 - Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").
 - "Abrir pasta de backups" funciona no Windows; em outros sistemas mostra o caminho.
-- Avanço de frente: a distância é a medida informada (trena/topografia). O chainage calculado sobre o eixo topográfico chega na E10.
+- Avanço de frente: a distância é a medida informada; o chainage sobre o eixo é calculado quando o avanço tem coordenadas.
+- A topografia real **não tem eixos de galeria**: o eixo precisa ser definido no GeoMina (pontos XYZ ou uma linha 3D da topografia). Desenhar o eixo com o mouse na planta ainda não existe (só selecionar uma linha ou digitar pontos).
+- A planta é 2D (vista de cima); o 3D vem no módulo integrado (Seção 27).
+- Transformação calibrada é translação pura (sem rotação/escala): válida para a área da mina, onde o resíduo medido foi de milímetros.
 
 ## Pendências que dependem do usuário
 | # | Pergunta | Bloqueia |
@@ -167,9 +184,10 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | P3 | CRS de trabalho: a tela de cadastro da mina sugere SIRGAS 2000; confirmar ao cadastrar | — |
 | P4 | Lista de níveis, galerias, travessas e rampas (posso preparar uma importação por planilha se for longa) | uso real da E3 |
 | P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
-| P6 | Existe arquivo de eixos de galeria na topografia, ou o eixo deverá ser desenhado no GeoMina? | E10 |
+| P6 | Existe arquivo de eixos de galeria? (hoje: definidos no GeoMina) | uso real do chainage |
+| P8 | Dados de sondagem: enviar exemplos de collar, survey, litologia e amostras dos furos (CSV/Excel) | módulo de sondagens (Seção 27) |
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Usuário usa a ficha digital com dados reais e indica ajustes (campos, listas, layout de impressão).
-2. **E6 — Croquis e documentos**: anexar croquis (PDF/imagens, incluindo o PDF de fichas escaneadas) a fichas e unidades, com versões e visualização.
+1. Seção 27 do Prompt Mestre (módulo integrado), na ordem de PLANO_DE_DESENVOLVIMENTO.md: começa pela análise geoquímica longitudinal (E11).
+2. Usuário valida no Windows a importação da topografia e a definição de um eixo real.

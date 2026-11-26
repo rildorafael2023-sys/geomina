@@ -120,19 +120,18 @@
 | `certificado` | id, importacao_id, laboratorio_id, codigo (bateria/lote do laboratório), data_emissao | — |
 | `resultado` | id, amostra_id, analito_id, metodo_id, certificado_id, importacao_id, valor_texto, valor_num, qualificador (`=`/`<`/`>`/`ND`/`IS`), limite_deteccao, unidade, data_analise, preferido bool, linha_origem int, ativo | UNIQUE parcial (amostra, analito, metodo, certificado) WHERE ativo; índice (analito_id, amostra_id); índice único parcial `preferido` por (amostra, analito) |
 
-## 8. Espacial e topografia (Etapa 10 proposta)
+## 8. Espacial e topografia (Etapa 10) **[IMPLEMENTADO — migração 0008]**
 
 | Tabela | Colunas principais | Observações |
 |--------|--------------------|-------------|
-| `spatial_ref_sys` (PostGIS) | + registros próprios SRID ≥ 900000 para grades locais | definição PROJ documentada |
-| `transformacao_coordenadas` | id, srid_origem, srid_destino, pipeline_proj, precisao_estimada_m, aprovado_por, aprovado_em | toda transformação é registrada |
-| `levantamento` | id, mina_id, codigo, descricao, data_levantamento, responsavel, importacao_id, documento_versao_id, srid_original, transformacao_id, extensao geometry(PolygonZ), estado, substitui_levantamento_id | levantamentos coexistem; nenhum é sobrescrito |
-| `feicao_topografica` | id, levantamento_id, unidade_id (opcional), classe (`eixo`/`contorno`/`poligono`/`ponto`/`outro`), geom geometry(GeometryZ, srid), geom_original (quando transformado), dimensao_original (2/3), z_constante bool, atributos_originais JSONB, indice_origem | GiST(geom), índice(levantamento_id), índice(unidade_id) |
-| `eixo_referencia` | id, unidade_id, descricao | um por unidade com eixo |
-| `eixo_versao` | id, eixo_id, numero, geom LineStringZ, comprimento_3d_m, comprimento_2d_m, origem (`feicao`/`desenho`/`manual`), feicao_id, sentido_chainage, vigente bool, criado_por | índice único parcial de vigente por eixo |
-| `camada_visualizacao` | id, codigo, nome, tipo_fonte, filtro JSONB, estilo JSONB, ordem, ativo | camadas extensíveis do 3D |
+| `transformacao_coordenadas` | mina_id, nome, srid_origem, srid_destino, metodo (`proj`/`translacao`), parametros JSON {dx, dy, dz}, residuo_medio_m, residuo_max_m, pontos_calibracao, origem_calibracao (arquivo + sha256), aprovada, aprovada_por/em | trigger: uso exige aprovação |
+| `levantamento` | mina_id, codigo (único por mina), descricao, data_levantamento, responsavel, importacao_id, camada (arquivo .shp), tipo_geometria, srid_original, transformacao_id, feicoes, vertices, extensão (min/max X, Y, Z), arquivado | levantamentos coexistem |
+| `feicao_topografica` | levantamento_id, indice_origem, tipo, dimensao, geom (WKB, sistema da mina), geom_original (WKB, só se convertida), camada_cad, entidade_cad, z_suspeito, atributos JSON, caixa | **imutável e sem exclusão** (triggers); não auditada linha a linha (rastreio pela importação) |
+| `feicao_rtree` | R*Tree (id = rowid da feição, min/max X, Y, Z) | preenchida por trigger; consultas por janela |
+| `eixo_versao` | unidade_id, numero, geom LineStringZ (WKB), vertices, comprimento_3d, comprimento_2d, origem (`pontos`/`feicao`), feicao_id, inicio_descricao, observacao, vigente | imutável (só `vigente` muda); trigger: tipo da unidade precisa ter `possui_eixo` |
+| `posicao_eixo` | eixo_versao_id + exatamente um de amostra_id / mapeamento_id / avanco_id, chainage_m, afastamento_m, ambigua, alternativa_m, transformacao_id | recalculada sob pedido; ligada à versão do eixo |
 
-Colunas `eixo_versao_id` em `frente_avanco`, `mapeamento` e `amostra` serão FKs adicionadas na migração desta etapa (as colunas existem antes, nulas — sem retrabalho).
+Diferença da proposta: SQLite em vez de PostGIS (DT-016) — geometria em WKB + R*Tree; o eixo é a própria `eixo_versao` por unidade (sem tabela `eixo_referencia`); a posição no eixo fica em `posicao_eixo` (em vez de colunas nas tabelas de amostra/ficha/avanço), o que permite várias versões do eixo sem alterar os registros de origem.
 
 ## 9. Auditoria (Etapa 2) **[IMPLEMENTADO — por ORM, DT-019]**
 

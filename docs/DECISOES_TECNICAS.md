@@ -151,3 +151,17 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 ## DT-028 — Impressão/PDF pelo navegador
 **Estado:** Aceita (E5)
 **Justificativa.** O Edge gera PDF pela janela de impressão; uma página A4 com CSS de impressão evita dependências de bibliotecas de PDF no pacote offline. Relatórios mais elaborados (E17) reavaliarão a geração de PDF no servidor.
+
+## DT-029 — Transformação SAD69 → SIRGAS calibrada com a topografia da mina
+**Estado:** Aceita (E10)
+**Contexto.** O mesmo levantamento exportado em SAD69 e em SIRGAS 2000 pela topografia da mina difere do PROJ padrão (parâmetros oficiais) em ~2,2 m; a diferença entre os dois arquivos é uma translação constante (dx −46,367 m, dy −43,899 m) com resíduo de ~5 mm.
+**Decisão.** Oferecer a transformação "calibrada": translação média calculada vértice a vértice a partir de um par de arquivos, com resíduos, origem (arquivo + sha256) e aprovação por revisor. O PROJ padrão continua disponível, identificado como tal. Nenhuma conversão é feita sem escolha explícita; amostras em outro sistema sem transformação aprovada ficam fora do chainage, com aviso.
+**Consequência.** Os dados convertidos ficam coerentes com a topografia da mina. Fora da área da mina a translação não vale (registrado na transformação).
+
+## DT-030 — Leitor de shapefile próprio, WKB + R*Tree e coordenadas relativas no desenho
+**Estado:** Aceita (E10)
+**Justificativa.** GDAL complica o pacote offline no Windows; o formato shapefile é simples e o leitor próprio (com testes vértice a vértice) cobre PolyLineZ/PolygonZ/pontos/multi e recusa MultiPatch. Geometrias em WKB (Shapely) e índice R*Tree nativo do SQLite. A planta recebe coordenadas relativas a uma origem (evita perda de precisão de coordenadas UTM em float32 no navegador e no futuro 3D); a coordenada absoluta é reconstruída e mostrada.
+
+## DT-031 — Chainage 3D com versões do eixo
+**Estado:** Aceita (E10)
+**Decisão.** Chainage = comprimento 3D acumulado até a projeção do ponto no eixo (para ponto sem cota, a projeção é feita em planta, mas a distância continua 3D). Galerias em U: a projeção mais próxima é usada e a alternativa é registrada como "ambígua". O eixo é versionado; posições ficam ligadas à versão usada.
