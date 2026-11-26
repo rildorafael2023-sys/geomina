@@ -113,6 +113,9 @@
 | 2026-11-26 | GO-3/4 | `pytest`: 184 (+2: layouts salvos; estruturas/descrição/ficha por amostra) | **184 aprovados, 1 pulado** | |
 | 2026-11-26 | GO-3/4 | E2E `e2e/geoop_galerias.cjs` (7 cenários) + regressão das outras 10 suítes (inclui `geoop.cjs` atualizado para os tracks) | **aprovados** | 2 defeitos corrigidos (atributo do contorno de seleção, ⚙ sobre a escala) |
 
+| 2026-11-26 | GO-5 | `pytest`: 196 (+8 trajetória calculada à mão, +4 sondagem) | **196 aprovados, 1 pulado** | interpolação na corda (corrigida para o arco); furo sem trajetória seria gravado com "ignorar erros" (corrigido) |
+| 2026-11-26 | GO-5 | E2E `geoop_sondagens.cjs` (6 cenários: importação pela tela com erros e gravação parcial, lista e perfil com tracks, amostra → contexto e intervalo → detalhes, dois furos com mesma escala e classes, zoom e seleção de intervalo, track em barras e CSV) + regressão das outras 11 suítes; migração 0010 sobre cópia dos dados reais | **aprovados** | aviso de seleção deslocava o perfil durante o arraste (corrigido) |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

@@ -30,3 +30,7 @@ export function trackGeo(tipo: TipoGeo): TrackGeo {
   return { id: novoId(), tipo, altura: tipo === "descricao" || tipo === "estruturas" ? "G" : "P" };
 }
 export const TRACKS_PADRAO = (): Track[] => [trackGeo("amostras"), trackGeo("litologia")];
+
+export const TRACKS_FURO_PADRAO = (): Track[] => [trackGeo("litologia"), trackGeo("alteracao"), trackGeo("amostras")];
+/** No perfil de sondagem a "altura" do track vira largura da coluna. */
+export const LARGURA_PX: Record<Altura, number> = { P: 64, M: 96, G: 170 };

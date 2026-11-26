@@ -138,6 +138,15 @@ Diferença da proposta: SQLite em vez de PostGIS (DT-016) — geometria em WKB +
 |---|---|---|
 | `layout_analise` | mina_id, dono_id, nome, tipo (`galeria`/`sondagem`/`comparacao`), config JSON (tracks, analitos), compartilhado | único por (mina, dono, tipo, nome); auditado |
 
+## 8c. Sondagem (migração 0010) **[IMPLEMENTADO]**
+| Tabela | Colunas principais | Observações |
+|---|---|---|
+| `furo` | mina_id, codigo (único por mina), projeto, area, unidade_id, x, y, z, srid, azimute (0–360), inclinacao (−90…90, da horizontal, negativo = para baixo), referencia_azimute, declinacao, profundidade_planejada, profundidade_final (> 0), datas, responsavel, metodo, descricao, importacao_id | auditado |
+| `survey_furo` | furo_id, profundidade (única por furo), azimute, inclinacao, metodo | auditado |
+| `intervalo_furo` | furo_id, de_m < ate_m, litologia_id, alteracao_id, mineralizacao_id, estruturas, descricao, observacoes, atributos JSON (texto original fora do dicionário) | sobreposição validada na importação |
+| `amostra.furo_id` | FK para furo (usa prof_de_m/prof_ate_m da amostra) | coluna adicionada sem recriar a tabela (triggers preservados) |
+| `importacao.tipo` | passa a aceitar `sondagem` | |
+
 ## 9. Auditoria (Etapa 2) **[IMPLEMENTADO — por ORM, DT-019]**
 
 | Tabela | Colunas |

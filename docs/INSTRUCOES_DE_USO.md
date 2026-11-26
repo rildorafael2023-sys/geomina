@@ -1,4 +1,4 @@
-# INSTRUÇÕES DE USO — versão 0.13.0
+# INSTRUÇÕES DE USO — versão 0.14.0
 
 > Descreve apenas o que está implementado e testado. O 3D e a sondagem ainda não estão disponíveis.
 
@@ -133,7 +133,8 @@ Menu **Geoquímica operacional**. A tela usa toda a largura: o botão ☰ no top
   - clique numa coluna, numa linha da tabela ou num ponto da planta: a amostra fica destacada nos três e abre no painel de contexto;
   - **Layouts**: salve a composição (ex.: "Travessa — Cr/V/Be/MgO/K2O"), compartilhe e aplique em outra galeria;
   - **Exportar**: tabela (CSV), tracks (SVG/PNG das colunas visíveis).
-- **Sondagens, Comparação, Visualização espacial**: em construção (próximas etapas).
+- **Sondagens**: **Importar sondagem…** com os arquivos de collar, survey, geologia e amostras (CSV ou Excel; cabeçalhos em português ou inglês). Escolha o sistema de coordenadas, **como a inclinação está escrita** (−60, 60 para baixo, ou a partir da vertical) e a referência do azimute. A prévia mostra erros e avisos; grave tudo ou só as linhas sem erro. Marque os furos na lista: os perfis aparecem lado a lado na mesma escala de profundidade — tracks configuráveis como nas galerias; roda = zoom; Shift+arrastar = intervalo; clique na amostra = painel de contexto; clique na litologia = detalhes do intervalo. À direita, planta e seção das trajetórias (tracejado = **estimada**, sem survey). Exportar: perfil (SVG/PNG) e intervalos com resultados (CSV).
+- **Comparação, Visualização espacial**: em construção (próximas etapas).
 - **Laboratório (laudos)** (menu): importação de laudos, certificados e QA/QC (antiga tela "Geoquímica").
 
 ## 18. Segurança dos dados

@@ -1,7 +1,7 @@
 /** Estado compartilhado da Geoquímica Operacional: os mesmos filtros, analitos e seleção valem em todas as abas. */
 import { create } from "zustand";
 
-import { TRACKS_PADRAO, type Track } from "./tracks/tipos";
+import { TRACKS_FURO_PADRAO, TRACKS_PADRAO, type Track } from "./tracks/tipos";
 
 export const FACETAS = [
   { chave: "nivel", rotulo: "Nível", grupo: "Local" },
@@ -35,6 +35,8 @@ interface Estado {
   selecionado: string | null; // chave do registro (id da amostra ou "laudo:CÓDIGO")
   filtrosAbertos: boolean;
   tracks: Track[]; // tracks da aba Galerias (salvos nos layouts)
+  tracksFuro: Track[]; // tracks do perfil de sondagem
+  furos: string[]; // furos escolhidos na aba Sondagens
   alternar: (f: Faceta, valor: string) => void;
   definir: (f: Faceta, valores: string[]) => void;
   set: (p: Partial<Omit<Estado, "alternar" | "definir" | "set" | "limpar">>) => void;
@@ -44,7 +46,7 @@ interface Estado {
 const VAZIO = { filtros: {}, texto: "", dataDe: "", dataAte: "", teor: { analito: null, min: "", max: "" } };
 
 export const useGeo = create<Estado>((set) => ({
-  ...VAZIO, analitos: [], regraLd: "limite", selecionado: null, filtrosAbertos: true, tracks: TRACKS_PADRAO(),
+  ...VAZIO, analitos: [], regraLd: "limite", selecionado: null, filtrosAbertos: true, tracks: TRACKS_PADRAO(), tracksFuro: TRACKS_FURO_PADRAO(), furos: [],
   alternar: (f, valor) => set((s) => {
     const atual = s.filtros[f] ?? [];
     return { filtros: { ...s.filtros, [f]: atual.includes(valor) ? atual.filter((v) => v !== valor) : [...atual, valor] } };

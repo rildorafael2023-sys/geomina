@@ -192,3 +192,11 @@ Cada faceta mostra opções e contagens calculadas com os **demais** filtros (pa
 ## DT-037 — Sem eixo de distância na análise das galerias (decisão U1 do usuário)
 **Estado:** Aceita
 As amostras ficam lado a lado na sequência da galeria (faixa/tracks), sem escala de metros e sem gráfico teor × distância. Substitui os itens de distância longitudinal do prompt de reestruturação. O chainage continua calculado e guardado (topografia, 3D).
+
+## DT-038 — Trajetória por curvatura mínima com interpolação sobre o arco; estimada sempre identificada
+**Estado:** Aceita (Geoquímica Operacional, Etapa 5)
+Curvatura mínima entre estações de survey; a posição numa profundidade intermediária usa a direção interpolada esfericamente (slerp) e o fator de razão do arco parcial — fica sobre o arco, não sobre a corda (a interpolação linear errava até ~18 m num survey espaçado). Sem 2+ medidas, reta pela orientação do collar (ou da única medida), com a marca "estimada" na API, na lista, no perfil e no desenho (tracejado). A trajetória não é gravada: é recalculada do survey (fonte única).
+
+## DT-039 — Convenção de inclinação explícita na importação
+**Estado:** Aceita
+Guardada sempre como graus da horizontal, negativo = para baixo. Na importação o usuário declara como o arquivo está escrito (horizontal negativa, horizontal positiva para baixo, ou a partir da vertical) e o sistema converte; furos ascendentes geram aviso, nunca correção automática.

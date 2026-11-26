@@ -139,7 +139,7 @@ const X0 = 500000, Y0 = 7800000;
   assert.strictEqual(await page.getByText(/ainda não estão ligadas a uma galeria/).count(), 0, "testemunho (BMT-TS) não é cobrado como amostra de galeria");
 
   // 8. Abas ainda não construídas não mostram dados de exemplo
-  await page.getByRole("tab", { name: "Sondagens" }).click();
+  await page.getByRole("tab", { name: "Comparação" }).click();
   await page.getByText("Este ambiente ainda não foi construído").waitFor();
 
   assert.deepStrictEqual(erros, []);

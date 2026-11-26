@@ -26,7 +26,7 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 | 2 | Área de trabalho: navegação, filtros encadeados, área analítica, painel de contexto, base por resultado, conciliação | ✅ v0.12.0 |
 | 3 | Galerias: tracks configuráveis (faixa/pontos/barras), seleção sincronizada, tabela integrada, layouts salvos | ✅ v0.13.0 |
 | 4 | Tracks geológicos: litologia, alteração, mineralização, estruturas, descrição, fotos/croquis, amostras | ✅ v0.13.0 |
-| 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | pendente |
+| 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | ✅ v0.14.0 |
 | 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | pendente |
 | 7 | Visualização espacial 3D integrada | pendente |
 | 8 | Consulta completa | pendente (base pronta na Etapa 2) |
@@ -73,3 +73,16 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Defeitos corrigidos**: o contorno de seleção tinha o mesmo atributo das colunas (contagem errada de colunas); o ⚙ ficava sobre o valor máximo da escala.
 
 **Limitações**: a exportação dos tracks cobre as colunas visíveis (amplie "Ver todas" para exportar tudo); estruturas/descrição/fotos vêm da ficha ligada à amostra (amostras sem ficha não têm esses tracks preenchidos); a tela antiga `analise/Longitudinal.tsx` ainda contém componentes não usados (limpeza na Etapa 10).
+
+## Etapa 5 — Sondagens (v0.14.0)
+**Desenvolvido**
+- **Banco** (migração 0010): `furo` (collar com sistema de coordenadas, azimute, inclinação, referência do azimute e correção, profundidades, projeto, área, datas, responsável, método), `survey_furo`, `intervalo_furo` (litologia/alteração/mineralização dos dicionários, estruturas, descrição; texto fora do dicionário guardado como original) e `amostra.furo_id` (a amostra BMT-TS usa a profundidade de/até que já existia). Resultados continuam na tabela única (U2). Permissões `sondagem:ler` e `sondagem:importar`.
+- **Trajetória** (`espacial/trajetoria.py`): curvatura mínima com o survey; posição em qualquer profundidade **sobre o arco** (não sobre a corda); sem survey suficiente = reta pela orientação do collar, sempre marcada **estimada**; furos ascendentes de subsolo; correção de azimute (declinação/convergência).
+- **Importação** (CSV/Excel, até 4 arquivos: collar, survey, geologia, amostras), cabeçalhos em português ou inglês, **convenção de inclinação escolhida pelo usuário** (horizontal negativa, horizontal positiva para baixo, a partir da vertical). Prévia com erros (furo repetido/já cadastrado/sem coordenada, survey fora do furo ou repetido, de ≥ até, além do fundo, sobreposição, código de amostra inválido, furo sem trajetória possível) e avisos (lacunas, termo fora do dicionário, furo ascendente, trajetória estimada). Grava tudo, ou só as linhas sem erro por escolha do usuário; liga/cadastra as amostras e os resultados já importados.
+- **Tela Sondagens**: lista de furos (trajetória real/estimada, intervalos, amostras com resultado); **perfil por profundidade** com tracks configuráveis (litologia, alteração, mineralização, estruturas, amostras, descrição, um por analito em faixa/barras/pontos com escala e classes); **vários furos lado a lado com a mesma escala de profundidade e as mesmas classes**; zoom (roda), deslocamento, **seleção de intervalo** (Shift+arrastar) com contagem e ampliação; clique na amostra → painel de contexto; clique no intervalo → detalhes geológicos e amostras do intervalo; **planta e seção X–Z das trajetórias** (estimada tracejada) com as amostras coloridas; exportação SVG/PNG do perfil e CSV de intervalos e resultados.
+
+**Testes**: `test_trajetoria.py` (8 casos calculados à mão: vertical, inclinado, curva de 90° com ponto a meio arco exato, survey reto = reta, prolongamento, declinação, ascendente); `test_sondagem.py` (4: validação com 9 tipos de erro e avisos, gravação, perfil com profundidades e resultados, XYZ das amostras na trajetória, convenções de inclinação, furo em SAD69 sem transformação aprovada fica no sistema original com aviso, furo sem trajetória não é gravado); E2E `geoop_sondagens.cjs` (6 cenários). Migração 0010 testada numa cópia dos dados reais (triggers e índice espacial preservados, integridade ok).
+
+**Defeitos encontrados e corrigidos**: interpolação da posição na corda em vez do arco (erro de até ~18 m com survey espaçado); furo sem trajetória marcado como erro mas que seria gravado com "ignorar erros"; aviso de seleção que deslocava o perfil durante o arraste; migração automática que apagaria o índice espacial e recriaria a tabela de amostras (sem os triggers) — reescrita à mão.
+
+**Limitações**: sem dados reais de sondagem até agora (formato genérico; ajustar quando chegarem os arquivos); o painel de contexto da amostra de furo mostra furo e profundidade, mas ainda não a coordenada calculada na trajetória (aparece no perfil e no 3D); edição manual de survey/intervalos pela tela ainda não existe (importação ou cadastro do collar).

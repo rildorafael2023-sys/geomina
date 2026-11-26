@@ -241,11 +241,19 @@ def analisar(arquivos: dict[str, tuple[bytes, str]], convencao: str, existentes:
     for cod in {c for c in codigos if codigos.count(c) > 1}:
         erro("amostras", None, f"amostra {cod} aparece em mais de um intervalo")
 
+    sem_trajetoria = set()
     for c in dados["collar"]:
         if c["furo"] not in por_furo and (c["azimute"] is None or c["inclinacao"] is None):
             erro("collar", c["linha"], f"{c['furo']}: sem survey e sem azimute/inclinação — não há como calcular a trajetória")
+            sem_trajetoria.add(c["furo"])
         elif len(por_furo.get(c["furo"], ())) < 2:
             aviso("collar", c["linha"], f"{c['furo']}: sem survey suficiente — trajetória será ESTIMADA (reta)")
+    if sem_trajetoria:  # o furo com erro não é gravado, nem o que depende dele
+        for t in dados:
+            fora = [x for x in dados[t] if x["furo"] in sem_trajetoria]
+            if fora and t != "collar":
+                erro(t, None, f"{len(fora)} linha(s) de {', '.join(sorted({x['furo'] for x in fora}))} não serão gravadas (furo com erro)")
+            dados[t] = [x for x in dados[t] if x["furo"] not in sem_trajetoria]
     furos = sorted({c["furo"] for c in dados["collar"]} | {x["furo"] for t in ("survey", "geologia", "amostras") for x in dados[t]})
     resumo = [{"furo": f, "novo": f not in existentes, "surveys": len(por_furo.get(f, ())),
                "intervalos": sum(1 for x in dados["geologia"] if x["furo"] == f), "amostras": sum(1 for x in dados["amostras"] if x["furo"] == f)}

@@ -128,3 +128,14 @@ def test_convencoes_de_inclinacao_e_crs(cliente, h, mina):
                                                                           "profundidade_final": 5}).status_code == 409
     r = cliente.post(f"{API}/minas/{mina['id']}/sondagem/importacoes", headers=h, files={"collar": ("c.csv", b"a;b\n1;2\n")}, data={"srid": "31983"})
     assert r.status_code == 422 and "cabeçalho" in r.json()["mensagem"]
+
+
+def test_furo_sem_trajetoria_nao_e_gravado(cliente, h, mina):
+    collar = "furo;x;y;z;azimute;dip;eoh\nOK1;500000;7800000;600;0;-90;10\nRUIM;500010;7800000;600;;;10\n"
+    am = "furo;amostra;de;ate\nRUIM;BMT-TS-900;0;1\nOK1;BMT-TS-901;0;1\n"
+    p = importar(cliente, h, mina, collar=collar, amostras=am)
+    msgs = [e["mensagem"] for e in p["erros"]]
+    assert any("RUIM: sem survey e sem azimute/inclinação" in m for m in msgs) and any("1 linha(s) de RUIM não serão gravadas" in m for m in msgs)
+    g = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-sondagem", headers=h, json={"ignorar_erros": True}).json()
+    assert (g["furos"], g["amostras_ligadas"]) == (1, 1)
+    assert [f["codigo"] for f in cliente.get(f"{API}/minas/{mina['id']}/furos", headers=h).json()] == ["OK1"]

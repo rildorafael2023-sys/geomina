@@ -9,6 +9,7 @@ import { Galerias } from "./Galerias";
 import { PainelContexto } from "./PainelContexto";
 import { PainelFiltros } from "./PainelFiltros";
 import { Pendente } from "./Pendente";
+import { Sondagens } from "./Sondagens";
 
 const ABAS = [
   { valor: "galerias", rotulo: "Galerias e frentes" },
@@ -74,7 +75,7 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
           <Routes>
             <Route index element={<Navigate to="galerias" replace />} />
             <Route path="galerias" element={<Galerias mina={mina} />} />
-            <Route path="sondagens" element={<Pendente tipo="sondagens" mina={mina} />} />
+            <Route path="sondagens" element={<Sondagens mina={mina} eu={eu} />} />
             <Route path="comparacao" element={<Pendente tipo="comparacao" mina={mina} />} />
             <Route path="espacial" element={<Pendente tipo="espacial" mina={mina} />} />
             <Route path="consulta" element={<Consulta mina={mina} eu={eu} />} />
