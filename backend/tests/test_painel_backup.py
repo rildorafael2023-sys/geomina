@@ -208,6 +208,8 @@ def test_api_bloqueada_durante_restauracao(app, cliente, h):
 def test_backup_diario_na_abertura_e_retencao(tmp_path):
     cfg = Config(dados=tmp_path / "d", backup_diario=True)
     a = criar_app(cfg)
+    assert a.state.backup_thread.primeira_execucao.wait(60)  # roda em segundo plano, sem atrasar a abertura
+    a.state.parar_backup.set()
     a.state.engine.dispose()
     diarios = [b for b in bk.listar(cfg) if b.tipo == "diario"]
     assert len(diarios) == 1 and not diarios[0].com_arquivos
@@ -235,3 +237,53 @@ def test_backup_consistente_e_integro(app, cliente, h, mina):
     assert con.execute("pragma integrity_check").fetchone()[0] == "ok"
     assert con.execute("select count(*) from mina").fetchone()[0] == 1
     con.close()
+
+
+# ------------------------------------------------------------------ E19: backup agendado, cópia e teste de restauração
+def test_backup_agendado_semanal_copia_e_teste(tmp_path, app, cliente, h, mina):
+    cfg = app.state.config
+    cliente.post(f"{API}/arquivos", headers=h, files={"arquivo": ("nota.txt", b"conteudo original")})
+    pendrive = tmp_path / "pendrive"
+    pendrive.mkdir()
+    # pasta de cópia: precisa existir e ficar fora da pasta de dados
+    assert cliente.put(f"{API}/backups/agenda", headers=h, json={"pasta_copia": str(tmp_path / "nao-existe")}).status_code == 422
+    assert cliente.put(f"{API}/backups/agenda", headers=h, json={"pasta_copia": str(cfg.pasta_backups)}).status_code == 422
+    r = cliente.put(f"{API}/backups/agenda", headers=h, json={"semanal_completo": True, "pasta_copia": str(pendrive)})
+    assert r.status_code == 200 and r.json()["agenda"]["pasta_copia"] == str(pendrive)
+
+    res = bk.backup_agendado(cfg)
+    assert set(res) == {"diario", "semanal"}
+    assert res["semanal"]["teste"]["ok"] and res["semanal"]["teste"]["arquivos"] == 1, res
+    assert res["diario"]["teste"]["ok"] and res["diario"]["copia"]["ok"]
+    assert {p.name for p in pendrive.iterdir()} == {res["diario"]["nome"], res["semanal"]["nome"]}
+    semanal = [b for b in bk.listar(cfg) if b.tipo == "semanal"][0]
+    assert semanal.com_arquivos
+    assert bk.backup_agendado(cfg) == {}  # nada vencido: não repete
+    # 8 dias depois: novo diário e novo semanal
+    assert set(bk.backup_agendado(cfg, datetime.now(UTC) + timedelta(days=8))) == {"diario", "semanal"}
+    est = cliente.get(f"{API}/backups/agenda", headers=h).json()["estado"]
+    assert est["semanal"]["teste"]["ok"] and est["verificado_em"]
+
+    # teste manual de um backup pela API
+    assert cliente.post(f"{API}/backups/{semanal.nome}/testar", headers=h).json()["ok"] is True
+    # backup adulterado: arquivo original trocado dentro do zip → o teste acusa
+    adulterado = cfg.pasta_backups / semanal.nome.replace("semanal", "completo")
+    with zipfile.ZipFile(cfg.pasta_backups / semanal.nome) as zi, zipfile.ZipFile(adulterado, "w") as zo:
+        for info in zi.infolist():
+            dados = zi.read(info)
+            zo.writestr(info, b"trocado" if info.filename.startswith("arquivos/objetos/") else dados)
+    r = cliente.post(f"{API}/backups/{adulterado.name}/testar", headers=h).json()
+    assert r["ok"] is False and "corrompido" in r["detalhe"]
+    assert cliente.post(f"{API}/backups/..%2Fgeomina.db/testar", headers=h).status_code in (404, 405, 422)
+
+
+def test_pasta_de_copia_desconectada_nao_impede_o_backup(tmp_path, app, cliente, h, mina):
+    cfg = app.state.config
+    pendrive = tmp_path / "pendrive"
+    pendrive.mkdir()
+    cliente.put(f"{API}/backups/agenda", headers=h, json={"pasta_copia": str(pendrive)})
+    pendrive.rmdir()  # pendrive retirado
+    res = bk.backup_agendado(cfg)
+    assert res["diario"]["teste"]["ok"] and res["diario"]["copia"]["ok"] is False
+    assert "não existe" in res["diario"]["copia"]["erro"]
+    assert (cfg.pasta_backups / res["diario"]["nome"]).exists()

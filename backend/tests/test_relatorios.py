@@ -89,7 +89,7 @@ def test_historico_csv_e_permissoes(cliente, h, token_admin, local, termos):  # 
     r = cliente.get(f"{API}/auditoria.csv", headers=h, params={"tabela": "mapeamento"})
     assert r.status_code == 200
     linhas = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig")), delimiter=";"))
-    assert linhas[0][:4] == ["Quando", "Usuário", "Operação", "Tabela"] 
+    assert linhas[0][:4] == ["Quando", "Usuário", "Operação", "Tabela"]
     assert ["Geologo1", "inclusão", "Ficha de mapeamento"] in [x[1:4] for x in linhas[1:]]
     assert all(x[3] == "Ficha de mapeamento" for x in linhas[1:])  # filtro por tabela aplicado
     assert cliente.get(f"{API}/auditoria.csv", headers=cab(tg)).status_code == 403  # geólogo não lê o histórico geral

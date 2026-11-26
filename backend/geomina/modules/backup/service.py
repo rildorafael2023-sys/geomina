@@ -4,6 +4,8 @@ Tipos de backup (todos em <dados>/backups):
 - ``completo``  — zip com o banco (cópia consistente) + todos os arquivos originais + manifesto;
 - ``diario``    — zip só com o banco, criado automaticamente na abertura se o último tiver mais de 24 h
                   (mantidos os 14 mais recentes);
+- ``semanal``   — zip completo (banco + arquivos originais) criado automaticamente a cada 7 dias
+                  (mantidos os 4 mais recentes);
 - ``antes-restauracao`` — zip completo criado automaticamente antes de qualquer restauração;
 - ``antes-migracao``    — cópia .db criada antes de atualizar o banco (migrar.py).
 
@@ -39,7 +41,10 @@ log = logging.getLogger("geomina.backup")
 MANIFESTO = "manifesto.json"
 NOME_BANCO = "geomina.db"
 MANTER_DIARIOS = 14
-TIPOS = ("completo", "diario", "antes-restauracao")
+MANTER_SEMANAIS = 4
+TIPOS = ("completo", "diario", "semanal", "antes-restauracao")
+ARQ_AGENDA = "agenda.json"   # em <dados>/backups: preferências do backup automático
+ARQ_ESTADO = "estado.json"   # em <dados>/backups: resultado da última execução
 _trava = threading.Lock()
 
 
@@ -180,17 +185,138 @@ def caminho_seguro(cfg: Config, nome: str) -> Path:
 
 
 def backup_diario_se_necessario(cfg: Config) -> Path | None:
-    """Chamado na abertura do aplicativo. Retorna o backup criado, se houve."""
+    """Compatibilidade: executa o backup automático e devolve o backup diário criado, se houve."""
+    r = backup_agendado(cfg)
+    return cfg.pasta_backups / r["diario"]["nome"] if r.get("diario", {}).get("criado") else None
+
+
+# ------------------------------------------------------------------ backup automático (E19)
+def ler_agenda(cfg: Config) -> dict:
+    padrao = {"semanal_completo": True, "pasta_copia": None}
+    try:
+        return {**padrao, **json.loads((cfg.pasta_backups / ARQ_AGENDA).read_text("utf-8"))}
+    except (OSError, json.JSONDecodeError):
+        return padrao
+
+
+def gravar_agenda(cfg: Config, semanal_completo: bool, pasta_copia: str | None) -> dict:
+    cfg.preparar_pastas()
+    pasta_copia = (pasta_copia or "").strip() or None
+    if pasta_copia:
+        destino = Path(pasta_copia).expanduser()
+        if not destino.is_dir():
+            raise BackupInvalido(f"A pasta '{pasta_copia}' não existe ou não está conectada.")
+        if destino.resolve() == cfg.pasta_backups.resolve() or cfg.dados.resolve() in [destino.resolve(), *destino.resolve().parents]:
+            raise BackupInvalido("Escolha uma pasta fora da pasta de dados do GeoMina (de preferência outro disco ou pendrive).")
+    agenda = {"semanal_completo": bool(semanal_completo), "pasta_copia": pasta_copia}
+    _gravar_json(cfg.pasta_backups / ARQ_AGENDA, agenda)
+    return agenda
+
+
+def ler_estado(cfg: Config) -> dict:
+    try:
+        return json.loads((cfg.pasta_backups / ARQ_ESTADO).read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _gravar_json(caminho: Path, dados: dict) -> None:
+    tmp = caminho.with_suffix(".tmp")
+    tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=2, default=str), "utf-8")
+    os.replace(tmp, caminho)
+
+
+def testar_restauracao(cfg: Config, caminho: Path) -> dict:
+    """Teste de restauração sem tocar no banco em uso: extrai o banco do backup numa pasta temporária, confere hash,
+    integridade, revisão e as contagens do manifesto, e confere o hash de cada arquivo original guardado no zip."""
+    inicio = datetime.now(UTC)
+    try:
+        m = validar_para_restaurar(cfg, caminho)
+        with tempfile.TemporaryDirectory(dir=cfg.dados) as tmp, zipfile.ZipFile(caminho) as z:
+            z.extract(NOME_BANCO, tmp)
+            contagens = _contagens(Path(tmp) / NOME_BANCO)
+            if m.get("contagens") and contagens != m["contagens"]:
+                raise BackupInvalido("As quantidades de registros no banco do backup não conferem com o manifesto.")
+            arquivos = 0
+            for info in z.infolist():
+                if info.filename.startswith("arquivos/objetos/") and not info.is_dir():
+                    h = hashlib.sha256()
+                    with z.open(info) as f:
+                        while b := f.read(1 << 20):
+                            h.update(b)
+                    # os objetos são guardados pelo próprio hash (…/aa/bb/<sha256>)
+                    if h.hexdigest() != Path(info.filename).name.split(".")[0]:
+                        raise BackupInvalido(f"Arquivo original corrompido dentro do backup: {info.filename}")
+                    arquivos += 1
+            if m.get("com_arquivos") and arquivos != m.get("arquivos", arquivos):
+                raise BackupInvalido("Faltam arquivos originais dentro do backup.")
+        return {"ok": True, "testado_em": inicio.isoformat(), "registros": sum(contagens.values()), "arquivos": arquivos,
+                "detalhe": f"{sum(contagens.values())} registros e {arquivos} arquivo(s) conferidos"}
+    except (BackupInvalido, zipfile.BadZipFile, OSError, sqlite3.Error) as e:
+        return {"ok": False, "testado_em": inicio.isoformat(), "detalhe": str(e)}
+
+
+def _podar_copias(destino: Path, tipo: str, manter: int) -> None:
+    for antigo in sorted(destino.glob(f"geomina-*-{tipo}.zip"), reverse=True)[manter:]:
+        antigo.unlink(missing_ok=True)
+
+
+def backup_agendado(cfg: Config, agora_: datetime | None = None) -> dict:
+    """Executado ao abrir o aplicativo e a cada hora enquanto ele está aberto.
+    - diário (só o banco) se o último tiver mais de 24 h; mantém 14;
+    - semanal completo (banco + arquivos originais) se o último tiver mais de 7 dias; mantém 4;
+    - cada backup novo passa pelo teste de restauração e, se houver pasta de cópia, é copiado para ela (com conferência
+      do hash) — a pasta de cópia guarda a mesma quantidade de backups.
+    O resultado fica em backups/estado.json (mostrado na tela Backup)."""
     if not cfg.caminho_banco.exists():
-        return None
-    diarios = [b for b in listar(cfg) if b.tipo == "diario"]
-    if diarios and _agora() - diarios[0].criado_em < timedelta(hours=24):
-        return None
-    with _trava:
-        criado = criar_backup(cfg, "diario", com_arquivos=False)
-    for antigo in [b for b in listar(cfg) if b.tipo == "diario"][MANTER_DIARIOS:]:
-        (cfg.pasta_backups / antigo.nome).unlink(missing_ok=True)
-    return criado
+        return {}
+    agora_ = agora_ or _agora()
+    agenda = ler_agenda(cfg)
+    estado = ler_estado(cfg)
+    resultado: dict = {}
+    planos = [("diario", timedelta(hours=24), False, MANTER_DIARIOS)]
+    if agenda["semanal_completo"]:
+        planos.append(("semanal", timedelta(days=7), True, MANTER_SEMANAIS))
+    for tipo, intervalo, com_arquivos, manter in planos:
+        existentes = [b for b in listar(cfg) if b.tipo == tipo]
+        if existentes and agora_ - existentes[0].criado_em < intervalo:
+            continue
+        with _trava:
+            criado = criar_backup(cfg, tipo, com_arquivos=com_arquivos)
+        for antigo in [b for b in listar(cfg) if b.tipo == tipo][manter:]:
+            (cfg.pasta_backups / antigo.nome).unlink(missing_ok=True)
+        item = {"nome": criado.name, "criado": True, "criado_em": agora_.isoformat(), "teste": testar_restauracao(cfg, criado)}
+        if agenda["pasta_copia"]:
+            try:
+                final = copiar_para(criado, agenda["pasta_copia"])
+                _podar_copias(final.parent, tipo, manter)
+                item["copia"] = {"ok": True, "destino": str(final)}
+            except (BackupInvalido, OSError) as e:
+                item["copia"] = {"ok": False, "destino": agenda["pasta_copia"], "erro": str(e)}
+                log.warning("Cópia do backup %s para %s falhou: %s", criado.name, agenda["pasta_copia"], e)
+        if not item["teste"]["ok"]:
+            log.error("Teste de restauração do backup %s FALHOU: %s", criado.name, item["teste"]["detalhe"])
+        resultado[tipo] = estado[tipo] = item
+    if resultado:
+        estado["verificado_em"] = agora_.isoformat()
+        _gravar_json(cfg.pasta_backups / ARQ_ESTADO, estado)
+    return resultado
+
+
+def agendar(cfg: Config, parar: threading.Event, intervalo_s: float = 3600) -> threading.Thread:
+    """Roda o backup automático agora e depois a cada `intervalo_s`, em segundo plano, até `parar` ser sinalizado."""
+    def _laco():
+        while not parar.is_set():
+            try:
+                backup_agendado(cfg)
+            except Exception:  # noqa: BLE001 — falha no backup automático não derruba o aplicativo (fica no log)
+                log.exception("Falha no backup automático")
+            t.primeira_execucao.set()
+            parar.wait(intervalo_s)
+    t = threading.Thread(target=_laco, name="backup-automatico", daemon=True)
+    t.primeira_execucao = threading.Event()  # type: ignore[attr-defined]
+    t.start()
+    return t
 
 
 def copiar_para(origem: Path, pasta_destino: str) -> Path:

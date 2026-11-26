@@ -12,7 +12,7 @@ import uuid
 from collections import defaultdict
 from datetime import date
 
-from sqlalchemy import text, select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session, aliased
 
 from geomina.modules.amostragem.models import Amostra, Campanha, TipoAmostra
@@ -20,7 +20,7 @@ from geomina.modules.analise.longitudinal import valor_grafico
 from geomina.modules.auth.models import Usuario
 from geomina.modules.dicionarios.models import Termo
 from geomina.modules.estrutura.models import TipoUnidade, UnidadeOperacional
-from geomina.modules.geoquimica.models import Analito, Certificado, Laboratorio, Resultado
+from geomina.modules.geoquimica.models import Analito, Certificado, Resultado
 from geomina.modules.mapeamento.models import Mapeamento
 from geomina.modules.sondagem.models import Furo
 

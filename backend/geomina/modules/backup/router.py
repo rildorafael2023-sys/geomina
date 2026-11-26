@@ -82,6 +82,41 @@ def criar(d: NovoBackup, request: Request, u: Usuario = Depends(BACKUP), db: Ses
     return NovoBackupSaida(backup=_info(cfg, caminho.name), copia=str(copia) if copia else None)
 
 
+class Agenda(BaseModel):
+    semanal_completo: bool = True
+    pasta_copia: str | None = Field(default=None, max_length=500,
+                                    description="segunda pasta (pendrive, HD externo, rede) que recebe cópia de cada backup automático")
+
+
+@router.get("/agenda")
+def ver_agenda(request: Request, _u: Usuario = Depends(BACKUP)) -> dict:
+    cfg = request.app.state.config
+    return {"agenda": service.ler_agenda(cfg), "estado": service.ler_estado(cfg)}
+
+
+@router.put("/agenda")
+def alterar_agenda(d: Agenda, request: Request, _u: Usuario = Depends(BACKUP)) -> dict:
+    cfg = request.app.state.config
+    try:
+        agenda = service.gravar_agenda(cfg, d.semanal_completo, d.pasta_copia)
+    except service.BackupInvalido as e:
+        raise _erro(e) from e
+    return {"agenda": agenda, "estado": service.ler_estado(cfg)}
+
+
+@router.post("/{nome}/testar")
+def testar(nome: str, request: Request, _u: Usuario = Depends(BACKUP)) -> dict:
+    """Teste de restauração sem alterar os dados em uso."""
+    cfg = request.app.state.config
+    try:
+        caminho = service.caminho_seguro(cfg, nome)
+    except service.BackupInvalido as e:
+        raise _erro(e) from e
+    if caminho.suffix != ".zip":
+        raise ErroAplicacao(422, "backup_invalido", "Só backups .zip podem ser testados.")
+    return service.testar_restauracao(cfg, caminho)
+
+
 @router.get("/{nome}/download")
 def baixar(nome: str, request: Request, _u: Usuario = Depends(BACKUP)):
     try:

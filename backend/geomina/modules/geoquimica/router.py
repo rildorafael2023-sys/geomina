@@ -6,7 +6,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-from fastapi import APIRouter, Query, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, insert, select, update

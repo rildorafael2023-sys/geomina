@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import threading
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, Request
@@ -20,8 +20,8 @@ from geomina.modules.amostragem.router import router as amostragem_router
 from geomina.modules.analise.router import router as analise_router
 from geomina.modules.arquivos.router import router as arquivos_router
 from geomina.modules.auth.router import router as auth_router
+from geomina.modules.backup import service as backup_service
 from geomina.modules.backup.router import router as backup_router
-from geomina.modules.backup.service import backup_diario_se_necessario
 from geomina.modules.dicionarios.router import router as dicionarios_router
 from geomina.modules.documentos.router import router as documentos_router
 from geomina.modules.estrutura.router import router as estrutura_router
@@ -29,8 +29,8 @@ from geomina.modules.geoop.router import router as geoop_router
 from geomina.modules.geoquimica.router import router as geoquimica_router
 from geomina.modules.mapeamento.router import router as mapeamento_router
 from geomina.modules.painel.router import router as painel_router
-from geomina.modules.sistema.router import router as sistema_router
 from geomina.modules.relatorios.router import router as relatorios_router
+from geomina.modules.sistema.router import router as sistema_router
 from geomina.modules.sondagem.router import router as sondagem_router
 from geomina.modules.topografia.router import router as topografia_router
 
@@ -45,14 +45,13 @@ def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> Fast
     cfg.preparar_pastas()
     if aplicar_migracoes:
         migrar(cfg)
-    if cfg.backup_diario:
-        try:
-            backup_diario_se_necessario(cfg)
-        except Exception:  # o aplicativo abre mesmo se o backup diário falhar (fica no log)
-            logging.getLogger("geomina").exception("Falha no backup diário automático")
 
     app = FastAPI(title="GeoMina", version=VERSAO_APP, docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.state.config = cfg
+    # Backup automático em segundo plano: na abertura e a cada hora (diário só do banco; semanal completo; teste de
+    # restauração e cópia para a segunda pasta, se configurada). Não atrasa a abertura do aplicativo.
+    app.state.parar_backup = threading.Event()
+    app.state.backup_thread = backup_service.agendar(cfg, app.state.parar_backup) if cfg.backup_diario else None
     app.state.engine = criar_engine(cfg.url_banco)
     app.state.fabrica_sessoes = criar_fabrica_sessoes(app.state.engine)
     app.state.armazenamento = ArmazenamentoLocal(cfg.pasta_arquivos)

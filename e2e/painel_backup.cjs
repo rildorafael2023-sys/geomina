@@ -82,6 +82,21 @@ const SENHA = "senhaForte123";
   await page.getByRole("cell", { name: "banco + arquivos · por Administrador" }).waitFor();
   await shot("e4-03-backup");
 
+  // 4b. (E19) Backup automático: segunda pasta, validação da pasta e teste de restauração de um backup
+  const auto = page.getByTestId("backup-automatico");
+  await auto.getByText("Último diário").waitFor();
+  const pastaCopia = require("fs").mkdtempSync(require("path").join(require("os").tmpdir(), "geomina-pendrive-"));
+  await auto.getByLabel("Segunda pasta para cópia automática").fill(pastaCopia + "-nao-existe");
+  await auto.getByRole("button", { name: "Salvar preferências" }).click();
+  await page.getByText(/não existe ou não está conectada/).waitFor();
+  await auto.getByLabel("Segunda pasta para cópia automática").fill(pastaCopia);
+  await auto.getByRole("button", { name: "Salvar preferências" }).click();
+  await page.getByText("Preferências do backup automático salvas.").waitFor();
+  assert.strictEqual((await chamar("GET", "/backups/agenda")).corpo.agenda.pasta_copia, pastaCopia);
+  const linhaTeste = page.locator("tr").filter({ hasText: "Completo" }).first();
+  await linhaTeste.getByRole("button", { name: "testar" }).click();
+  await linhaTeste.getByText("íntegro").waitFor();
+
   // 5. Depois do backup, cria N567; restaurar deve removê-lo
   await un("NIVEL", "N567");
   await page.reload();
@@ -129,7 +144,7 @@ const SENHA = "senhaForte123";
 
   assert.deepStrictEqual(erros, [], "erros no console da página");
   await browser.close();
-  console.log("E2E PAINEL/BACKUP OK: 7 cenários aprovados");
+  console.log("E2E PAINEL/BACKUP OK: 8 cenários aprovados");
 })().catch(async (e) => {
   console.error("E2E PAINEL/BACKUP FALHOU:", e);
   if (CAPTURAS && globalThis.__pagina) await globalThis.__pagina.screenshot({ path: `${CAPTURAS}/falha.png` }).catch(() => {});

@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.20.0 · **Etapa atual:** E18 Validação integrada concluída; próximas: implantação (E19: backup agendado, teste de restauração, instalador) e captura offline no tablet (E20). Usuário autorizou executar todas as etapas em sequência.
+**Última atualização:** 2026-11-26 · **Versão:** 0.21.0 · **Etapa atual:** E19 Implantação concluída (instalador .exe sem Python, backup automático testado com segunda cópia); próxima: captura offline no tablet/celular (E20). Usuário autorizou executar todas as etapas em sequência.
 
 ## Etapas
 
@@ -19,7 +19,15 @@
 | **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | ✅ Concluída (v0.18.0) — ver GEOQUIMICA_OPERACIONAL.md |
 | E17 Relatórios gerais | ✅ Concluída e testada (v0.19.0) |
 | E18 Validação integrada, segurança, carga e integridade | ✅ Concluída (v0.20.0) — ver VALIDACAO_E18.md |
-| E19 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+| E19 Implantação (instalador .exe, backup automático, teste de restauração) | ✅ Concluída (v0.21.0) — falta validar a instalação em Windows real |
+| E20 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
+
+## Entregue na E19 (versão 0.21.0) — implantação
+- **Instalador único `GeoMina-Setup-<versão>.exe`** (35 MB): não precisa de Python nem de internet; instala sem administrador; atalhos na área de trabalho e no menu Iniciar (GeoMina, diagnóstico, pasta de dados, desinstalar); atualização troca o Python e as bibliotecas sem tocar nos dados.
+- **Backup automático** em segundo plano (na abertura e a cada hora): diário só do banco (guarda 14) + **semanal completo** com fotos, croquis e laudos (guarda 4).
+- **Teste de restauração** de cada backup automático, sem mexer nos dados em uso; botão **testar** em qualquer backup da lista.
+- **Segunda pasta para cópia automática** (pendrive, HD externo, rede), com conferência do hash; se estiver desconectada, o backup é feito e a cópia fica para a próxima vez.
+- Tela Backup mostra o último diário/semanal, o resultado do teste e da cópia.
 
 ## Entregue na E18 (versão 0.20.0) — validação integrada
 Detalhes em `VALIDACAO_E18.md`. Resumo:
@@ -215,7 +223,7 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 
 ## Limitações conhecidas
 - **Janela própria e atalho não testados no Windows** (testados em Linux com Chromium). Se a janela não abrir, use `GeoMina.bat` (modo diagnóstico) e envie a mensagem.
-- O instalador exige Python 3.12/3.13 (instalador .exe único previsto para a E19).
+- Instalador .exe (0.21.0) gerado e conferido no Linux; falta a validação de instalação num Windows real.
 - Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
 - Visualização de PDF depende do leitor de PDF do Edge (o navegador de teste automatizado não exibe PDF; conferido só o carregamento). A amostra citada na ficha é ligada pelo código; o cadastro completo de amostras é da E8.
 - Medidas estruturais ficam como medidas (norte magnético + declinação registrada); a conversão para o norte da quadrícula será oferecida quando houver uso espacial (E13).

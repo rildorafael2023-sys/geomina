@@ -58,7 +58,7 @@ def fichas(db: Session, mina_id: uuid.UUID, ids: list[uuid.UUID]) -> dict:
             tids |= {i.litologia_id, i.textura_id, i.alteracao_id, i.intensidade_id, i.mineralizacao_id, i.contato_id}
         tids |= {x.tipo_id for x in m.medidas} | {a.destino_id for a in m.amostras}
     T = _termos(db, tids)
-    F, I, E, A = [], [], [], []
+    F, IV, E, A = [], [], [], []
     for m in ordem:
         u = unid.get(m.unidade_id)
         base = {"ficha": m.numero, "data": m.data, "unidade": u.codigo if u else None}
@@ -72,7 +72,7 @@ def fichas(db: Session, mina_id: uuid.UUID, ids: list[uuid.UUID]) -> dict:
                   "descricao": m.descricao, "obs_geotecnicas": m.obs_geotecnicas})
         idx = {i.id: n for n, i in enumerate(m.intervalos, 1)}
         for n, i in enumerate(m.intervalos, 1):
-            I.append({**base, "n": n, "de_m": i.de_m, "ate_m": i.ate_m, "litologia": _nome(T.get(i.litologia_id)),
+            IV.append({**base, "n": n, "de_m": i.de_m, "ate_m": i.ate_m, "litologia": _nome(T.get(i.litologia_id)),
                       "textura": _nome(T.get(i.textura_id)), "granulacao": i.granulacao, "cor": i.cor,
                       "alteracao": _nome(T.get(i.alteracao_id)), "intensidade": _nome(T.get(i.intensidade_id)),
                       "mineralizacao": _nome(T.get(i.mineralizacao_id)), "minerais": i.minerais, "percentual": i.percentual,
@@ -87,7 +87,7 @@ def fichas(db: Session, mina_id: uuid.UUID, ids: list[uuid.UUID]) -> dict:
         for a in m.amostras:
             A.append({**base, "codigo": a.codigo, "tipo": a.tipo, "de_m": a.de_m, "ate_m": a.ate_m,
                       "destino": _nome(T.get(a.destino_id)), "leitura_campo": a.leitura_campo, "observacao": a.observacao})
-    return {"fichas": F, "intervalos": I, "estruturas": E, "amostras": A}
+    return {"fichas": F, "intervalos": IV, "estruturas": E, "amostras": A}
 
 
 COLUNAS_FICHAS = [("ficha", "Ficha"), ("data", "Data"), ("unidade", "Unidade"), ("caminho", "Caminho"), ("hora", "Hora"),

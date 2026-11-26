@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Group, Loader, Modal, Paper, PasswordInput, ScrollArea, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, Group, Loader, Modal, Paper, PasswordInput, ScrollArea, Stack, Switch, Table, Text, TextInput, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { api, baixar, dataHora, ErroApi, json, tamanhoLegivel, type Backup as TB
 const TIPOS: Record<string, { rotulo: string; cor: string }> = {
   completo: { rotulo: "Completo", cor: "teal" },
   diario: { rotulo: "Diário automático", cor: "blue" },
+  semanal: { rotulo: "Semanal completo", cor: "indigo" },
   "antes-restauracao": { rotulo: "Antes de restaurar", cor: "orange" },
   "antes-migracao": { rotulo: "Antes de atualizar", cor: "gray" },
 };
@@ -74,10 +75,12 @@ export function Backup({ aoRestaurar }: { aoRestaurar: () => void }) {
         </Stack>
       </Paper>
 
+      <BackupAutomatico aoErro={setErro} />
+
       <Paper withBorder p="md">
         <Text fw={600} mb="xs">Backups disponíveis</Text>
         <Text size="xs" c="dimmed" mb="sm">
-          O GeoMina faz sozinho um backup diário do banco (mantém os 14 mais recentes), um backup antes de cada atualização e outro antes de cada restauração.
+          Também são feitos sozinhos: um backup antes de cada atualização do aplicativo e outro antes de cada restauração. "Testar" confere o backup sem alterar os dados em uso.
         </Text>
         {lista.isLoading ? (
           <Loader size="sm" />
@@ -105,6 +108,7 @@ export function Backup({ aoRestaurar }: { aoRestaurar: () => void }) {
                         <Button size="compact-xs" variant="subtle" onClick={() => baixar(`/backups/${encodeURIComponent(b.nome)}/download`, b.nome).catch(() => setErro("Falha ao baixar."))}>
                           baixar
                         </Button>
+                        {b.nome.endsWith(".zip") && <Testar nome={b.nome} />}
                         {b.nome.endsWith(".zip") && (
                           <Button size="compact-xs" variant="subtle" color="orange" onClick={() => { setErro(null); setSenha(""); setConfirmacao(""); setRestaurar(b); }}>
                             restaurar
@@ -140,5 +144,58 @@ export function Backup({ aoRestaurar }: { aoRestaurar: () => void }) {
         )}
       </Modal>
     </Stack>
+  );
+}
+
+interface ItemEstado { nome: string; criado_em: string; teste: { ok: boolean; detalhe: string }; copia?: { ok: boolean; destino: string; erro?: string } }
+interface Agenda { agenda: { semanal_completo: boolean; pasta_copia: string | null }; estado: { diario?: ItemEstado; semanal?: ItemEstado; verificado_em?: string } }
+
+function Testar({ nome }: { nome: string }) {
+  const m = useMutation({ mutationFn: () => api<{ ok: boolean; detalhe: string }>(`/backups/${encodeURIComponent(nome)}/testar`, { method: "POST" }) });
+  if (m.data) return <Badge color={m.data.ok ? "teal" : "red"} variant="light" title={m.data.detalhe}>{m.data.ok ? "íntegro" : "com defeito"}</Badge>;
+  return <Button size="compact-xs" variant="subtle" loading={m.isPending} onClick={() => m.mutate()}>testar</Button>;
+}
+
+function LinhaEstado({ rotulo, item }: { rotulo: string; item?: ItemEstado }) {
+  if (!item) return <Text size="sm">{rotulo}: <Text span c="dimmed">ainda não feito</Text></Text>;
+  return (
+    <Group gap="xs" wrap="wrap">
+      <Text size="sm">{rotulo}: <b>{dataHora(item.criado_em)}</b></Text>
+      <Badge size="sm" color={item.teste.ok ? "teal" : "red"} title={item.teste.detalhe}>{item.teste.ok ? "restauração testada" : "teste falhou"}</Badge>
+      {item.copia && <Badge size="sm" color={item.copia.ok ? "teal" : "orange"} title={item.copia.erro ?? item.copia.destino}>{item.copia.ok ? "cópia feita" : "cópia não feita"}</Badge>}
+      {item.copia && !item.copia.ok && <Text size="xs" c="orange">{item.copia.erro}</Text>}
+      {!item.teste.ok && <Text size="xs" c="red">{item.teste.detalhe}</Text>}
+    </Group>
+  );
+}
+
+function BackupAutomatico({ aoErro }: { aoErro: (e: string | null) => void }) {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["backup-agenda"], queryFn: () => api<Agenda>("/backups/agenda") });
+  const [pasta, setPasta] = useState<string | null>(null);
+  const [semanal, setSemanal] = useState<boolean | null>(null);
+  const salvar = useMutation({
+    mutationFn: () => api<Agenda>("/backups/agenda", { method: "PUT", body: json({ semanal_completo: semanal ?? q.data?.agenda.semanal_completo ?? true, pasta_copia: (pasta ?? q.data?.agenda.pasta_copia ?? "") || null }) }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["backup-agenda"] }); setPasta(null); setSemanal(null); notifications.show({ color: "teal", message: "Preferências do backup automático salvas." }); },
+    onError: (e) => aoErro(e instanceof ErroApi ? e.message : "Falha ao salvar."),
+  });
+  if (q.isLoading || !q.data) return <Loader size="sm" />;
+  const a = q.data.agenda, e = q.data.estado;
+  return (
+    <Paper withBorder p="md" data-testid="backup-automatico">
+      <Stack gap="xs">
+        <Text fw={600}>Backup automático</Text>
+        <Text size="sm" c="dimmed">
+          Enquanto o GeoMina estiver aberto (e ao abrir), ele faz sozinho um backup <b>diário</b> do banco (guarda 14) e, se ativado, um backup <b>semanal completo</b> com
+          os arquivos originais (guarda 4). Cada backup é <b>testado</b> (restauração simulada, sem mexer nos dados) e, se houver, <b>copiado</b> para a segunda pasta.
+        </Text>
+        <LinhaEstado rotulo="Último diário" item={e.diario} />
+        <LinhaEstado rotulo="Último semanal completo" item={e.semanal} />
+        <Switch label="Fazer também o backup semanal completo (com fotos, croquis e laudos)" checked={semanal ?? a.semanal_completo} onChange={(ev) => setSemanal(ev.currentTarget.checked)} />
+        <TextInput label="Segunda pasta para cópia automática" description="Pendrive, HD externo ou pasta da rede (ex.: E:\\Backups GeoMina). Se não estiver conectada, o backup é feito assim mesmo e a cópia fica para a próxima vez."
+          placeholder="nenhuma" value={pasta ?? a.pasta_copia ?? ""} onChange={(ev) => setPasta(ev.currentTarget.value)} />
+        <Group><Button variant="light" loading={salvar.isPending} disabled={pasta === null && semanal === null} onClick={() => { aoErro(null); salvar.mutate(); }}>Salvar preferências</Button></Group>
+      </Stack>
+    </Paper>
   );
 }
