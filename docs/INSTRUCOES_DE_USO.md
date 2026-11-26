@@ -1,4 +1,4 @@
-# INSTRUÇÕES DE USO — versão 0.9.0
+# INSTRUÇÕES DE USO — versão 0.10.0
 
 > Descreve apenas o que está implementado e testado. O 3D e os gráficos longitudinais ainda não estão disponíveis.
 
@@ -120,7 +120,21 @@ Na **Estrutura da mina**, selecione a galeria → aba **Eixo e chainage**.
 3. Amostras em SAD69 só entram se houver transformação aprovada; senão aparecem na lista "sem posição" com o motivo.
 4. Corrigir o eixo cria uma **nova versão** (as anteriores ficam guardadas); depois, calcule as posições de novo.
 
-## 17. Segurança dos dados
+## 17. Teores na galeria
+Menu **Teores na galeria**.
+1. Escolha a **galeria, travessa ou rampa** e os **analitos** (ex.: Cr, Be, F). Não é preciso desenhar eixo.
+2. **Planta**: os pontos de amostragem numerados do início (1) ao fim, coloridos pelo teor do analito escolhido, com as paredes da topografia em volta.
+3. **Gráfico**: teor × distância desde o início (um gráfico por analito). Arraste para ampliar um trecho; "Filtrar este trecho" restringe a análise a ele.
+4. **Tabela**: do início ao fim, com a distância de cada ponto, barras e o maior (vermelho) e menor (azul) valor. Amostras do mesmo ponto (sub-pontos da parede) aparecem juntas.
+5. **Inverter início ⇄ fim** se o início escolhido (a ponta com a amostra mais antiga) não for o emboque.
+6. Abaixo do limite (ex.: <10): escolha mostrar no limite (triângulo vazado), na metade, ou não mostrar. Nunca vira zero.
+7. **Filtros** escondem amostras, mas a distância de cada uma continua a da galeria inteira.
+8. **Comparar com outras galerias**: cada uma em painel próprio (as distâncias de galerias diferentes não são o mesmo lugar).
+9. **Exportar**: CSV (tabela), PNG ou SVG (gráfico).
+10. **Ligar às galerias…** (amostras vindas da planilha só com o texto do local): busque o local (ex.: "1F5"), marque as variações de escrita do mesmo lugar, escolha a unidade e ligue. Lados e ramos diferentes (Direita, Esquerda, Subindo, Câmara) devem ir para unidades diferentes; se juntar ramos, o GeoMina avisa que as amostras não seguem uma linha única.
+11. Se a galeria tiver eixo desenhado (aba "Eixo e chainage"), dá para escolher "Pelo eixo desenhado".
+
+## 18. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.

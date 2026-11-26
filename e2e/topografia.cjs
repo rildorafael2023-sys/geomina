@@ -103,7 +103,7 @@ const SENHA = "senhaForte123";
 
   // 5. Celular: sem rolagem lateral na topografia
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(URL + "/topografia");
+  await page.goto(URL.replace(/\/$/, "") + "/topografia");
   await page.getByRole("tab", { name: "Levantamentos" }).click();
   await page.getByRole("cell", { name: "TOPO-2026-09-28" }).waitFor();
   const largura = await page.evaluate(() => document.documentElement.scrollWidth);

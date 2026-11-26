@@ -165,3 +165,13 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 ## DT-031 — Chainage 3D com versões do eixo
 **Estado:** Aceita (E10)
 **Decisão.** Chainage = comprimento 3D acumulado até a projeção do ponto no eixo (para ponto sem cota, a projeção é feita em planta, mas a distância continua 3D). Galerias em U: a projeção mais próxima é usada e a alternativa é registrada como "ambígua". O eixo é versionado; posições ficam ligadas à versão usada.
+
+## DT-032 — Distância ao longo da galeria pelo caminho entre as amostras (eixo opcional)
+**Estado:** Aceita (E11, revisão pedida pelo usuário)
+**Contexto.** A topografia real não tem eixos; exigir que o geólogo desenhe o eixo e recalcule posições antes de ver teores tornava a ferramenta pouco usada. As amostras de frente já têm X/Y/Z medidos ao longo da galeria.
+**Decisão.** Sem eixo, o caminho parte de uma ponta (a de amostra mais antiga; sem datas, menor número) e segue para o ponto vizinho mais próximo; a distância é a soma dos trechos (3D quando há cota). Amostras a menos de 0,5 m (sub-pontos da parede) formam um ponto. A ordem é calculada com todas as amostras da unidade; filtros não alteram distâncias. Eixo desenhado continua disponível (projeção na hora).
+**Limitações declaradas.** Ramos diferentes na mesma unidade geram caminho em zigue-zague → aviso automático (caminho > 1,6 × distância entre pontas e > 30 m a mais); trechos longos sem amostras → aviso. Não é interpolação: entre dois pontos a distância é a reta entre eles (galerias curvas com amostras espaçadas ficam um pouco mais curtas que o eixo real).
+
+## DT-033 — Plotly carregado sob demanda
+**Estado:** Aceita (E11)
+`plotly.js-dist-min` 3.7.0 (local, sem internet) em chunk separado, carregado só nas telas de análise; o restante do aplicativo não fica mais pesado.

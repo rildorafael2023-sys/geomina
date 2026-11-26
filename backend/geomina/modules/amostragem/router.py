@@ -5,7 +5,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, insert, or_, select
+from sqlalchemy import case, func, insert, or_, select
 from sqlalchemy.orm import Session
 
 from geomina.core.dependencias import obter_sessao, requer
@@ -322,6 +322,49 @@ def alterar(amostra_id: uuid.UUID, e: AmostraAlteracao, _u: Usuario = Depends(ED
     _aplicar(db, a, e)
     db.flush()
     return _saida(db, a)
+
+
+@router.get("/minas/{mina_id}/amostras/sem-local")
+def sem_local(mina_id: uuid.UUID, _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> list[dict]:
+    """Amostras ainda não ligadas a uma unidade da mina, agrupadas pelo texto de local que vieram (ex.: da planilha de campo)."""
+    q = (select(Amostra.local_descricao, func.count(), func.sum(case((Amostra.x.is_not(None), 1), else_=0)), func.min(Amostra.codigo),
+                func.max(Amostra.codigo))
+         .where(Amostra.mina_id == mina_id, Amostra.unidade_id.is_(None), Amostra.estado != "cancelada")
+         .group_by(Amostra.local_descricao).order_by(func.count().desc()))
+    return [{"local": loc, "amostras": n, "com_coordenadas": int(xy or 0), "exemplo": f"{c1} … {c2}" if c1 != c2 else c1}
+            for loc, n, xy, c1, c2 in db.execute(q)]
+
+
+class LigarLocal(BaseModel):
+    unidade_id: uuid.UUID
+    local: str | None = Field(default=None, description="texto de local exatamente como na amostra; vazio = sem texto de local")
+    locais: list[str | None] | None = Field(default=None, description="vários textos de local (variações de escrita do mesmo lugar)")
+    codigos: list[str] | None = None
+
+
+@router.post("/minas/{mina_id}/amostras/ligar-unidade")
+def ligar_unidade(mina_id: uuid.UUID, e: LigarLocal, _u: Usuario = Depends(EDITAR), db: Session = Depends(obter_sessao)) -> dict:
+    """Liga em lote à unidade escolhida as amostras sem unidade com um dado texto de local (ou uma lista de códigos).
+
+    Cada amostra é alterada pelo ORM (registro no histórico de alterações, versão incrementada)."""
+    un = db.get(UnidadeOperacional, e.unidade_id)
+    if un is None or un.mina_id != mina_id:
+        raise ErroAplicacao(404, "nao_encontrado", "Unidade não encontrada nesta mina.")
+    q = select(Amostra).where(Amostra.mina_id == mina_id, Amostra.unidade_id.is_(None), Amostra.estado != "cancelada")
+    if e.codigos:
+        q = q.where(Amostra.codigo.in_([_canonico(c) for c in e.codigos]))
+    elif e.locais is not None:
+        textos = [x for x in e.locais if x]
+        q = q.where(or_(Amostra.local_descricao.in_(textos), Amostra.local_descricao.is_(None)) if None in e.locais or "" in e.locais
+                    else Amostra.local_descricao.in_(textos))
+    else:
+        q = q.where(Amostra.local_descricao.is_(None) if not e.local else Amostra.local_descricao == e.local)
+    n = 0
+    for a in db.scalars(q):
+        a.unidade_id = un.id
+        n += 1
+    db.flush()
+    return {"ligadas": n, "unidade": un.codigo}
 
 
 @router.post("/amostras/{amostra_id}/cancelar", response_model=AmostraSaida)

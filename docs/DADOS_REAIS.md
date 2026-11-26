@@ -73,3 +73,8 @@ Mostram fichas "Mapeamento Geotécnico Estrutural" manuscritas e escaneadas (23 
 | **BMT-TS** | amostragem de testemunho de sondagem |
 | **BE** | amostras antigas (mina e testemunho) |
 | SAB-CP (visto no laudo) | **a confirmar** |
+
+## 6. Planilha de campo × topografia (E11)
+- **Sistema das coordenadas da planilha: SAD69 / UTM 23S.** Conferido: com SAD69, as amostras ficam a 1,8 m (mediana) e 3,6 m (90%) das linhas da topografia em SAD69; supondo SIRGAS, 13 m (90%).
+- O local vem só como texto ("Direção da seção") e com muitas variações de escrita do mesmo lugar (ex.: 14 variações de "Travessa 1F2": "Travessa 1F - 2", "Travessa - 1F2 - Direita", "Tavessa 1F - 2 - Esquerda"…). Lados e ramos (Direita, Esquerda, Subindo, Câmara Refúgio) são lugares diferentes.
+- Poucas amostras da planilha têm resultado nos dois laudos recebidos (as demais aguardam laudos).

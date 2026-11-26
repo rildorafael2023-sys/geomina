@@ -14,6 +14,7 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/mapeamento", rotulo: "Mapeamento geológico", visivel: usuario.permissoes.includes("mapeamento:ler") },
     { para: "/amostras", rotulo: "Amostras", visivel: usuario.permissoes.includes("amostra:ler") },
     { para: "/geoquimica", rotulo: "Geoquímica", visivel: usuario.permissoes.includes("geoquimica:ler") },
+    { para: "/longitudinal", rotulo: "Teores na galeria", visivel: usuario.permissoes.includes("geoquimica:ler") },
     { para: "/topografia", rotulo: "Topografia", visivel: usuario.permissoes.includes("topografia:ler") },
     { para: "/documentos", rotulo: "Fotos e croquis", visivel: usuario.permissoes.includes("arquivo:ler") },
     { para: "/dicionarios", rotulo: "Dicionários", visivel: true },

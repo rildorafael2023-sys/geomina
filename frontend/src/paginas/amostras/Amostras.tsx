@@ -320,7 +320,7 @@ function Importar({ mina }: { mina: Mina }) {
   );
 }
 
-function ResultadosAmostra({ id }: { id: string }) {
+export function ResultadosAmostra({ id }: { id: string }) {
   const r = useQuery({ queryKey: ["resultados-amostra", id], queryFn: () => api<{ analito: string; metodo: string; certificado: string; tipo_linha: string; valor: string; unidade: string; preferido: boolean }[]>(`/amostras/${id}/resultados`) });
   if (!r.data?.length) return <Text size="xs" c="dimmed">Sem resultados de laboratório.</Text>;
   const pref = r.data.filter((x) => x.preferido);

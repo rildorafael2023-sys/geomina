@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.9.0 · **Etapa atual:** E10 concluída; próxima: módulo integrado da Seção 27 do Prompt Mestre (E11 em diante, replanejadas)
+**Última atualização:** 2026-11-26 · **Versão:** 0.10.0 · **Etapa atual:** E11 concluída (refeita a pedido do usuário); próxima: E12 sondagem
 
 ## Etapas
 
@@ -15,7 +15,27 @@
 | E8 Amostragem | ✅ Concluída e testada (v0.7.0) |
 | E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
 | E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
-| E11 – E21 (replanejadas com a Seção 27) | ⚪ Pendentes — ver PLANO_DE_DESENVOLVIMENTO |
+| E11 Teores ao longo da galeria | ✅ Concluída e testada (v0.10.0) |
+| E12 – E21 (replanejadas com a Seção 27) | ⚪ Pendentes — ver PLANO_DE_DESENVOLVIMENTO |
+
+## Entregue na E11 (versão 0.10.0) — teores ao longo da galeria
+**Revisão a pedido do usuário:** a 1ª versão exigia desenhar o eixo e "calcular posições" antes de ver qualquer coisa. Refeita: escolhe a galeria e os analitos e o resultado aparece.
+
+| Funcionalidade | Teste |
+|---|---|
+| Distância **pelo caminho entre as amostras** (sem eixo): começa numa ponta e segue para o ponto vizinho; trecho 3D quando há cota. Início = ponta com a amostra mais antiga (sem datas: menor número de amostra); botão "Inverter início ⇄ fim" | API (galeria em L com rampa) + E2E |
+| Eixo desenhado é opcional: se existir, pode ser usado (projeção na hora, sem "calcular posições") | API |
+| Amostras do mesmo ponto (sub-pontos da parede, ex.: 0–1,5 m e 1,5–3 m) ficam na mesma distância | API + E2E |
+| Planta da galeria com a topografia (paredes) ao redor, caminho e pontos numerados coloridos pelo teor; legenda de cores | E2E + **dados reais** |
+| Gráficos teor × distância, um por analito, alinhados, escala própria (linear/log, mín/máx); cor por litologia; regra de <LD visível (no limite / metade / omitir — nunca zero) | API + E2E |
+| Tabela do início ao fim com barras, maior (vermelho) e menor (azul) de cada analito | E2E |
+| Filtros (litologia, alteração, mineralização, estrutura da ficha, datas, responsável, tipo, campanha, trecho, faixa de teor); **não mudam as distâncias** | API + E2E |
+| Comparação com outras galerias em painéis separados (cada uma com seu início) | E2E |
+| Exportação CSV (mesmos pontos), PNG e SVG | API + E2E |
+| **Ligar em lote** amostras que vieram só com texto de local (planilha) a uma unidade: busca, várias variações de escrita de uma vez, histórico de alterações | API + E2E + **dados reais** |
+| Avisos: trecho longo sem amostras; **amostras que não seguem uma linha única** (ramos diferentes na mesma unidade); amostras sem coordenadas ou em sistema sem transformação aprovada | API + dados reais |
+
+**Dados reais:** a planilha de campo está em **SAD69** (amostras a 1,8 m em mediana das linhas da topografia em SAD69; na hipótese SIRGAS, 90% ficariam a até 13 m). Numa travessa real (6 amostras) o caminho seguiu a travessa entre as paredes. Ao juntar as 14 variações de "Travessa 1F2" (Direita, Esquerda, Subindo, Câmara…) numa só unidade, o caminho ziguezagueou entre ramos — por isso o aviso de ramos e a orientação de separar cada ramo.
 
 ## Entregue na E10 (versão 0.9.0)
 | Funcionalidade | Teste |
@@ -185,9 +205,10 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | P4 | Lista de níveis, galerias, travessas e rampas (posso preparar uma importação por planilha se for longa) | uso real da E3 |
 | P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
 | P6 | Existe arquivo de eixos de galeria? (hoje: definidos no GeoMina) | uso real do chainage |
+| P9 | Nomes dos ramos das travessas (ex.: 1F2 Direita/Esquerda/Subindo): cadastrar como unidades para ligar as amostras da planilha | uso real da E11 |
 | P8 | Dados de sondagem: enviar exemplos de collar, survey, litologia e amostras dos furos (CSV/Excel) | módulo de sondagens (Seção 27) |
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Seção 27 do Prompt Mestre (módulo integrado), na ordem de PLANO_DE_DESENVOLVIMENTO.md: começa pela análise geoquímica longitudinal (E11).
-2. Usuário valida no Windows a importação da topografia e a definição de um eixo real.
+1. **E12 — Sondagem** (banco, importação de collar/survey/intervalos, trajetória). Precisa de exemplos reais (P8).
+2. Usuário: cadastrar as travessas e seus ramos e ligar as amostras da planilha (tela "Teores na galeria" → "Ligar às galerias…").

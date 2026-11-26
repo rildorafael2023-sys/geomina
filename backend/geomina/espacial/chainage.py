@@ -53,3 +53,59 @@ def projetar(vertices: np.ndarray, ponto, tolerancia_ambiguidade: float = 0.5) -
     outros = np.where((np.abs(ch - ch[k]) > 2.0) & (dist - dist[k] <= tolerancia_ambiguidade))[0]
     alt = float(ch[outros[np.argmin(dist[outros])]]) if len(outros) else None
     return Projecao(float(ch[k]), float(dist[k]), k, bool(len(outros)), alt)
+
+
+@dataclass
+class Percurso:
+    """Caminho que segue a galeria passando pelos pontos de amostragem (quando não há eixo desenhado)."""
+
+    ordem: list[int]            # índices dos pontos, do início ao fim
+    distancia: list[float]      # distância acumulada (3D quando há cota nos dois pontos) de cada ponto, na ordem
+    saltos: list[int]           # posições (na ordem) em que o trecho é bem maior que o espaçamento típico
+
+
+def percurso_pelos_pontos(pontos: list[list[float]], inicio: int | None = None) -> Percurso:
+    """Ordena os pontos ao longo da galeria: parte de uma extremidade e segue sempre para o vizinho mais próximo.
+
+    Extremidades = par de pontos mais distantes em planta. `inicio` escolhe a extremidade de partida (índice do ponto);
+    se não for uma extremidade, é usado mesmo assim. A distância de cada trecho é 3D quando os dois pontos têm cota.
+    """
+    n = len(pontos)
+    if n == 0:
+        return Percurso([], [], [])
+    xy = np.array([[p[0], p[1]] for p in pontos], dtype=float)
+    if inicio is None:
+        c = xy.mean(axis=0)
+        a = int(np.argmax(np.linalg.norm(xy - c, axis=1)))
+        inicio = a
+    restantes = set(range(n)) - {inicio}
+    ordem = [inicio]
+    while restantes:
+        ult = xy[ordem[-1]]
+        prox = min(restantes, key=lambda i: (float(np.hypot(*(xy[i] - ult))), i))
+        ordem.append(prox)
+        restantes.remove(prox)
+    dist, trechos = [0.0], []
+    for a, b in zip(ordem, ordem[1:], strict=False):
+        pa, pb = pontos[a], pontos[b]
+        if len(pa) > 2 and len(pb) > 2 and pa[2] is not None and pb[2] is not None:
+            d = float(np.linalg.norm(np.array(pb[:3], float) - np.array(pa[:3], float)))
+        else:
+            d = float(np.hypot(pb[0] - pa[0], pb[1] - pa[1]))
+        trechos.append(d)
+        dist.append(dist[-1] + d)
+    saltos = []
+    if len(trechos) >= 4:
+        tipico = float(np.median(trechos))
+        saltos = [i + 1 for i, d in enumerate(trechos) if tipico > 0 and d > 4 * tipico and d > 20]
+    return Percurso(ordem, dist, saltos)
+
+
+def extremidades(pontos: list[list[float]]) -> tuple[int, int]:
+    """Os dois pontos mais distantes em planta (as pontas da galeria amostrada)."""
+    xy = np.array([[p[0], p[1]] for p in pontos], dtype=float)
+    if len(xy) < 2:
+        return 0, 0
+    a = int(np.argmax(np.linalg.norm(xy - xy.mean(axis=0), axis=1)))
+    b = int(np.argmax(np.linalg.norm(xy - xy[a], axis=1)))
+    return a, b
