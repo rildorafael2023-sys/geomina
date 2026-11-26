@@ -12,6 +12,7 @@ import { Auditoria } from "./paginas/Auditoria";
 import { Backup } from "./paginas/Backup";
 import { Dicionarios } from "./paginas/Dicionarios";
 import { Documentos } from "./paginas/documentos/Documentos";
+import { Topografia } from "./paginas/topografia/Topografia";
 import { Geoquimica } from "./paginas/geoquimica/Geoquimica";
 import { Inicio } from "./paginas/Inicio";
 import { Mapeamento } from "./paginas/mapeamento/Mapeamento";
@@ -66,6 +67,7 @@ export function App() {
         {usuario.permissoes.includes("mapeamento:ler") && <Route path="/mapeamento/*" element={<Mapeamento eu={usuario} />} />}
         {usuario.permissoes.includes("amostra:ler") && <Route path="/amostras" element={<Amostras eu={usuario} />} />}
         {usuario.permissoes.includes("geoquimica:ler") && <Route path="/geoquimica" element={<Geoquimica eu={usuario} />} />}
+        {usuario.permissoes.includes("topografia:ler") && <Route path="/topografia" element={<Topografia eu={usuario} />} />}
         {usuario.permissoes.includes("arquivo:ler") && <Route path="/documentos" element={<Documentos eu={usuario} />} />}
         <Route path="/dicionarios" element={<Dicionarios podeEditar={usuario.permissoes.includes("dicionario:configurar")} />} />
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}

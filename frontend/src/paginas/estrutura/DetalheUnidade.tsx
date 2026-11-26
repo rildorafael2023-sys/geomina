@@ -39,6 +39,7 @@ import {
 } from "../../api/cliente";
 import { PainelDocumentos } from "../documentos/PainelDocumentos";
 import { ListaFichas } from "../mapeamento/Mapeamento";
+import { EixoUnidade } from "../topografia/Eixo";
 import { Avancos } from "./Avancos";
 import { FormUnidade } from "./FormUnidade";
 
@@ -156,6 +157,7 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
           <Tabs.List>
             <Tabs.Tab value="dados">Dados</Tabs.Tab>
             {tipo?.e_frente && <Tabs.Tab value="avancos">Avanços</Tabs.Tab>}
+            {tipo?.possui_eixo && eu.permissoes.includes("topografia:ler") && <Tabs.Tab value="eixo">Eixo e chainage</Tabs.Tab>}
             {eu.permissoes.includes("mapeamento:ler") && <Tabs.Tab value="mapeamentos">Mapeamentos</Tabs.Tab>}
             {eu.permissoes.includes("arquivo:ler") && <Tabs.Tab value="documentos">Fotos e croquis</Tabs.Tab>}
             <Tabs.Tab value="historico">Histórico</Tabs.Tab>
@@ -194,6 +196,11 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
           {tipo?.e_frente && (
             <Tabs.Panel value="avancos" pt="sm">
               <Avancos frenteId={d.id} mina={mina} podeRegistrar={eu.permissoes.includes("avanco:registrar")} />
+            </Tabs.Panel>
+          )}
+          {tipo?.possui_eixo && eu.permissoes.includes("topografia:ler") && (
+            <Tabs.Panel value="eixo" pt="sm">
+              <EixoUnidade unidadeId={d.id} mina={mina} pode={eu.permissoes.includes("topografia:importar")} />
             </Tabs.Panel>
           )}
           {eu.permissoes.includes("mapeamento:ler") && (
