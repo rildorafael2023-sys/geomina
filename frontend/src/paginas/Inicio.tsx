@@ -35,6 +35,10 @@ export function Inicio({ usuario }: { usuario: Eu }) {
         {d.avancos_30_dias !== null && (
           <Numero rotulo="Avanço em 30 dias" valor={`${fmt(d.avancos_30_dias.metros)} m`} detalhe={`${d.avancos_30_dias.registros} registro(s)`} />
         )}
+        {d.fichas !== null && (
+          <Numero rotulo="Fichas de mapeamento" valor={Object.entries(d.fichas).filter(([e]) => e !== "cancelado").reduce((a, [, v]) => a + v, 0)}
+            detalhe={d.fichas.submetido ? `${d.fichas.submetido} aguardando revisão` : "nenhuma aguardando revisão"} para="/mapeamento" />
+        )}
         {d.arquivos !== null && <Numero rotulo="Arquivos originais" valor={d.arquivos.quantidade} detalhe={tamanhoLegivel(d.arquivos.bytes)} />}
         {d.usuarios_ativos !== null && <Numero rotulo="Usuários ativos" valor={d.usuarios_ativos} para="/usuarios" />}
       </SimpleGrid>

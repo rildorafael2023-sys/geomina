@@ -20,15 +20,18 @@ from geomina.db import agora
 from geomina.modules.arquivos.models import Arquivo
 from geomina.modules.auth.models import Usuario
 from geomina.modules.estrutura.models import FrenteAvanco, Mina, TipoUnidade, UnidadeOperacional
+from geomina.modules.mapeamento.models import Mapeamento
 
 router = APIRouter(tags=["painel e auditoria"])
 
 # Tabelas cujas alterações aparecem em "Atividades recentes" para qualquer usuário.
-TABELAS_PUBLICAS = ("mina", "unidade_operacional", "frente_avanco", "unidade_nivel", "arquivo")
+TABELAS_PUBLICAS = ("mina", "unidade_operacional", "frente_avanco", "unidade_nivel", "arquivo", "mapeamento")
 NOMES_TABELAS = {
     "mina": "Mina", "unidade_operacional": "Unidade", "frente_avanco": "Avanço de frente",
     "unidade_nivel": "Vínculo de nível", "arquivo": "Arquivo", "usuario": "Usuário", "tipo_unidade": "Tipo de unidade",
-    "regra_hierarquia": "Regra de hierarquia", "sistema": "Sistema",
+    "regra_hierarquia": "Regra de hierarquia", "sistema": "Sistema", "mapeamento": "Ficha de mapeamento",
+    "mapeamento_intervalo": "Intervalo de ficha", "medida_estrutural": "Medida estrutural",
+    "mapeamento_amostra": "Amostra de ficha", "termo": "Termo de dicionário", "termo_sinonimo": "Sinônimo",
 }
 OPERACOES = {"I": "inclusão", "U": "alteração", "D": "exclusão", "B": "backup", "R": "restauração"}
 
@@ -72,6 +75,7 @@ class Painel(BaseModel):
     atividades: list[Atividade]
     arquivos: dict[str, int] | None
     usuarios_ativos: int | None
+    fichas: dict[str, int] | None = None
 
 
 def _resumo(a: Auditoria) -> str:
@@ -80,7 +84,7 @@ def _resumo(a: Auditoria) -> str:
         if a.operacao == "B":
             return f"Backup {d.get('arquivo', '')}"
         return f"Restauração de {d.get('restaurado', '')}"
-    for chave in ("codigo", "login", "nome_original", "nome"):
+    for chave in ("numero", "codigo", "login", "nome_original", "nome"):
         if d.get(chave):
             return str(d[chave])
     if a.tabela == "frente_avanco":
@@ -135,6 +139,9 @@ def painel(u: Usuario = Depends(usuario_atual), db: Session = Depends(obter_sess
         p.ultimos_avancos = [UltimoAvanco(frente_id=a.frente_id, frente=cod, data=a.data, distancia_m=a.distancia_m,
                                           referencia=a.referencia, avanco_m=a.avanco_m, responsavel=nome)
                              for a, cod, nome in ult]
+
+    if "mapeamento:ler" in perms:
+        p.fichas = {e: n for e, n in db.execute(select(Mapeamento.estado, func.count()).group_by(Mapeamento.estado))}
 
     if "arquivo:ler" in perms:
         n, tam = db.execute(select(func.count(), func.coalesce(func.sum(Arquivo.tamanho), 0))).one()

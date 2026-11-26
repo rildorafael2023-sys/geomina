@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.4.0
+# INSTRUÇÕES DE USO — versão 0.5.0
 
-> Descreve apenas o que está implementado e testado. Mapeamento, amostras, laudos e topografia ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. Croquis, amostras, laudos e topografia ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -70,7 +70,19 @@ Menu **Backup**.
 - Para restaurar um backup que está no pendrive: **Abrir pasta de backups**, copie o .zip para essa pasta e atualize a página.
 - Recomendação: um backup completo por semana num pendrive guardado fora do computador.
 
-## 11. Segurança dos dados
+## 11. Mapeamento geológico (ficha digital)
+Menu **Mapeamento geológico** → **Nova ficha** (ou, na Estrutura da mina, aba **Mapeamentos** → "Nova ficha neste local").
+1. **Identificação**: local, data, exposição (frente, parede…), distância e de onde foi medida, altura/largura da seção, azimute do eixo, coordenadas se medidas.
+2. **Seção**: um cartão por intervalo, do piso para o teto (de/até, litologia, alteração e intensidade, mineralização, contato). "+ Intervalo" começa onde o anterior terminou. Intervalos sobrepostos não são aceitos; lacunas geram aviso.
+3. **Medidas**: escolha a estrutura (S1, fratura, falha, lineação…). Planos em direção de mergulho/mergulho (ex.: 230/30) ou rumo pela regra da mão direita; lineações em rumo/caimento. Família (ex.: FR-I) e intervalo são opcionais.
+4. **Amostras**: digite o código como quiser ("BS - RP - 474 - A") — ao sair do campo ele vira **BS-RP-474A**. "RP 478" mostra o botão "Usar BS-RP-478" para confirmar.
+5. A **coluna da seção** e o **estereograma** (à direita) se atualizam enquanto você digita.
+6. **Criar ficha** grava um rascunho. Quando terminar: **Submeter para revisão** (a ficha fica bloqueada).
+7. **Revisor**: **Aprovar** ou **Devolver ao autor** (com motivo). Ficha aprovada não pode ser alterada; para corrigir: **Reabrir para correção** (a versão aprovada fica guardada).
+8. **Imprimir / PDF**: versão A4 da ficha (na janela de impressão, escolha "Salvar como PDF"). Na lista, **Ficha em branco para imprimir** gera a ficha vazia para campo.
+9. **Dicionários** (menu): litologias, estruturas, alterações… O revisor/administrador pode incluir termos, siglas, cores e sinônimos e inativar termos.
+
+## 12. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.

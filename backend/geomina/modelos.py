@@ -3,6 +3,7 @@
 from geomina.core.auditoria import Auditoria  # noqa: F401
 from geomina.modules.arquivos.models import Arquivo  # noqa: F401
 from geomina.modules.auth.models import Papel, Permissao, Sessao, Usuario  # noqa: F401
+from geomina.modules.dicionarios.models import Dicionario, Termo, TermoSinonimo  # noqa: F401
 from geomina.modules.estrutura.models import (  # noqa: F401
     FrenteAvanco,
     Mina,
@@ -10,5 +11,12 @@ from geomina.modules.estrutura.models import (  # noqa: F401
     TipoUnidade,
     UnidadeNivel,
     UnidadeOperacional,
+)
+from geomina.modules.mapeamento.models import (  # noqa: F401
+    AmostraCitada,
+    Intervalo,
+    Mapeamento,
+    MapeamentoRevisao,
+    MedidaEstrutural,
 )
 from geomina.modules.sistema.models import ParametroSistema  # noqa: F401

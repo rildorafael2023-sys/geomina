@@ -66,12 +66,13 @@
 **Escopo:** mina (com CRS de trabalho, proposto SIRGAS 2000 / UTM 23S), tipos de unidade, regras de hierarquia, unidades (árvore ltree), unidades multinível, frentes e avanços, histórico por unidade, inativação.
 **Aceitação:** ✅ cadastro, consulta e alteração pela API e pela interface testados; ✅ regra de hierarquia violada é rejeitada **pelo banco** (testado com SQL direto, sem a API); ✅ ciclos impossíveis; ✅ mover sub-árvore atualiza os caminhos; ✅ rampa vinculada a 3 níveis aparece na consulta de cada nível; ✅ exclusão de unidade com vínculos bloqueada; ✅ cada operação auditada, com histórico legível por unidade; ✅ avanços de frente com referência obrigatória.
 
-## E4 — Painel, histórico de alterações, backup e restauração 🟡 concluída e testada, aguardando validação
+## E4 — Painel, histórico de alterações, backup e restauração ✅ concluída (usuário autorizou prosseguir)
 **Realizado:** painel com dados reais, consulta da auditoria, backup completo/diário, cópia para pendrive, restauração segura. A interface base e a administração de usuários já tinham sido feitas na E2.
 **Escopo original:** **Escopo:** SPA React/TS (layout, navegação, login, tratamento de sessão), cliente da API gerado; telas de estrutura operacional (árvore, cadastro, histórico); administração de usuários/papéis; dashboard com indicadores **apenas dos módulos existentes**, calculados no banco.
 **Aceitação:** testes E2E (Playwright): login, criar mina/nível/galeria/frente pela interface, ver no dashboard a contagem real; usuário "Consulta" não vê botões de edição e a API também recusa; uso testado em resolução de tablet.
 
-## E5 — Mapeamento geológico
+## E5 — Mapeamento geológico 🟡 concluída e testada, aguardando validação
+**Fora do escopo realizado:** atributos customizados (RF-MAP-07, desejável) e coerência lineação × plano hospedeiro (RF-MAP-06, aviso) — adiados; croquis/fotos na ficha (E6/E7).
 **Escopo:** **ficha digital nova (`FICHA_MAPEAMENTO.md`, sem RQD)**; dicionários configuráveis com sinônimos (grafias da planilha de campo); estereograma automático; ficha em PDF e ficha em branco para impressão; mapeamento com observações e medidas estruturais; conversões de orientação; validações; fluxo rascunho→submetido→aprovado; revisões; consulta cronológica por unidade.
 **Aceitação:** conversão rumo(RHR)/mergulho → dip-direction/dip testada com casos de referência; valores fora de faixa rejeitados; aprovação bloqueia edição direta e gera revisão; histórico reconstrói versões anteriores; termo inativo não aparece para novos registros mas permanece nos antigos.
 

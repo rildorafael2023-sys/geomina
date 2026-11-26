@@ -19,7 +19,7 @@ const consultas = new QueryClient({ defaultOptions: { queries: { retry: false, r
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <MantineProvider theme={tema} defaultColorScheme="auto">
-      <Notifications position="bottom-right" limit={3} autoClose={3500} />
+      <Notifications position="bottom-left" limit={3} autoClose={3500} />
       <QueryClientProvider client={consultas}>
         <BrowserRouter>
           <App />

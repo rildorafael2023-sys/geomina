@@ -53,7 +53,7 @@ geomina/
 │   │   ├── migrar.py             migrações automáticas + backup prévio
 │   │   ├── modelos.py            registro de todos os modelos
 │   │   ├── janela.py             janela própria, instância única, encerramento
-│   │   ├── migrations/           Alembic (0001_nucleo, 0002_estrutura, 0003_backup)
+│   │   ├── migrations/           Alembic (0001_nucleo … 0004_mapeamento)
 │   │   ├── core/                 auditoria, segurança, armazenamento, erros, dependências
 │   │   ├── espacial/             geometria WKB 3D (base para a topografia)
 │   │   ├── modules/
@@ -62,6 +62,8 @@ geomina/
 │   │   │   ├── estrutura/        minas, tipos, regras, unidades, avanços (E3)
 │   │   │   ├── painel/           painel e consulta da auditoria (E4)
 │   │   │   ├── backup/           backup, backup diário, restauração (E4)
+│   │   │   ├── dicionarios/      dicionários, termos, sinônimos (E5)
+│   │   │   ├── mapeamento/       ficha digital, regras de orientação e códigos (E5)
 │   │   │   └── sistema/          saúde, parâmetros da instalação
 │   │   └── static/               interface compilada (gerada, fora do git)
 │   └── tests/                    pytest (banco SQLite real em pasta temporária)
@@ -104,6 +106,11 @@ Endpoints **[IMPLEMENTADO]**:
 | GET | `/painel` | autenticado (blocos conforme permissões) |
 | GET | `/auditoria?tabela=&operacao=&usuario_id=&de=&ate=&texto=&pagina=&tamanho=` · `/auditoria/tabelas` | `auditoria:ler` |
 | GET/POST | `/backups` · GET `/backups/{nome}/download` · POST `/backups/abrir-pasta` · POST `/backups/restaurar` | `sistema:backup` |
+| GET · POST · PATCH · PUT | `/dicionarios` · `/dicionarios/{codigo}/termos` · `/termos/{id}` · `/termos/{id}/sinonimos` · GET `/dicionarios/{codigo}/reconhecer?texto=` | leitura: autenticado; edição: `dicionario:configurar` |
+| GET | `/minas/{id}/mapeamentos?unidade_id=&estado=&litologia_id=&de=&ate=&texto=` | `mapeamento:ler` |
+| POST/GET/PUT/DELETE | `/mapeamentos` · `/mapeamentos/{id}` | `mapeamento:editar` / `mapeamento:ler` |
+| POST | `/mapeamentos/{id}/submeter` · `/aprovar` · `/devolver` · `/reabrir` · `/cancelar` · GET `/mapeamentos/{id}/revisoes` | conforme a ação (`mapeamento:aprovar` para aprovar/devolver/reabrir) |
+| GET | `/codigos-amostra/verificar?codigo=` | `mapeamento:ler` |
 
 ## 6. Arquitetura espacial (adaptada ao SQLite — DT-017)
 

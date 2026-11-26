@@ -20,7 +20,9 @@ from geomina.modules.arquivos.router import router as arquivos_router
 from geomina.modules.auth.router import router as auth_router
 from geomina.modules.backup.router import router as backup_router
 from geomina.modules.backup.service import backup_diario_se_necessario
+from geomina.modules.dicionarios.router import router as dicionarios_router
 from geomina.modules.estrutura.router import router as estrutura_router
+from geomina.modules.mapeamento.router import router as mapeamento_router
 from geomina.modules.painel.router import router as painel_router
 from geomina.modules.sistema.router import router as sistema_router
 
@@ -56,7 +58,8 @@ def criar_app(cfg: Config | None = None, aplicar_migracoes: bool = True) -> Fast
         return await chamar(request)
 
     api = APIRouter(prefix="/api/v1")
-    for r in (sistema_router, auth_router, arquivos_router, estrutura_router, painel_router, backup_router):
+    for r in (sistema_router, auth_router, arquivos_router, estrutura_router, painel_router, backup_router,
+              dicionarios_router, mapeamento_router):
         api.include_router(r)
     app.include_router(api)
 

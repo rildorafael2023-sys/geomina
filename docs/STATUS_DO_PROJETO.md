@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-25 · **Versão:** 0.4.0 · **Etapa atual:** E4 concluída, aguardando validação
+**Última atualização:** 2026-11-26 · **Versão:** 0.5.0 · **Etapa atual:** E5 concluída, aguardando validação
 
 ## Etapas
 
@@ -9,9 +9,34 @@
 | E1 Arquitetura e especificação | ✅ Aprovada |
 | E2 Infraestrutura, banco local, autenticação, auditoria, arquivos | ✅ Validada (instalada e aberta pelo usuário no Windows) |
 | E3 Estrutura operacional da mina + janela própria | ✅ Usuário autorizou prosseguir (validação no Windows da janela própria ainda pendente) |
-| E4 Painel, histórico de alterações, backup e restauração | 🟡 **Concluída e testada, aguardando validação do usuário** |
-| E5 Mapeamento geológico (ficha digital) | ⚪ Próxima — depende da revisão de `FICHA_MAPEAMENTO.md` |
+| E4 Painel, histórico de alterações, backup e restauração | ✅ Usuário autorizou prosseguir |
+| E5 Mapeamento geológico (ficha digital) | 🟡 **Concluída e testada, aguardando validação do usuário** (feita com a proposta da ficha como estava, a pedido do usuário: "comece") |
+| E6 Croquis e documentos | ⚪ Próxima |
 | E5 – E21 | ⚪ Pendentes |
+
+## Entregue na E5 (versão 0.5.0)
+| Funcionalidade | Teste |
+|---|---|
+| **Dicionários** configuráveis (11): litologias da planilha da mina (17, com siglas e cores), texturas, alterações, intensidade, mineralização, minerais, contatos, tipos de estrutura (planar/linear), exposição, água, destino da amostra. Inclusão, edição, inativação, **sinônimos**; reconhecimento de grafias ("Gnaisse Pelitico" = "gnaisse pelítico") | API + E2E |
+| **Ficha digital** (proposta `FICHA_MAPEAMENTO.md`, sem RQD): identificação (local na árvore, exposição, distância + referência, seção, azimute, XYZ opcional), intervalos da seção, medidas estruturais, amostras coletadas, descrição, água, observações geotécnicas opcionais | API + E2E |
+| Numeração automática `MAP-AAAA-nnnn` por mina | API |
+| Medidas: direção de mergulho/mergulho ou rumo (mão direita), rumo/caimento para lineações; valor digitado e convenção guardados; norte de referência e declinação (herdada da mina) registrados, sem correção automática | testes com casos calculados à mão |
+| Validações: intervalos sobrepostos (erro), lacunas e altura excedida (avisos), faixas de ângulos, termos do dicionário certo (garantido **pelo banco**), termos inativos só em registros antigos | API + banco |
+| Códigos de amostra normalizados ("BS - RP - 237 - B" → BS-RP-237B); "RP 478" vira **sugestão** BS-RP-478 com confirmação; BE aceito com aviso | testes com as grafias reais da planilha + E2E |
+| **Coluna da seção** e **estereograma** (Schmidt, hemisfério inferior, polos + grandes círculos + lineações) atualizados enquanto se digita | testes unitários da projeção + E2E |
+| Fluxo **rascunho → submetida → aprovada** (devolver com motivo, reabrir com motivo, cancelar). Autor não aprova a própria ficha se houver outro revisor. Ficha aprovada/submetida **imutável no banco**; reabrir guarda a versão aprovada | API + banco + teste de mutação |
+| Lista de fichas com filtros (local com sub-árvore, situação, litologia, período, texto/amostra); aba "Mapeamentos" em cada unidade; "Nova ficha neste local" | API + E2E |
+| **Impressão / PDF** da ficha e **ficha em branco** para campo | E2E (capturas) |
+| Painel: fichas e quantas aguardam revisão | API |
+
+### Problemas encontrados e corrigidos na E5
+| Problema | Correção |
+|---|---|
+| Remoção de amostra/intervalo de uma ficha não era auditada | exclusão explícita de cada item |
+| Alterar só intervalos não mudava a versão da ficha (edições simultâneas não detectadas) | toda gravação avança a versão |
+| Ficha nova seria gravada sem unidade/data | campos obrigatórios definidos na criação |
+| Migração gerada com tipo interno (não executava) | tipo padrão + ajuste do gerador |
+| Impressão: " × 3,2 m" sem largura; "magnetico" sem acento; notificações sobre os botões | corrigidos |
 
 ## Entregue na E4 (versão 0.4.0)
 | Funcionalidade | Teste |
@@ -79,6 +104,8 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - **Janela própria e atalho não testados no Windows** (testados em Linux com Chromium). Se a janela não abrir, use `GeoMina.bat` (modo diagnóstico) e envie a mensagem.
 - O instalador exige Python 3.12/3.13 (instalador .exe único previsto para a E19).
 - Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
+- Ficha: croquis e fotos ainda não podem ser anexados (E6). A amostra citada na ficha é ligada pelo código; o cadastro completo de amostras é da E8.
+- Medidas estruturais ficam como medidas (norte magnético + declinação registrada); a conversão para o norte da quadrícula será oferecida quando houver uso espacial (E13).
 - Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
 - Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").
 - "Abrir pasta de backups" funciona no Windows; em outros sistemas mostra o caminho.
@@ -88,7 +115,7 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | # | Pergunta | Bloqueia |
 |---|---|---|
 | P1 | Validar a E3: atualizar a instalação (ver INSTRUCOES_DE_INSTALACAO → Atualização), abrir pelo ícone e cadastrar a mina e alguns níveis | E4 |
-| P2 | Revisar a proposta da ficha (`FICHA_MAPEAMENTO.md`) e responder às 4 perguntas da §4 | E5 |
+| P2 | Ajustes na ficha digital depois do uso (a proposta foi implementada como estava) | — |
 | P3 | CRS de trabalho: a tela de cadastro da mina sugere SIRGAS 2000; confirmar ao cadastrar | — |
 | P4 | Lista de níveis, galerias, travessas e rampas (posso preparar uma importação por planilha se for longa) | uso real da E3 |
 | P5 | Significado do prefixo SAB-CP (visto no laudo) e dos layers SC e PONTO CONVERGÊNCIA | E8/E10 |
@@ -96,5 +123,5 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 | P7 | Croquis: enviar alguns exemplos individuais (além do PDF de fichas) | E6 |
 
 ## Próximos passos
-1. Usuário valida a E4 (Painel, Histórico de alterações, Backup) e a janela própria da E3 no Windows.
-2. **E5 — Mapeamento geológico** com a ficha digital: precisa da revisão de `FICHA_MAPEAMENTO.md` (enviada ao usuário em 2026-11-25).
+1. Usuário usa a ficha digital com dados reais e indica ajustes (campos, listas, layout de impressão).
+2. **E6 — Croquis e documentos**: anexar croquis (PDF/imagens, incluindo o PDF de fichas escaneadas) a fichas e unidades, com versões e visualização.

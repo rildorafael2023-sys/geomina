@@ -1,7 +1,7 @@
 # BANCO DE DADOS — Modelo inicial
 
 > Estado: modelo lógico da Etapa 1, **adaptado ao SQLite em 2026-11-25** (DT-016/DT-017).
-> **Tabelas implementadas:** migração `0001_nucleo` (E2): `usuario`, `papel`, `permissao`, `papel_permissao`, `usuario_papel`, `sessao`, `auditoria`, `arquivo`, `parametro_sistema`. Migração `0002_estrutura` (E3): `mina`, `tipo_unidade`, `regra_hierarquia`, `unidade_operacional`, `unidade_nivel`, `frente_avanco`, mais 10 triggers de integridade e os dados iniciais (9 tipos, regras, 4 permissões). As demais tabelas ainda são projeto.
+> **Tabelas implementadas:** migração `0001_nucleo` (E2): `usuario`, `papel`, `permissao`, `papel_permissao`, `usuario_papel`, `sessao`, `auditoria`, `arquivo`, `parametro_sistema`. Migração `0002_estrutura` (E3): `mina`, `tipo_unidade`, `regra_hierarquia`, `unidade_operacional`, `unidade_nivel`, `frente_avanco`, mais 10 triggers de integridade e os dados iniciais (9 tipos, regras, 4 permissões). Migração `0003_backup` (E4): permissão. Migração `0004_mapeamento` (E5): `dicionario`, `termo`, `termo_sinonimo`, `mapeamento`, `mapeamento_intervalo`, `medida_estrutural`, `mapeamento_amostra`, `mapeamento_revisao`, 37 triggers (termo do dicionário certo por coluna, classe da medida, ficha só editável em rascunho, exclusão só de rascunho nunca submetido, unidade da mesma mina, revisões imutáveis), 11 dicionários iniciais. As demais tabelas ainda são projeto.
 
 ## 0. Adaptação ao SQLite (aplicativo local)
 
@@ -65,7 +65,8 @@
 
 > **Por que árvore genérica?** Ver ANALISE_CRITICA A1. A hierarquia é configurável, impõe regras pelo banco e permite consultar a sub-árvore inteira com `caminho <@ 'MINA.N350.GAL01'`.
 
-## 4. Dicionários configuráveis (Etapa 5)
+## 4. Dicionários configuráveis (Etapa 5) **[IMPLEMENTADO]**
+> Implementação: `termo` ganhou `sigla` e `classe` (planar/linear para estruturas); `termo_sinonimo` (texto normalizado único por dicionário). `definicao_atributo` (campos customizados) adiada.
 
 | Tabela | Colunas | Observações |
 |--------|---------|-------------|
@@ -73,7 +74,8 @@
 | `termo` | id, dicionario_id, codigo, nome, descricao, cor, pai_id (hierarquia de termos, ex.: grupo litológico), ativo, ordem | UNIQUE(dicionario_id, codigo) |
 | `definicao_atributo` | id, contexto (ex.: `observacao:ALTERACAO`), codigo, rotulo, tipo (texto/num/inteiro/data/termo/booleano), dicionario_id, obrigatorio, min, max, unidade | Campos customizados (DT-009) |
 
-## 5. Mapeamento geológico (Etapa 5)
+## 5. Mapeamento geológico (Etapa 5) **[IMPLEMENTADO — ajustes abaixo]**
+> Implementação: cabeçalho conforme a ficha (exposição, distância + referência, seção L×A, azimute, XYZ, norte de referência, declinação, água, obs. geotécnicas, número `MAP-AAAA-nnnn`); intervalos em `mapeamento_intervalo` (de/até ao longo da seção); medidas em `medida_estrutural` com `valor_digitado`/`convencao`; amostras citadas em `mapeamento_amostra` (código canônico; ligação ao cadastro de amostras na E8); `mapeamento_revisao` guarda o instantâneo aprovado ao reabrir. Posição ao longo do eixo (chainage) e geometria entram na E10.
 
 | Tabela | Colunas principais | Restrições |
 |--------|--------------------|-----------|

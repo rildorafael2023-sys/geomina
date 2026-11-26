@@ -22,6 +22,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   api,
@@ -36,6 +37,7 @@ import {
   type UnidadeDetalhe,
   type UnidadeResumo,
 } from "../../api/cliente";
+import { ListaFichas } from "../mapeamento/Mapeamento";
 import { Avancos } from "./Avancos";
 import { FormUnidade } from "./FormUnidade";
 
@@ -153,6 +155,7 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
           <Tabs.List>
             <Tabs.Tab value="dados">Dados</Tabs.Tab>
             {tipo?.e_frente && <Tabs.Tab value="avancos">Avanços</Tabs.Tab>}
+            {eu.permissoes.includes("mapeamento:ler") && <Tabs.Tab value="mapeamentos">Mapeamentos</Tabs.Tab>}
             <Tabs.Tab value="historico">Histórico</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="dados" pt="sm">
@@ -189,6 +192,16 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
           {tipo?.e_frente && (
             <Tabs.Panel value="avancos" pt="sm">
               <Avancos frenteId={d.id} mina={mina} podeRegistrar={eu.permissoes.includes("avanco:registrar")} />
+            </Tabs.Panel>
+          )}
+          {eu.permissoes.includes("mapeamento:ler") && (
+            <Tabs.Panel value="mapeamentos" pt="sm">
+              <Stack gap="xs">
+                {eu.permissoes.includes("mapeamento:editar") && d.ativo && (
+                  <Button size="xs" w="fit-content" component={Link} to={`/mapeamento/nova?unidade=${d.id}`}>Nova ficha neste local</Button>
+                )}
+                <ListaFichas mina={mina} unidadeId={d.id} compacta />
+              </Stack>
             </Tabs.Panel>
           )}
           <Tabs.Panel value="historico" pt="sm">

@@ -81,7 +81,14 @@
 
 | 2026-11-25 | E4 | Atualização real 0.3.0 → 0.4.0 (pacote linux) com mina já cadastrada | **aprovado** | banco 0002 → 0003; mina preservada e exibida no painel; backups `antes-migracao` e `diario` criados; admin antigo recebeu a permissão de backup |
 
+| 2026-11-26 | E5 | `pytest` backend: 126 testes (+49: regras do mapeamento 31, ficha 18) | **126 aprovados** | 1ª execução: 2 falhas reais (exclusão sem auditoria; versão não avançava), corrigidas. **Teste de mutação:** trigger de imutabilidade desativado → teste do banco falhou, como esperado |
+| 2026-11-26 | E5 | `vitest` (interface): projeção do estereograma, 5 casos calculados à mão | **5 aprovados** | |
+| 2026-11-26 | E5 | E2E `e2e/mapeamento.cjs` (7 cenários: geóloga cria ficha completa pela tela, normalização e sugestão de código, coluna/estereograma, submeter e bloqueio, revisor aprova, impressão e ficha em branco, lista/aba da unidade/dicionários, celular) | **aprovado** | ajustes de seletores no teste; 3 defeitos de acabamento corrigidos |
+| 2026-11-26 | E5 | E2E de regressão: estrutura, painel/backup, básico | **aprovados** | |
+| 2026-11-26 | E5 | Atualização real 0.4.0 → 0.5.0 (pacote linux) com mina e nível já cadastrados | **aprovado** | banco 0003 → 0004; dicionários criados; ficha nova no nível antigo |
+
 ### Ainda não testado
+- Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).
 - Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
 - "Abrir pasta de backups" no Windows (E4).
 - Desempenho com volume real de dados (não se aplica à E2).

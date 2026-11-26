@@ -11,6 +11,8 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
   const itens = [
     { para: "/", rotulo: "Painel", visivel: true },
     { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
+    { para: "/mapeamento", rotulo: "Mapeamento geológico", visivel: usuario.permissoes.includes("mapeamento:ler") },
+    { para: "/dicionarios", rotulo: "Dicionários", visivel: true },
     { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },
     { para: "/usuarios", rotulo: "Usuários", visivel: usuario.permissoes.includes("usuario:gerenciar") },
     { para: "/auditoria", rotulo: "Histórico de alterações", visivel: usuario.permissoes.includes("auditoria:ler") },
@@ -40,7 +42,7 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
         {itens
           .filter((i) => i.visivel)
           .map((i) => (
-            <NavLink key={i.para} component={Link} to={i.para} label={i.rotulo} active={local.pathname === i.para} onClick={close} />
+            <NavLink key={i.para} component={Link} to={i.para} label={i.rotulo} active={i.para === "/" ? local.pathname === "/" : local.pathname.startsWith(i.para)} onClick={close} />
           ))}
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>

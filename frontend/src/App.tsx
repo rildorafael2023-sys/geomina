@@ -9,7 +9,9 @@ import { ConfiguracaoEstrutura } from "./paginas/estrutura/Configuracao";
 import { Estrutura } from "./paginas/estrutura/Estrutura";
 import { Auditoria } from "./paginas/Auditoria";
 import { Backup } from "./paginas/Backup";
+import { Dicionarios } from "./paginas/Dicionarios";
 import { Inicio } from "./paginas/Inicio";
+import { Mapeamento } from "./paginas/mapeamento/Mapeamento";
 import { Instalacao } from "./paginas/Instalacao";
 import { Login } from "./paginas/Login";
 import { Sistema } from "./paginas/Sistema";
@@ -58,6 +60,8 @@ export function App() {
         <Route path="/" element={<Inicio usuario={usuario} />} />
         {usuario.permissoes.includes("estrutura:ler") && <Route path="/estrutura" element={<Estrutura eu={usuario} />} />}
         {usuario.permissoes.includes("estrutura:configurar") && <Route path="/configuracao/estrutura" element={<ConfiguracaoEstrutura />} />}
+        {usuario.permissoes.includes("mapeamento:ler") && <Route path="/mapeamento/*" element={<Mapeamento eu={usuario} />} />}
+        <Route path="/dicionarios" element={<Dicionarios podeEditar={usuario.permissoes.includes("dicionario:configurar")} />} />
         {usuario.permissoes.includes("usuario:gerenciar") && <Route path="/usuarios" element={<Usuarios eu={usuario} />} />}
         {usuario.permissoes.includes("auditoria:ler") && (
           <Route path="/auditoria" element={<Auditoria podeVerUsuarios={usuario.permissoes.includes("usuario:gerenciar")} />} />

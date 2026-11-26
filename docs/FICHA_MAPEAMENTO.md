@@ -1,6 +1,7 @@
 # FICHA DIGITAL DE MAPEAMENTO — proposta
 
-> Estado: **proposta para revisão do usuário** (2026-11-25). Será implementada na Etapa 5.
+> Estado: **implementada na Etapa 5 (versão 0.5.0)** a partir desta proposta, a pedido do usuário ("comece"). Ajustes virão do uso real.
+> Diferenças da implementação: croqui/fotos na ficha ficam para a E6/E7; o estereograma é gerado na própria ficha (filtros por galeria ficam para as consultas, E14).
 > Pedido do usuário: a ficha "Mapeamento Geotécnico Estrutural" atual **não** é o modelo principal; deve ser aprimorada e **sem RQD**.
 > A ficha atual serviu só como referência do que a equipe já registra hoje.
 

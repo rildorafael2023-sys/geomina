@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>GeoMina</title>
+    <style>
+      /* Impressão de fichas: só o conteúdo, sem menu nem cabeçalho */
+      @media print {
+        .mantine-AppShell-header, .mantine-AppShell-navbar, .nao-imprimir, .mantine-Notifications-root { display: none !important; }
+        .mantine-AppShell-main { padding: 0 !important; }
+        body { background: #fff !important; }
+        @page { size: A4; margin: 10mm; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

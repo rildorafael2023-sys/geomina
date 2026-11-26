@@ -211,6 +211,7 @@ export interface PainelDados {
   atividades: Atividade[];
   arquivos: { quantidade: number; bytes: number } | null;
   usuarios_ativos: number | null;
+  fichas: Record<string, number> | null;
 }
 export interface Backup {
   nome: string;
@@ -245,3 +246,131 @@ export async function baixar(caminho: string, nome: string): Promise<void> {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ---- Dicionários e mapeamento (Etapa 5) ----
+export interface Termo {
+  id: string;
+  codigo: string;
+  nome: string;
+  sigla: string | null;
+  descricao: string | null;
+  cor: string | null;
+  classe: "planar" | "linear" | null;
+  ordem: number;
+  ativo: boolean;
+  versao: number;
+  sinonimos: string[];
+}
+export interface Dicionario {
+  codigo: string;
+  nome: string;
+  descricao: string | null;
+  termos: Termo[];
+}
+export type EstadoFicha = "rascunho" | "submetido" | "aprovado" | "cancelado";
+export interface IntervaloFicha {
+  id?: string;
+  de_m: number;
+  ate_m: number;
+  litologia_id: string;
+  textura_id: string | null;
+  granulacao: string | null;
+  cor: string | null;
+  alteracao_id: string | null;
+  intensidade_id: string | null;
+  mineralizacao_id: string | null;
+  minerais: string | null;
+  percentual: number | null;
+  contato_id: string | null;
+  descricao: string | null;
+}
+export interface MedidaFicha {
+  id: string;
+  tipo_id: string;
+  classe: "planar" | "linear";
+  dip_dir: number | null;
+  dip: number | null;
+  trend: number | null;
+  plunge: number | null;
+  convencao: string;
+  valor_digitado: { a: number; b: number; convencao: string } | null;
+  familia: string | null;
+  espessura_m: number | null;
+  preenchimento: string | null;
+  movimento: string | null;
+  intervalo_id: string | null;
+  observacao: string | null;
+}
+export interface AmostraFicha {
+  id?: string;
+  codigo: string;
+  tipo: string | null;
+  de_m: number | null;
+  ate_m: number | null;
+  destino_id: string | null;
+  leitura_campo: string | null;
+  observacao: string | null;
+}
+export interface Ficha {
+  id: string;
+  mina_id: string;
+  numero: string;
+  unidade_id: string;
+  unidade: string;
+  unidade_caminho: string[];
+  data: string;
+  hora: string | null;
+  geologo_id: string;
+  geologo: string;
+  acompanhantes: string | null;
+  exposicao_id: string | null;
+  distancia_m: number | null;
+  referencia: string | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  crs: string | null;
+  azimute_eixo: number | null;
+  largura_m: number | null;
+  altura_m: number | null;
+  norte_referencia: "magnetico" | "quadricula" | "verdadeiro";
+  declinacao: number | null;
+  descricao: string | null;
+  agua_id: string | null;
+  obs_geotecnicas: string | null;
+  estado: EstadoFicha;
+  revisao: number;
+  versao: number;
+  submetido_em: string | null;
+  revisado_por: string | null;
+  revisado_em: string | null;
+  motivo: string | null;
+  criado_em: string;
+  atualizado_em: string | null;
+  intervalos: (IntervaloFicha & { id: string })[];
+  medidas: MedidaFicha[];
+  amostras: (AmostraFicha & { id: string })[];
+  termos: Record<string, { id: string; codigo: string; nome: string; sigla: string | null; cor: string | null }>;
+  avisos: string[];
+  pode_editar: boolean;
+  pode_aprovar: boolean;
+}
+export interface FichaResumo {
+  id: string;
+  numero: string;
+  data: string;
+  unidade_id: string;
+  unidade: string;
+  geologo: string;
+  estado: EstadoFicha;
+  revisao: number;
+  litologias: string[];
+  medidas: number;
+  amostras: number;
+}
+export const ESTADOS_FICHA: Record<EstadoFicha, { rotulo: string; cor: string }> = {
+  rascunho: { rotulo: "Rascunho", cor: "gray" },
+  submetido: { rotulo: "Aguardando revisão", cor: "yellow" },
+  aprovado: { rotulo: "Aprovada", cor: "teal" },
+  cancelado: { rotulo: "Cancelada", cor: "red" },
+};

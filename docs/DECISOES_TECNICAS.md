@@ -138,3 +138,16 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 **Estado:** Aceita (E4)
 **Decisão.** Backup completo = banco (cópia consistente) + arquivos originais + `manifesto.json` (versão, revisão do esquema, SHA-256 do banco, contagens por tabela, usuário). A restauração valida o manifesto, o hash, o `integrity_check` e a revisão (recusa backup de versão mais nova). Antes, faz um backup de segurança. Depois, copia o banco do backup para o banco em uso pela API de backup do SQLite, sem trocar arquivos com conexões abertas. Os arquivos originais só são acrescentados (endereçamento por hash). As migrações pendentes são aplicadas e o evento é registrado na auditoria do banco restaurado. A API fica bloqueada (503) durante a restauração.
 **Segurança.** Exige a permissão `sistema:backup` (só Administrador), a senha do usuário e a confirmação digitada. O download valida o nome do arquivo para não sair da pasta de backups.
+
+## DT-026 — Ficha de mapeamento como documento versionado com imutabilidade no banco
+**Estado:** Aceita (E5)
+**Decisão.** A ficha é editada e gravada como um todo (cabeçalho + intervalos + medidas + amostras); os itens são sincronizados por id (atualiza, cria, exclui), e cada mudança é auditada. Toda gravação avança a versão da ficha (concorrência otimista sobre o documento inteiro). Triggers impedem qualquer alteração fora do estado rascunho e qualquer exclusão de ficha já submetida. A correção de ficha aprovada passa por "reabrir", que guarda o instantâneo aprovado (`mapeamento_revisao`, imutável).
+**Revisão independente.** O autor não aprova a própria ficha quando existe outro usuário ativo com permissão de aprovar.
+
+## DT-027 — Orientações guardadas como medidas (sem correção automática de norte)
+**Estado:** Aceita (E5)
+**Decisão.** A forma canônica (direção de mergulho/mergulho; rumo/caimento) é calculada só a partir da convenção digitada (ex.: RHR → +90°). O norte de referência e a declinação ficam registrados na ficha. Nenhuma rotação é aplicada automaticamente (princípio "nada silencioso"); a conversão para o norte da quadrícula (declinação + convergência meridiana) será uma operação explícita quando as medidas forem usadas no espaço (E13).
+
+## DT-028 — Impressão/PDF pelo navegador
+**Estado:** Aceita (E5)
+**Justificativa.** O Edge gera PDF pela janela de impressão; uma página A4 com CSS de impressão evita dependências de bibliotecas de PDF no pacote offline. Relatórios mais elaborados (E17) reavaliarão a geração de PDF no servidor.

@@ -63,7 +63,7 @@ const SENHA = "senhaForte123";
   assert.match(await cartao("Unidades ativas").innerText(), /\n3\b/);
   assert.match(await cartao("Frentes ativas").innerText(), /\n1\b/);
   assert.match(await cartao("Avanço em 30 dias").innerText(), /3,2 m/);
-  await page.getByRole("cell", { name: "+3,2 m" }).waitFor();
+  await page.getByRole("cell", { name: "+3,2 m", exact: true }).waitFor();
   await shot("e4-01-painel");
 
   // 3. Histórico de alterações com filtro e detalhes
