@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { api, baixar, type Eu, type Mina } from "../../api/cliente";
+import { Comparacao } from "./Comparacao";
 import { Consulta } from "./Consulta";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 import { Galerias } from "./Galerias";
@@ -76,7 +77,7 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
             <Route index element={<Navigate to="galerias" replace />} />
             <Route path="galerias" element={<Galerias mina={mina} />} />
             <Route path="sondagens" element={<Sondagens mina={mina} eu={eu} />} />
-            <Route path="comparacao" element={<Pendente tipo="comparacao" mina={mina} />} />
+            <Route path="comparacao" element={<Comparacao mina={mina} />} />
             <Route path="espacial" element={<Pendente tipo="espacial" mina={mina} />} />
             <Route path="consulta" element={<Consulta mina={mina} eu={eu} />} />
             <Route path="*" element={<Navigate to="galerias" replace />} />

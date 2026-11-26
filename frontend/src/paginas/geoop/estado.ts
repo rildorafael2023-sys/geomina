@@ -7,6 +7,7 @@ export const FACETAS = [
   { chave: "nivel", rotulo: "Nível", grupo: "Local" },
   { chave: "galeria", rotulo: "Galeria / travessa / rampa", grupo: "Local" },
   { chave: "trecho", rotulo: "Trecho", grupo: "Local" },
+  { chave: "furo", rotulo: "Furo de sondagem", grupo: "Local" },
   { chave: "litologia", rotulo: "Litologia", grupo: "Geologia" },
   { chave: "alteracao", rotulo: "Alteração", grupo: "Geologia" },
   { chave: "mineralizacao", rotulo: "Mineralização", grupo: "Geologia" },

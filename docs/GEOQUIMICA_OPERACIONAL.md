@@ -27,7 +27,7 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 | 3 | Galerias: tracks configuráveis (faixa/pontos/barras), seleção sincronizada, tabela integrada, layouts salvos | ✅ v0.13.0 |
 | 4 | Tracks geológicos: litologia, alteração, mineralização, estruturas, descrição, fotos/croquis, amostras | ✅ v0.13.0 |
 | 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | ✅ v0.14.0 |
-| 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | pendente |
+| 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | ✅ v0.15.0 |
 | 7 | Visualização espacial 3D integrada | pendente |
 | 8 | Consulta completa | pendente (base pronta na Etapa 2) |
 | 9 | Exportação (CSV/Excel/PDF/imagens/GIS) | pendente |
@@ -86,3 +86,15 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Defeitos encontrados e corrigidos**: interpolação da posição na corda em vez do arco (erro de até ~18 m com survey espaçado); furo sem trajetória marcado como erro mas que seria gravado com "ignorar erros"; aviso de seleção que deslocava o perfil durante o arraste; migração automática que apagaria o índice espacial e recriaria a tabela de amostras (sem os triggers) — reescrita à mão.
 
 **Limitações**: sem dados reais de sondagem até agora (formato genérico; ajustar quando chegarem os arquivos); o painel de contexto da amostra de furo mostra furo e profundidade, mas ainda não a coordenada calculada na trajetória (aparece no perfil e no 3D); edição manual de survey/intervalos pela tela ainda não existe (importação ou cadastro do collar).
+
+## Etapa 6 — Comparação (v0.15.0)
+**Desenvolvido**
+- **Grupos**: "+ Grupo da seleção atual" guarda os filtros do painel (nível, galeria, trecho, **furo** — nova faceta —, geologia, campanha, responsável, status, laboratório, certificado, texto, datas); "Agrupar por…" cria um grupo para cada galeria, furo, nível, trecho, campanha, litologia, alteração, mineralização, responsável ou certificado (até 12), respeitando os demais filtros. A descrição dos filtros fica ao lado de cada grupo e vai para o CSV.
+- **Estatísticas no servidor** (`geoop/estatistica.py`, sobre os registros efetivamente selecionados): n, mínimo, Q1, mediana, Q3, máximo, média, desvio-padrão amostral, CV, média geométrica (só com valores positivos); quantos valores estão no limite e quantos sem valor. Por padrão só valores medidos; opção "incluir valores no limite" pela regra de LD escolhida.
+- **Correlação** Pearson e Spearman (postos médios nos empates) entre os analitos, por grupo, só com pares em que os dois valores existem (mínimo 3 pares; variável constante → sem coeficiente).
+- **Vistas**: tabela de estatísticas (exporta CSV), **boxplot** por analito (caixa, mediana, média ◆, bigodes mín–máx e as amostras), **histogramas** com as mesmas classes para todos os grupos (Sturges, linear ou log), **dispersão** X × Y colorida por grupo com r e ρ, **matriz de correlação** (Spearman) por grupo. Escala log opcional.
+- Nenhuma equivalência espacial é assumida entre grupos (só distribuições).
+
+**Testes**: `test_comparacao.py` (estatísticas e correlação conferidas à mão, inclusive empates; API com 3 grupos, grupo vazio sem números inventados, valores no limite fora/dentro, faceta furo); `vitest` histograma (bordas lineares/log, Sturges, contagem com o máximo); E2E `geoop_comparacao.cjs` (6 cenários: agrupar por galeria, estatísticas conferidas célula a célula, incluir limite, boxplot/log/histograma/dispersão/correlação, grupo da seleção com descrição do filtro, CSV).
+
+**Limitações**: até 12 grupos; seleção espacial desenhada (polígono) para formar grupo vem com o 3D/planta na Etapa 7.

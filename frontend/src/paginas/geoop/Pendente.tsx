@@ -5,7 +5,6 @@ import { api, type Mina } from "../../api/cliente";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 
 const TEXTO = {
-  comparacao: { titulo: "Comparação geoquímica — Etapa 6", itens: ["Painéis por galeria, trecho, campanha, litologia, furo ou grupo", "Estatísticas descritivas, histograma, boxplot e dispersão", "Filtros de cada grupo sempre identificados"] },
   espacial: { titulo: "Visualização espacial 3D — Etapa 7", itens: ["Topografia, galerias, amostras e furos em 3D", "Cor pelo analito escolhido, com classes e legenda", "Seleção sincronizada com tabela, tracks e painel de contexto"] },
 };
 
