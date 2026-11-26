@@ -4,14 +4,15 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 
 **Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-## Estado atual — versão 0.6.0
+## Estado atual — versão 0.7.0
 - ✅ Etapa 1: arquitetura e especificação (aprovada).
 - ✅ Etapa 2: infraestrutura (banco local, usuários, auditoria, arquivos, instalação offline) — validada no Windows.
 - ✅ Etapa 3: estrutura da mina (níveis, galerias, travessas, rampas, frentes, avanços) + janela própria com ícone.
 - ✅ Etapa 4: painel com dados reais, histórico de alterações, backup e restauração.
 - ✅ Etapa 5: mapeamento geológico com ficha digital, estereograma, coluna da seção, revisão e impressão.
 - ✅ Etapas 6 e 7: fotos, croquis e documentos com versões, EXIF, miniaturas e separação de PDF.
-- Em andamento: Etapa 8 (amostragem).
+- ✅ Etapa 8: amostras, controle de qualidade, lotes de envio, importação de planilha.
+- Em andamento: Etapa 9 (laudos de laboratório).
 
 Detalhes em [`docs/STATUS_DO_PROJETO.md`](docs/STATUS_DO_PROJETO.md). Instalação em [`docs/INSTRUCOES_DE_INSTALACAO.md`](docs/INSTRUCOES_DE_INSTALACAO.md).
 

@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.6.0 · **Etapa atual:** E6+E7 concluídas; seguindo para a E8 (pedido do usuário: executar as etapas em sequência)
+**Última atualização:** 2026-11-26 · **Versão:** 0.7.0 · **Etapa atual:** E8 concluída; seguindo para a E9 (etapas em sequência, a pedido do usuário)
 
 ## Etapas
 
@@ -12,8 +12,22 @@
 | E4 Painel, histórico de alterações, backup e restauração | ✅ Usuário autorizou prosseguir |
 | E5 Mapeamento geológico (ficha digital) | 🟡 **Concluída e testada, aguardando validação do usuário** (feita com a proposta da ficha como estava, a pedido do usuário: "comece") |
 | E6+E7 Croquis, documentos e fotografias | ✅ Concluídas e testadas (v0.6.0) |
-| E8 Amostragem | 🔵 Em andamento |
+| E8 Amostragem | ✅ Concluída e testada (v0.7.0) |
+| E9 Importação geoquímica | 🔵 Em andamento |
 | E5 – E21 | ⚪ Pendentes |
+
+## Entregue na E8 (versão 0.7.0)
+| Funcionalidade | Teste |
+|---|---|
+| Amostras com código canônico único por mina (BS-RP, BMT-TS, BE), série, tipo, campanha, local (unidade e descrição), seção de/até, furo e profundidade (testemunho), XYZ **com o sistema de coordenadas de origem** (obrigatório), geologia por dicionário, destino, massa | API + E2E |
+| QA/QC: padrão (CRM), branco, duplicatas de campo/preparação/polpa ligadas à original (regras no banco) | API |
+| "Próximo código" BS-RP / BMT-TS | API + E2E |
+| Lotes de envio (cadeia de custódia): amostras passam a "enviada"; lote enviado fica fechado (trigger); código não muda após envio | API + E2E |
+| **Importação de planilha** (.xlsx/CSV) em duas fases com prévia por linha: códigos normalizados, sugestões a confirmar ("RP 478" → BS-RP-478), repetidos, já cadastrados, intervalo "0 m - 4,5 m", vírgula decimal, datas, litologias reconhecidas por sinônimo/normalização; o usuário declara o sistema de coordenadas ou não importa XYZ; associa litologias não reconhecidas; arquivo original e relatório guardados | API + E2E + **planilha real** |
+| Cadastro das amostras a partir da ficha de mapeamento (herda local, data, geólogo e litologia do intervalo) | API |
+| Painel: amostras e quantas aguardam resultado | API + E2E |
+
+**Planilha real (GEOQUIMICA_DESCRIÇÃO):** 368 linhas com amostra → 89 ok, 180 sugestões de código, 5 inválidas, 94 repetidas; 269 gravadas com sugestões aceitas. ~90 grafias de litologia compostas não estão no dicionário (ex.: "quartzo - anfibolio - flogopita xisto"): ficam como texto na amostra até o usuário associar ou criar termos.
 
 ## Entregue nas E6+E7 (versão 0.6.0)
 | Funcionalidade | Teste |
@@ -118,6 +132,8 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - Alterações feitas direto no arquivo `.db`, fora do aplicativo, não são auditadas. Os caminhos das unidades internas recalculados ao mover são derivados e não geram registro próprio (o movimento da unidade é registrado).
 - Visualização de PDF depende do leitor de PDF do Edge (o navegador de teste automatizado não exibe PDF; conferido só o carregamento). A amostra citada na ficha é ligada pelo código; o cadastro completo de amostras é da E8.
 - Medidas estruturais ficam como medidas (norte magnético + declinação registrada); a conversão para o norte da quadrícula será oferecida quando houver uso espacial (E13).
+- Importação de amostras: linhas sem código de amostra (só descrição de intervalo) não são importadas; códigos repetidos em várias linhas da planilha — decisão do usuário pendente (hoje: primeira ocorrência).
+- Vínculo de foto diretamente a uma amostra: ainda não (fotos se ligam à ficha ou à unidade).
 - Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
 - Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").
 - "Abrir pasta de backups" funciona no Windows; em outros sistemas mostra o caminho.

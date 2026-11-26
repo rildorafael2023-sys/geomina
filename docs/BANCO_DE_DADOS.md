@@ -97,7 +97,8 @@
 | `derivado_arquivo` | arquivo_id, tipo (`miniatura`/`previa`), chave_armazenamento | regenerável |
 | `sugestao_extraida` *(futuro)* | id, documento_versao_id, tipo, conteudo, confianca, estado (`nao_validada`/`aceita`/`rejeitada`), revisado_por | OCR/IA (RF-DOC-08) |
 
-## 7. Amostragem e geoquímica (Etapas 8–9)
+## 7. Amostragem e geoquímica (Etapas 8–9) — **amostragem IMPLEMENTADA (migração 0006)**
+> Implementado: `tipo_amostra`, `campanha`, `amostra` (com `serie`, `srid` das coordenadas, `local_descricao`, `ponto_campo`, seção/profundidade, `importacao_id` + `linha_origem`), `lote_envio`, `lote_envio_amostra`, `importacao` (genérica: amostras/resultados/topografia). `regra_codigo_amostra` configurável e `padrao_referencia` adiados (regras BS-RP/BMT-TS/BE fixas; CRM pelo código). Triggers: termos do dicionário certo, mesma mina, lote enviado fechado.
 
 | Tabela | Colunas principais | Restrições |
 |--------|--------------------|-----------|

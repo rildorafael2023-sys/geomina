@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from geomina.core.auditoria import Auditoria
 from geomina.core.dependencias import obter_sessao, requer, usuario_atual
 from geomina.db import agora
+from geomina.modules.amostragem.models import Amostra
 from geomina.modules.arquivos.models import Arquivo
 from geomina.modules.auth.models import Usuario
 from geomina.modules.estrutura.models import FrenteAvanco, Mina, TipoUnidade, UnidadeOperacional
@@ -25,13 +26,16 @@ from geomina.modules.mapeamento.models import Mapeamento
 router = APIRouter(tags=["painel e auditoria"])
 
 # Tabelas cujas alterações aparecem em "Atividades recentes" para qualquer usuário.
-TABELAS_PUBLICAS = ("mina", "unidade_operacional", "frente_avanco", "unidade_nivel", "arquivo", "mapeamento")
+TABELAS_PUBLICAS = ("mina", "unidade_operacional", "frente_avanco", "unidade_nivel", "arquivo", "mapeamento", "amostra",
+                    "lote_envio", "documento")
 NOMES_TABELAS = {
     "mina": "Mina", "unidade_operacional": "Unidade", "frente_avanco": "Avanço de frente",
     "unidade_nivel": "Vínculo de nível", "arquivo": "Arquivo", "usuario": "Usuário", "tipo_unidade": "Tipo de unidade",
     "regra_hierarquia": "Regra de hierarquia", "sistema": "Sistema", "mapeamento": "Ficha de mapeamento",
     "mapeamento_intervalo": "Intervalo de ficha", "medida_estrutural": "Medida estrutural",
-    "mapeamento_amostra": "Amostra de ficha", "termo": "Termo de dicionário", "termo_sinonimo": "Sinônimo",
+    "mapeamento_amostra": "Amostra de ficha", "amostra": "Amostra", "lote_envio": "Lote de envio", "importacao": "Importação",
+    "documento": "Documento", "documento_versao": "Versão de documento", "documento_vinculo": "Vínculo de documento",
+    "termo": "Termo de dicionário", "termo_sinonimo": "Sinônimo",
 }
 OPERACOES = {"I": "inclusão", "U": "alteração", "D": "exclusão", "B": "backup", "R": "restauração"}
 
@@ -76,6 +80,7 @@ class Painel(BaseModel):
     arquivos: dict[str, int] | None
     usuarios_ativos: int | None
     fichas: dict[str, int] | None = None
+    amostras: dict[str, int] | None = None
 
 
 def _resumo(a: Auditoria) -> str:
@@ -84,7 +89,7 @@ def _resumo(a: Auditoria) -> str:
         if a.operacao == "B":
             return f"Backup {d.get('arquivo', '')}"
         return f"Restauração de {d.get('restaurado', '')}"
-    for chave in ("numero", "codigo", "login", "nome_original", "nome"):
+    for chave in ("numero", "codigo", "login", "nome_original", "titulo", "nome_arquivo", "nome"):
         if d.get(chave):
             return str(d[chave])
     if a.tabela == "frente_avanco":
@@ -142,6 +147,9 @@ def painel(u: Usuario = Depends(usuario_atual), db: Session = Depends(obter_sess
 
     if "mapeamento:ler" in perms:
         p.fichas = {e: n for e, n in db.execute(select(Mapeamento.estado, func.count()).group_by(Mapeamento.estado))}
+
+    if "amostra:ler" in perms:
+        p.amostras = {e: n for e, n in db.execute(select(Amostra.estado, func.count()).group_by(Amostra.estado))}
 
     if "arquivo:ler" in perms:
         n, tam = db.execute(select(func.count(), func.coalesce(func.sum(Arquivo.tamanho), 0))).one()

@@ -12,6 +12,7 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/", rotulo: "Painel", visivel: true },
     { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
     { para: "/mapeamento", rotulo: "Mapeamento geológico", visivel: usuario.permissoes.includes("mapeamento:ler") },
+    { para: "/amostras", rotulo: "Amostras", visivel: usuario.permissoes.includes("amostra:ler") },
     { para: "/documentos", rotulo: "Fotos e croquis", visivel: usuario.permissoes.includes("arquivo:ler") },
     { para: "/dicionarios", rotulo: "Dicionários", visivel: true },
     { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },

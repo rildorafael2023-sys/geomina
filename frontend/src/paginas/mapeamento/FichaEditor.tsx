@@ -484,6 +484,14 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
                   </Paper>
                 ))}
                 {!ro && <Button variant="light" onClick={() => up({ amostras: [...f.amostras, vaziaAmostra()] })}>+ Amostra</Button>}
+                {d && d.amostras.length > 0 && eu.permissoes.includes("amostra:editar") && (
+                  <Button size="xs" variant="light" w="fit-content" onClick={async () => {
+                    try {
+                      const r = await api<unknown[]>(`/mapeamentos/${d.id}/gerar-amostras`, { method: "POST" });
+                      notifications.show({ color: "teal", message: r.length ? `${r.length} amostra(s) cadastrada(s) a partir da ficha.` : "Todas as amostras da ficha já estavam cadastradas." });
+                    } catch (e) { setErro(e instanceof ErroApi ? e.message : "Falha ao cadastrar as amostras."); }
+                  }}>Cadastrar estas amostras no módulo Amostras</Button>
+                )}
                 <Text size="xs" c="dimmed">Os resultados de laboratório aparecerão aqui quando os laudos forem importados (Etapa 9).</Text>
               </Stack>
             </Secao>

@@ -84,7 +84,7 @@
 **Escopo:** envio em lote, EXIF, miniaturas, captura por câmera do navegador, galeria com filtros, vínculos a amostra/medida/mapeamento.
 **Aceitação:** lote de N fotos com EXIF extraído e miniaturas geradas; filtros retornam o conjunto correto; captura testada em navegador móvel (registro manual).
 
-## E8 — Amostragem
+## E8 — Amostragem ✅ (v0.7.0)
 **Escopo:** tipos, métodos, regras de código (BS-RP mina, BMT-TS testemunho, BE antigas; forma canônica e normalização com confirmação), importação da planilha "GEOQUIMICA_DESCRIÇÃO", campanhas, amostras (ponto/intervalo), QA/QC (padrões, brancos, duplicatas), lotes de envio, importação/exportação CSV/Excel, detecção de duplicidade.
 **Aceitação:** código duplicado rejeitado pelo banco; geração de códigos concorrentes sem colisão (teste com concorrência); duplicata sem original rejeitada; importação histórica com relatório de linhas rejeitadas; estado "aguardando resultado" derivado corretamente.
 

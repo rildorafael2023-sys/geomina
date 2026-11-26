@@ -39,6 +39,10 @@ export function Inicio({ usuario }: { usuario: Eu }) {
           <Numero rotulo="Fichas de mapeamento" valor={Object.entries(d.fichas).filter(([e]) => e !== "cancelado").reduce((a, [, v]) => a + v, 0)}
             detalhe={d.fichas.submetido ? `${d.fichas.submetido} aguardando revisão` : "nenhuma aguardando revisão"} para="/mapeamento" />
         )}
+        {d.amostras !== null && (
+          <Numero rotulo="Amostras" valor={Object.entries(d.amostras).filter(([e]) => e !== "cancelada").reduce((a, [, v]) => a + v, 0)}
+            detalhe={`${d.amostras.enviada ?? 0} aguardando resultado`} para="/amostras" />
+        )}
         {d.arquivos !== null && <Numero rotulo="Arquivos originais" valor={d.arquivos.quantidade} detalhe={tamanhoLegivel(d.arquivos.bytes)} />}
         {d.usuarios_ativos !== null && <Numero rotulo="Usuários ativos" valor={d.usuarios_ativos} para="/usuarios" />}
       </SimpleGrid>

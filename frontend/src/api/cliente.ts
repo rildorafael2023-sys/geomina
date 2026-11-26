@@ -212,6 +212,7 @@ export interface PainelDados {
   arquivos: { quantidade: number; bytes: number } | null;
   usuarios_ativos: number | null;
   fichas: Record<string, number> | null;
+  amostras: Record<string, number> | null;
 }
 export interface Backup {
   nome: string;
@@ -437,3 +438,63 @@ export async function urlArquivo(caminho: string): Promise<string> {
   if (!r.ok) throw new ErroApi(r.status, "arquivo", "Falha ao carregar o arquivo.");
   return URL.createObjectURL(await r.blob());
 }
+
+// ---- Amostragem (Etapa 8) ----
+export interface Amostra {
+  id: string;
+  codigo: string;
+  serie: string;
+  papel_controle: string;
+  amostra_original_codigo: string | null;
+  padrao_codigo: string | null;
+  tipo_id: string | null;
+  metodo: string | null;
+  campanha_id: string | null;
+  data_coleta: string | null;
+  responsavel: string | null;
+  unidade_id: string | null;
+  unidade: string | null;
+  local_descricao: string | null;
+  mapeamento_id: string | null;
+  ficha: string | null;
+  ponto_campo: string | null;
+  secao_de_m: number | null;
+  secao_ate_m: number | null;
+  distancia_m: number | null;
+  referencia: string | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  srid: number | null;
+  furo: string | null;
+  prof_de_m: number | null;
+  prof_ate_m: number | null;
+  litologia_id: string | null;
+  litologia: string | null;
+  alteracao_id: string | null;
+  mineralizacao_id: string | null;
+  destino_id: string | null;
+  massa_kg: number | null;
+  descricao: string | null;
+  observacoes: string | null;
+  estado: "coletada" | "enviada" | "cancelada";
+  lotes: string[];
+  versao: number;
+}
+export interface Lote {
+  id: string;
+  codigo: string;
+  laboratorio: string;
+  data_envio: string | null;
+  estado: "aberto" | "enviado";
+  observacao: string | null;
+  amostras: string[];
+}
+export const PAPEIS_CONTROLE: Record<string, string> = {
+  normal: "Normal", padrao: "Padrão (CRM)", branco: "Branco", dup_campo: "Duplicata de campo",
+  dup_preparacao: "Duplicata de preparação", dup_pulpa: "Duplicata de polpa",
+};
+export const ESTADOS_AMOSTRA: Record<string, { rotulo: string; cor: string }> = {
+  coletada: { rotulo: "Coletada", cor: "gray" }, enviada: { rotulo: "Enviada ao laboratório", cor: "yellow" },
+  cancelada: { rotulo: "Cancelada", cor: "red" },
+};

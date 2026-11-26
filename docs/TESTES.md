@@ -90,6 +90,9 @@
 | 2026-11-26 | E6+E7 | `pytest`: 136 testes (+10 documentos, incluindo o PDF real de 23 páginas via `GEOMINA_PDF_FICHAS`) | **136 aprovados** | |
 | 2026-11-26 | E6+E7 | E2E `e2e/documentos.cjs` (6 cenários: fotos em lote com EXIF e miniaturas, legenda, croqui PDF real e separação em 23 páginas, anexo na ficha, busca, celular) + regressão das outras 4 suítes | **aprovados** | defeito corrigido: botão "Separar" continuava visível após separar |
 
+| 2026-11-26 | E8 | `pytest`: 146 (+10 amostragem, incluindo a **planilha real** via `GEOMINA_PLANILHA_CAMPO`) | **146 aprovados** | defeitos corrigidos: Excel sem extensão no armazenamento não abria; teste de backup corrompido não corrompia (bytes zerados no fim do arquivo) |
+| 2026-11-26 | E8 | E2E `e2e/amostras.cjs` (5 cenários: importação com prévia/sugestão/CRS/litologia não reconhecida, lista e detalhe, próximo código, lote de envio, painel) + regressão das outras 5 suítes | **aprovados** | |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

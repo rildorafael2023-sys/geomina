@@ -174,7 +174,10 @@ def _backup_alterado(app, cliente, h, alterar):
 
 def test_restauracao_recusa_backup_corrompido(app, cliente, h, mina):
     def corromper(nome, dados):
-        return dados[:-200] + b"\0" * 200 if nome == "geomina.db" else dados
+        if nome != "geomina.db":
+            return dados
+        meio = len(dados) // 2
+        return dados[:meio] + bytes(b ^ 0xFF for b in dados[meio:meio + 64]) + dados[meio + 64:]
     nome = _backup_alterado(app, cliente, h, corromper)
     r = cliente.post(f"{API}/backups/restaurar", headers=h, json={"nome": nome, "senha": SENHA, "confirmacao": "RESTAURAR"})
     assert r.status_code == 422 and "corrompido" in r.json()["mensagem"]

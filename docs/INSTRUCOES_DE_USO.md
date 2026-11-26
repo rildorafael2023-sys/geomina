@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.6.0
+# INSTRUÇÕES DE USO — versão 0.7.0
 
-> Descreve apenas o que está implementado e testado. Amostras, laudos e topografia ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. Laudos e topografia ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -89,7 +89,15 @@ Menu **Mapeamento geológico** → **Nova ficha** (ou, na Estrutura da mina, aba
 - **Nova versão**: informe o motivo e envie o arquivo novo; as versões anteriores nunca são apagadas.
 - Arquivos anexados a uma ficha já submetida/aprovada não podem ser retirados (só acrescentados).
 
-## 13. Segurança dos dados
+## 13. Amostras
+Menu **Amostras**.
+- **Nova amostra**: "Próximo BS-RP"/"Próximo BMT-TS" sugere o número seguinte. Coordenadas exigem o sistema (SIRGAS ou SAD69) em que foram medidas.
+- **Controle de qualidade**: marque padrão (informe o CRM), branco ou duplicata (informe a amostra original).
+- **Da ficha**: na ficha de mapeamento (seção D), "Cadastrar estas amostras" cria as amostras com local, data e litologia da ficha.
+- **Lotes de envio**: crie o lote com os códigos e "Marcar como enviado" — as amostras ficam "Enviada ao laboratório" (aparecem no painel como aguardando resultado).
+- **Importar planilha** (.xlsx ou CSV): a prévia mostra cada linha (ok, confirmar código, inválido, repetido, já cadastrado). Decida: aceitar as sugestões de código ("RP 478" → BS-RP-478), o sistema das coordenadas da planilha (ou não importar XYZ) e o termo das litologias não reconhecidas. Só então confirme.
+
+## 14. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.
