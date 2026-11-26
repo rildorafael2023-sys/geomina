@@ -114,10 +114,10 @@ const X0 = 500000, Y0 = 7800000;
   // 6. Galerias: escolha rápida da galeria, faixa de teores; clique na coluna → painel de contexto da amostra
   await page.getByRole("tab", { name: "Galerias e frentes" }).click();
   await page.getByRole("button", { name: /^GAL-01 · 4$/ }).click();
-  const faixa = page.getByTestId("faixa-GAL-01");
-  await faixa.waitFor({ timeout: 30000 });
-  assert.deepStrictEqual(await faixa.locator("g[data-amostra]").evaluateAll((gs) => gs.map((g) => g.getAttribute("data-amostra"))), ["BS-RP-100", "BS-RP-101", "BS-RP-102", "BS-RP-103"]);
-  await faixa.locator('g[data-amostra="BS-RP-102"]').click();
+  const tracks = page.getByTestId("tracks");
+  await tracks.waitFor({ timeout: 30000 });
+  assert.deepStrictEqual(await tracks.locator("rect[data-amostra]").evaluateAll((rs) => rs.map((r) => r.getAttribute("data-amostra"))), ["BS-RP-100", "BS-RP-101", "BS-RP-102", "BS-RP-103"]);
+  await tracks.locator('rect[data-amostra="BS-RP-102"]').click();
   await ctxP.getByText("BS-RP-102", { exact: true }).waitFor();
   await shot("geoop-04-galerias");
 

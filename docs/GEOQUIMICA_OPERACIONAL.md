@@ -24,8 +24,8 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 |---|---|---|
 | 1 | Auditoria e plano | ✅ |
 | 2 | Área de trabalho: navegação, filtros encadeados, área analítica, painel de contexto, base por resultado, conciliação | ✅ v0.12.0 |
-| 3 | Galerias: tracks configuráveis (faixa/pontos/barras), seleção sincronizada, tabela integrada, layouts salvos | pendente |
-| 4 | Tracks geológicos: litologia, alteração, mineralização, estruturas, descrição, fotos/croquis, amostras | pendente |
+| 3 | Galerias: tracks configuráveis (faixa/pontos/barras), seleção sincronizada, tabela integrada, layouts salvos | ✅ v0.13.0 |
+| 4 | Tracks geológicos: litologia, alteração, mineralização, estruturas, descrição, fotos/croquis, amostras | ✅ v0.13.0 |
 | 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | pendente |
 | 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | pendente |
 | 7 | Visualização espacial 3D integrada | pendente |
@@ -53,3 +53,23 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Defeitos encontrados e corrigidos**: painel de contexto travava após conciliar (a chave "só no laudo" mudou para a da amostra cadastrada); testemunho BMT-TS era cobrado como "amostra sem galeria"; busca "rp 3" não ignorava hífens.
 
 **Limitações**: a faixa de teores ainda usa a classificação por quantis fixa (configuração nos tracks da Etapa 3); a seleção ainda não é destacada na faixa (Etapa 3); filtros não são guardados entre sessões (layouts salvos na Etapa 3).
+
+## Etapas 3 e 4 — Tracks das galerias e geologia (v0.13.0)
+**Desenvolvido**
+- **Motor de tracks** próprio (SVG): uma coluna por amostra na sequência da galeria (decisão U1: sem escala de distância); número do ponto no topo; sub-pontos lado a lado.
+- **Janela compartilhada por todos os tracks**: roda do mouse = zoom em torno do cursor; arrastar = deslocar; "Ver todas". **Shift+arrastar = seleção de trecho**, com ações: ampliar o trecho, exportar o trecho (CSV), limpar; o trecho é destacado também na tabela.
+- **Track de analito** (um por analito escolhido no topo; qualquer analito do laudo): representação **faixa colorida, barras ou pontos**; escala **linear ou logarítmica**, mínimo/máximo; **classes** por quantis, intervalos iguais ou limites do usuário; 3 paletas; mostrar valores; ligar pontos (opcional, só valores medidos, com aviso de que não indica continuidade); altura P/M/G; subir/descer; remover. Sem resultado = hachurado; abaixo/acima do limite = contorno tracejado/triângulo vazado.
+- **Tracks geológicos** (Etapa 4): Amostras (código, intervalo da seção, estado do resultado), Litologia, Alteração, Mineralização (células só onde há registro — nenhum contato inventado), **Estruturas** medidas na ficha da amostra (ex.: "S1 230/30", "FR 160/85"), **Descrição**, **Fotos e croquis** da ficha (📷/✎ com quantidade; abrem no painel de contexto).
+- **Seleção sincronizada**: clique na coluna, na linha da tabela ou no ponto da planta → mesma amostra destacada nos três e aberta no painel de contexto; a janela vai até a amostra selecionada se ela estiver fora.
+- **Tabela integrada**: mesma sequência, ordenável por coluna, colunas configuráveis (seção, data, litologia, alteração, mineralização), cor da classe ao lado do valor.
+- **Planta**: topografia em volta, galeria colorida pelo teor (média do ponto, classes do track escolhido), amostra selecionada destacada.
+- **Layouts salvos** (banco, migração 0009 `layout_analise`): tracks + analitos com nome; compartilháveis; aplicáveis a qualquer galeria; só o dono exclui.
+- **Exportação**: tabela da galeria (CSV), tracks em SVG/PNG (colunas visíveis), trecho selecionado (CSV).
+
+**Arquivos**: `frontend/src/paginas/geoop/tracks/` (tipos, TracksGaleria, ConfigTrack), `Galerias.tsx` (reescrito), `PlantaGaleria.tsx`, `estado.ts`; `backend/geomina/modules/geoop/models.py` + rotas de layouts; `analise/longitudinal.py` (estruturas, descrição, fotos/croquis por amostra); migração `0009_layout_analise.py`.
+
+**Testes**: `test_geoop.py` +2 (layouts: substituir por nome, compartilhado visível, só o dono exclui; geologia da ficha: estruturas "230/30" e "315→20", descrição, ficha); E2E `geoop_galerias.cjs` (7 cenários: ordem dos tracks e colunas, configuração barras/log/limites/pontos/reordenar, tracks geológicos, sincronização coluna↔tabela↔planta↔contexto, zoom e seleção de trecho com exportação e ampliação, layout salvo e reaplicado, SVG).
+
+**Defeitos corrigidos**: o contorno de seleção tinha o mesmo atributo das colunas (contagem errada de colunas); o ⚙ ficava sobre o valor máximo da escala.
+
+**Limitações**: a exportação dos tracks cobre as colunas visíveis (amplie "Ver todas" para exportar tudo); estruturas/descrição/fotos vêm da ficha ligada à amostra (amostras sem ficha não têm esses tracks preenchidos); a tela antiga `analise/Longitudinal.tsx` ainda contém componentes não usados (limpeza na Etapa 10).

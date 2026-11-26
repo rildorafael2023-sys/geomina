@@ -18,6 +18,7 @@ from geomina.modules.amostragem.router import serie_de
 from geomina.modules.auth.models import Usuario
 from geomina.modules.estrutura.models import Mina
 from geomina.modules.geoop import servico as S
+from geomina.modules.geoop.models import LayoutAnalise
 from geomina.modules.geoquimica.router import vincular_pendentes
 
 router = APIRouter(tags=["geoquímica operacional"])
@@ -156,3 +157,51 @@ def cadastrar_do_laudo(mina_id: uuid.UUID, e: Codigos, u: Usuario = Depends(EDIT
     db.flush()
     v = vincular_pendentes(mina_id, u, db)
     return {"criadas": list(e.codigos), "resultados_ligados": v["vinculados"]}
+
+
+# ------------------------------------------------------------------ layouts salvos
+class LayoutEntrada(BaseModel):
+    nome: str = Field(min_length=1, max_length=120)
+    tipo: str = Field(pattern="^(galeria|sondagem|comparacao)$")
+    config: dict
+    compartilhado: bool = False
+
+
+def _layout_saida(x: LayoutAnalise, u: Usuario, dono: str | None) -> dict:
+    return {"id": x.id, "nome": x.nome, "tipo": x.tipo, "config": x.config, "compartilhado": x.compartilhado,
+            "dono": dono, "meu": x.dono_id == u.id, "versao": x.versao}
+
+
+@router.get("/minas/{mina_id}/layouts")
+def listar_layouts(mina_id: uuid.UUID, tipo: str | None = None, u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> list[dict]:
+    q = (select(LayoutAnalise, Usuario.nome).join(Usuario, Usuario.id == LayoutAnalise.dono_id)
+         .where(LayoutAnalise.mina_id == mina_id, (LayoutAnalise.dono_id == u.id) | LayoutAnalise.compartilhado.is_(True))
+         .order_by(LayoutAnalise.nome))
+    if tipo:
+        q = q.where(LayoutAnalise.tipo == tipo)
+    return [_layout_saida(x, u, nome) for x, nome in db.execute(q)]
+
+
+@router.post("/minas/{mina_id}/layouts", status_code=201)
+def salvar_layout(mina_id: uuid.UUID, e: LayoutEntrada, u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> dict:
+    """Salva (ou substitui, se o usuário já tiver um com o mesmo nome) a configuração da análise."""
+    x = db.scalar(select(LayoutAnalise).where(LayoutAnalise.mina_id == mina_id, LayoutAnalise.dono_id == u.id,
+                                              LayoutAnalise.tipo == e.tipo, LayoutAnalise.nome == e.nome))
+    if x is None:
+        x = LayoutAnalise(mina_id=mina_id, dono_id=u.id, nome=e.nome, tipo=e.tipo, config=e.config, compartilhado=e.compartilhado)
+        db.add(x)
+    else:
+        x.config, x.compartilhado = e.config, e.compartilhado
+    db.flush()
+    return _layout_saida(x, u, u.nome)
+
+
+@router.delete("/layouts/{layout_id}", status_code=204)
+def excluir_layout(layout_id: uuid.UUID, u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> None:
+    x = db.get(LayoutAnalise, layout_id)
+    if x is None:
+        raise ErroAplicacao(404, "nao_encontrado", "Layout não encontrado.")
+    if x.dono_id != u.id:
+        raise ErroAplicacao(403, "sem_permissao", "Só quem criou o layout pode excluí-lo.")
+    db.delete(x)
+    db.flush()

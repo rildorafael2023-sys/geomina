@@ -170,3 +170,39 @@ def test_laudos_reais_nenhum_resultado_fica_de_fora(cliente, h):
     assert len({a for x in d["itens"] for a in x["analitos"]}) == 48, "os 48 analitos dos laudos ficam disponíveis"
     k = cliente.get(f"{API}/minas/{m}/geoop/conciliacao", headers=h).json()
     assert len(k["nao_cadastradas"]) + len(k["fora_das_regras"]) >= 60
+
+
+def test_layouts_salvos(cliente, h, c, token_admin):
+    m = c["m"]
+    cfg = {"tracks": [{"tipo": "analito", "analito": "Cr", "representacao": "faixa"}, {"tipo": "litologia"}]}
+    r = cliente.post(f"{API}/minas/{m}/layouts", headers=h, json={"nome": "Travessa — Cr/V/Be", "tipo": "galeria", "config": cfg})
+    assert r.status_code == 201 and r.json()["meu"]
+    cfg2 = {**cfg, "tracks": cfg["tracks"][:1]}
+    r2 = cliente.post(f"{API}/minas/{m}/layouts", headers=h, json={"nome": "Travessa — Cr/V/Be", "tipo": "galeria", "config": cfg2, "compartilhado": True})
+    assert r2.json()["id"] == r.json()["id"] and r2.json()["config"] == cfg2, "mesmo nome substitui"
+    _, geo = criar_usuario(cliente, token_admin, "geo", ["GEOLOGO"])
+    cliente.post(f"{API}/minas/{m}/layouts", headers=cab(geo), json={"nome": "Meu", "tipo": "galeria", "config": {}})
+    vistos = {x["nome"]: x for x in cliente.get(f"{API}/minas/{m}/layouts", headers=cab(geo), params={"tipo": "galeria"}).json()}
+    assert set(vistos) == {"Travessa — Cr/V/Be", "Meu"} and not vistos["Travessa — Cr/V/Be"]["meu"], "vê os seus e os compartilhados"
+    assert [x["nome"] for x in cliente.get(f"{API}/minas/{m}/layouts", headers=h).json()] == ["Travessa — Cr/V/Be"], "o do outro não é compartilhado"
+    assert cliente.delete(f"{API}/layouts/{r.json()['id']}", headers=cab(geo)).status_code == 403
+    assert cliente.delete(f"{API}/layouts/{r.json()['id']}", headers=h).status_code == 204
+    assert cliente.post(f"{API}/minas/{m}/layouts", headers=h, json={"nome": "x", "tipo": "outro", "config": {}}).status_code == 422
+
+
+def test_geologia_da_ficha_na_galeria(cliente, h, c):
+    termos = {x["codigo"]: {t["codigo"]: t for t in x["termos"]} for x in cliente.get(f"{API}/dicionarios", headers=h).json()}
+    L, E = termos["LITOLOGIA"], termos["TIPO_ESTRUTURA"]
+    f = cliente.post(f"{API}/mapeamentos", headers=h, json={
+        "unidade_id": c["g2"]["id"], "data": "2026-10-14", "x": 500100, "y": 7800000, "z": 500,
+        "intervalos": [{"de_m": 0, "ate_m": 3, "litologia_id": L["FLX"]["id"]}],
+        "medidas": [{"tipo_id": E["S1"]["id"], "valor_a": 230, "valor_b": 30}, {"tipo_id": E["LINEACAO"]["id"], "valor_a": 315, "valor_b": 20, "convencao": "trend_plunge"}],
+        "amostras": [{"codigo": "BS-RP-600", "de_m": 0, "ate_m": 1}]}).json()
+    cliente.post(f"{API}/mapeamentos/{f['id']}/gerar-amostras", headers=h)
+    a = next(x for x in cliente.get(f"{API}/minas/{c['m']}/amostras", headers=h).json() if x["codigo"] == "BS-RP-600")
+    cliente.put(f"{API}/amostras/{a['id']}", headers=h, json={**{k: a[k] for k in ("codigo", "versao", "unidade_id", "litologia_id", "mapeamento_id", "data_coleta")},
+                                                              "x": 500100, "y": 7800000, "z": 500, "srid": 31983, "descricao": "xisto com flogopita"})
+    d = cliente.get(f"{API}/unidades/{c['g2']['id']}/longitudinal", headers=h, params={"analitos": "Cr"}).json()
+    am = next(x for x in d["amostras"] if x["codigo"] == "BS-RP-600")
+    assert [(m["sigla"], m["atitude"]) for m in am["medidas"]] == [("S1", "230/30"), (E["LINEACAO"]["sigla"] or "LINEACAO", "315→20")]
+    assert am["descricao"] == "xisto com flogopita" and am["ficha_id"] == f["id"] and am["documentos"] == {}

@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.12.0 · **Etapa atual:** Geoquímica Operacional — Etapa 2 concluída; próxima: Etapa 3 (tracks das galerias). Usuário autorizou executar todas as etapas em sequência.
+**Última atualização:** 2026-11-26 · **Versão:** 0.13.0 · **Etapa atual:** Geoquímica Operacional — Etapas 3 e 4 concluídas; próxima: Etapa 5 (sondagens). Usuário autorizou executar todas as etapas em sequência.
 
 ## Etapas
 
@@ -16,7 +16,7 @@
 | E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
 | E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
 | E11 Teores na galeria | ✅ Concluída e testada (v0.11.0) |
-| **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | 🔵 Etapas 1–2 concluídas (v0.12.0) — ver GEOQUIMICA_OPERACIONAL.md |
+| **Geoquímica Operacional** (prompt de reestruturação, 10 etapas) | 🔵 Etapas 1–4 concluídas (v0.13.0) — ver GEOQUIMICA_OPERACIONAL.md |
 | E12 – E21 (replanejadas; sondagem, 3D e comparação passam a ser etapas da Geoquímica Operacional) | ⚪ Pendentes |
 
 ## Geoquímica Operacional — Etapa 2 (versão 0.12.0)

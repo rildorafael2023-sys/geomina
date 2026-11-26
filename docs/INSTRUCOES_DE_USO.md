@@ -1,4 +1,4 @@
-# INSTRUÇÕES DE USO — versão 0.12.0
+# INSTRUÇÕES DE USO — versão 0.13.0
 
 > Descreve apenas o que está implementado e testado. O 3D e a sondagem ainda não estão disponíveis.
 
@@ -126,7 +126,13 @@ Menu **Geoquímica operacional**. A tela usa toda a largura: o botão ☰ no top
 - **Painel de seleção (esquerda)**: marque nível, galeria, trecho, geologia, campanha, responsável, status, laboratório, certificado; busque por código ou local; datas; faixa de teor. O número ao lado de cada opção é quantas amostras ela tem **com os outros filtros**: ao escolher o nível, só aparecem as galerias dele.
 - **Painel de contexto (direita)**: clique numa amostra (tabela ou faixa) para ver local, coordenadas, geologia, ficha, fotos e **todos os resultados do laudo**, com a duplicata do laboratório ao lado.
 - **Consulta de amostras**: tabela com todas as amostras e resultados, inclusive códigos que só existem no laudo ("só no laudo"). **Conciliar laudo × cadastro…**: cria as sub-amostras (ex.: BS-RP-428A/B herdam local e coordenadas do ponto BS-RP-428) e cadastra em lote as amostras que só estão no laudo. **Ligar às galerias…**: liga amostras da planilha (texto do local) às galerias.
-- **Galerias e frentes**: escolha a galeria; as amostras aparecem lado a lado, do início ao fim, numa faixa por analito colorida pela classe de teor (sem eixo de distância). Clique numa coluna para ver a amostra.
+- **Galerias e frentes**: escolha a galeria. Cada coluna é uma amostra, do início ao fim da galeria (o número no topo é o ponto); cada linha é um **track**:
+  - um track por analito escolhido no topo; **⚙** no nome do track: faixa colorida, barras ou pontos, escala linear/log, mínimo/máximo, classes (quantis, intervalos iguais ou os seus limites), cores, altura, subir/descer, remover;
+  - **+ Track**: Amostras, Litologia, Alteração, Mineralização, Estruturas (medidas da ficha, ex.: S1 230/30), Descrição, Fotos e croquis;
+  - roda do mouse = zoom; arrastar = deslocar; **Shift+arrastar** = selecionar um trecho (ampliar, exportar CSV); **Ver todas** volta;
+  - clique numa coluna, numa linha da tabela ou num ponto da planta: a amostra fica destacada nos três e abre no painel de contexto;
+  - **Layouts**: salve a composição (ex.: "Travessa — Cr/V/Be/MgO/K2O"), compartilhe e aplique em outra galeria;
+  - **Exportar**: tabela (CSV), tracks (SVG/PNG das colunas visíveis).
 - **Sondagens, Comparação, Visualização espacial**: em construção (próximas etapas).
 - **Laboratório (laudos)** (menu): importação de laudos, certificados e QA/QC (antiga tela "Geoquímica").
 

@@ -133,6 +133,11 @@
 
 Diferença da proposta: SQLite em vez de PostGIS (DT-016) — geometria em WKB + R*Tree; o eixo é a própria `eixo_versao` por unidade (sem tabela `eixo_referencia`); a posição no eixo fica em `posicao_eixo` (em vez de colunas nas tabelas de amostra/ficha/avanço), o que permite várias versões do eixo sem alterar os registros de origem.
 
+## 8b. Geoquímica operacional (migração 0009) **[IMPLEMENTADO]**
+| Tabela | Colunas principais | Observações |
+|---|---|---|
+| `layout_analise` | mina_id, dono_id, nome, tipo (`galeria`/`sondagem`/`comparacao`), config JSON (tracks, analitos), compartilhado | único por (mina, dono, tipo, nome); auditado |
+
 ## 9. Auditoria (Etapa 2) **[IMPLEMENTADO — por ORM, DT-019]**
 
 | Tabela | Colunas |

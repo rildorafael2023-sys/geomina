@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 import shapely
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
 from geomina.core.erros import ErroAplicacao
@@ -25,6 +25,7 @@ from geomina.espacial.geometria import de_wkb
 from geomina.modules.amostragem.models import Amostra, Campanha, TipoAmostra
 from geomina.modules.auth.models import Usuario
 from geomina.modules.dicionarios.models import Termo
+from geomina.modules.documentos.models import Documento, DocumentoVinculo
 from geomina.modules.estrutura.models import Mina, UnidadeOperacional
 from geomina.modules.geoquimica.models import Analito, Certificado, Resultado
 from geomina.modules.mapeamento.models import Mapeamento, MedidaEstrutural
@@ -95,6 +96,28 @@ def _agrupar(pos: list[list[float]], tol: float = 0.5) -> list[int]:
             centros.append(p)
             grupos.append(len(centros) - 1)
     return grupos
+
+
+def _geologia_das_fichas(db: Session, amostras: dict[uuid.UUID, dict]) -> None:
+    """Estruturas medidas e fotos/croquis da ficha de cada amostra (registros originais, sem extrapolar)."""
+    fichas = {a["_ficha"] for a in amostras.values() if a["_ficha"]}
+    medidas: dict = {}
+    docs: dict = {}
+    if fichas:
+        T = aliased(Termo)
+        for m, t in db.execute(select(MedidaEstrutural, T).join(T, T.id == MedidaEstrutural.tipo_id)
+                               .where(MedidaEstrutural.mapeamento_id.in_(fichas)).order_by(MedidaEstrutural.ordem)):
+            atitude = (f"{m.dip_dir:03.0f}/{m.dip:02.0f}" if m.dip_dir is not None and m.dip is not None
+                       else f"{m.trend:03.0f}→{m.plunge:02.0f}" if m.trend is not None and m.plunge is not None else "")
+            medidas.setdefault(m.mapeamento_id, []).append({"tipo": t.nome, "sigla": t.sigla or t.codigo, "cor": t.cor, "classe": m.classe,
+                                                            "atitude": atitude, "familia": m.familia})
+        for fid, cat, n in db.execute(select(DocumentoVinculo.mapeamento_id, Documento.categoria, func.count())
+                                      .join(Documento, Documento.id == DocumentoVinculo.documento_id)
+                                      .where(DocumentoVinculo.mapeamento_id.in_(fichas), Documento.arquivado.is_(False)).group_by(DocumentoVinculo.mapeamento_id, Documento.categoria)):
+            docs.setdefault(fid, {})[cat] = n
+    for a in amostras.values():
+        f = a.pop("_ficha")
+        a["medidas"], a["documentos"] = medidas.get(f, []), docs.get(f, {})
 
 
 def serie(db: Session, unidade_id: uuid.UUID, analitos: list[str], f: Filtros, regra_ld: str = "limite",
@@ -218,8 +241,10 @@ def serie(db: Session, unidade_id: uuid.UUID, analitos: list[str], f: Filtros, r
                           "papel": a.papel_controle, "data": a.data_coleta.isoformat() if a.data_coleta else None,
                           "responsavel": geo or a.responsavel_nome, "responsavel_id": str(a.geologo_id) if a.geologo_id else None,
                           "litologia": termo(lit), "alteracao": termo(alt), "mineralizacao": termo(mi), "campanha": camp, "tipo": tipo,
-                          "ficha": ficha, "local": a.local_descricao, "unidade": local, "secao_de_m": a.secao_de_m, "secao_ate_m": a.secao_ate_m,
-                          "valores": {}}
+                          "ficha": ficha, "ficha_id": str(a.mapeamento_id) if a.mapeamento_id else None, "local": a.local_descricao,
+                          "unidade": local, "secao_de_m": a.secao_de_m, "secao_ate_m": a.secao_ate_m, "descricao": a.descricao,
+                          "estado": a.estado, "_ficha": a.mapeamento_id, "medidas": [], "documentos": {}, "valores": {}}
+    _geologia_das_fichas(db, amostras)
 
     pedidos = list(dict.fromkeys(analitos)) + ([f.teor_analito] if f.teor_analito and f.teor_analito not in analitos else [])
     resumo: dict[str, dict] = {}

@@ -110,6 +110,9 @@
 | 2026-11-26 | GO-2 | `pytest`: 182 (+6 geoquímica operacional, incluindo os **laudos reais**: 66 amostras, 3.168 resultados SMP e 48 analitos representados) | **182 aprovados, 1 pulado** | busca não ignorava hífens (corrigido) |
 | 2026-11-26 | GO-2 | E2E `e2e/geoop.cjs` (8 cenários: abas e total, filtros encadeados com contagens, consulta com resultados só no laudo, painel de contexto com duplicata ao lado, conciliação de sub-amostras e cadastro, faixa de teor, galeria → faixa → contexto, recolher filtros/menu e CSV, abas pendentes sem dados de exemplo) + regressão das outras 8 suítes; `e2e/longitudinal.cjs` retirado (tela substituída) | **aprovados** | painel de contexto travava depois de conciliar (corrigido); teste de laudos atualizado para o menu "Laboratório (laudos)" |
 
+| 2026-11-26 | GO-3/4 | `pytest`: 184 (+2: layouts salvos; estruturas/descrição/ficha por amostra) | **184 aprovados, 1 pulado** | |
+| 2026-11-26 | GO-3/4 | E2E `e2e/geoop_galerias.cjs` (7 cenários) + regressão das outras 10 suítes (inclui `geoop.cjs` atualizado para os tracks) | **aprovados** | 2 defeitos corrigidos (atributo do contorno de seleção, ⚙ sobre a escala) |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).
