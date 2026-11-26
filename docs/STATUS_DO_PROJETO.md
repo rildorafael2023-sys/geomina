@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.10.0 · **Etapa atual:** E11 concluída (refeita a pedido do usuário); próxima: E12 sondagem
+**Última atualização:** 2026-11-26 · **Versão:** 0.11.0 · **Etapa atual:** E11 concluída (2ª revisão a pedido do usuário); próxima: E12 sondagem
 
 ## Etapas
 
@@ -15,8 +15,18 @@
 | E8 Amostragem | ✅ Concluída e testada (v0.7.0) |
 | E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
 | E10 Topografia, eixos e chainage | ✅ Concluída e testada (v0.9.0) |
-| E11 Teores ao longo da galeria | ✅ Concluída e testada (v0.10.0) |
+| E11 Teores na galeria | ✅ Concluída e testada (v0.11.0) |
 | E12 – E21 (replanejadas com a Seção 27) | ⚪ Pendentes — ver PLANO_DE_DESENVOLVIMENTO |
+
+## Revisão da E11 (versão 0.11.0) — faixa de teores
+**2ª avaliação do usuário:** não quer gráfico teor × distância; quer algo como um *drillhole ribbon* para comparar as amostras da galeria (ex.: 1F5) entre si. Feito:
+- **Faixa de teores**: uma coluna por amostra, na ordem da galeria (pontos numerados, sub-pontos lado a lado), linhas Ponto / Amostra / Litologia e uma linha por analito com a **cor da classe** e o valor escrito; sem resultado = hachurado; abaixo/acima do limite = contorno tracejado. Clique na coluna abre a amostra. Exporta SVG e PNG.
+- **Classes**: quantis, intervalos iguais ou limites informados; 3 a 7 classes; 3 paletas (inclusive tons de cinza para impressão); legenda com os intervalos. **As mesmas classes para todas as galerias mostradas** (mesma cor = mesmo teor).
+- **Planta**: a galeria desenhada como uma fita colorida pelo teor de cada ponto (média do ponto), com a topografia em volta; formato acompanha a galeria.
+- **Comparação entre as amostras**: menor e maior (com o código), média e mediana (só valores medidos), quantas medidas, quantas no limite, quantas sem resultado.
+- Comparar várias galerias: escolha mais de uma; cada uma tem sua faixa, com as mesmas classes.
+- Opção "Só amostras com resultado".
+- Removidos: gráfico teor × distância, escalas log, filtro por trecho de distância e o Plotly (o aplicativo ficou ~5 MB menor).
 
 ## Entregue na E11 (versão 0.10.0) — teores ao longo da galeria
 **Revisão a pedido do usuário:** a 1ª versão exigia desenhar o eixo e "calcular posições" antes de ver qualquer coisa. Refeita: escolhe a galeria e os analitos e o resultado aparece.

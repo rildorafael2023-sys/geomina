@@ -173,5 +173,9 @@ Estado: **Proposta** (aguardando aprovação) · **Aceita** · **Substituída**.
 **Limitações declaradas.** Ramos diferentes na mesma unidade geram caminho em zigue-zague → aviso automático (caminho > 1,6 × distância entre pontas e > 30 m a mais); trechos longos sem amostras → aviso. Não é interpolação: entre dois pontos a distância é a reta entre eles (galerias curvas com amostras espaçadas ficam um pouco mais curtas que o eixo real).
 
 ## DT-033 — Plotly carregado sob demanda
-**Estado:** Aceita (E11)
+**Estado:** Substituída por DT-034 (E11 rev. 2) — o gráfico teor × distância foi retirado a pedido do usuário e o Plotly removido.
 `plotly.js-dist-min` 3.7.0 (local, sem internet) em chunk separado, carregado só nas telas de análise; o restante do aplicativo não fica mais pesado.
+
+## DT-034 — Faixa de teores ("ribbon") em SVG próprio, classes comuns entre galerias
+**Estado:** Aceita (E11 rev. 2, pedido do usuário)
+**Decisão.** A comparação de teores na galeria é uma faixa: colunas = amostras na ordem da galeria (sem escala de distância), linhas = analitos, cor = classe. Desenho em SVG próprio (sem biblioteca): leve, exportável (SVG/PNG) e com controle total do layout. Classificação em `geologia/classes.ts` (quantis por interpolação linear, intervalos iguais, limites do usuário; classe k = (lim[k−1], lim[k]]), calculada sobre todas as galerias mostradas para que a mesma cor signifique o mesmo teor. Valor no limite entra na cor conforme a regra escolhida, com contorno tracejado; média/mediana só com valores medidos.

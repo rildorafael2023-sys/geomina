@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.10.0
+# INSTRUÇÕES DE USO — versão 0.11.0
 
-> Descreve apenas o que está implementado e testado. O 3D e os gráficos longitudinais ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. O 3D e a sondagem ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -122,17 +122,14 @@ Na **Estrutura da mina**, selecione a galeria → aba **Eixo e chainage**.
 
 ## 17. Teores na galeria
 Menu **Teores na galeria**.
-1. Escolha a **galeria, travessa ou rampa** e os **analitos** (ex.: Cr, Be, F). Não é preciso desenhar eixo.
-2. **Planta**: os pontos de amostragem numerados do início (1) ao fim, coloridos pelo teor do analito escolhido, com as paredes da topografia em volta.
-3. **Gráfico**: teor × distância desde o início (um gráfico por analito). Arraste para ampliar um trecho; "Filtrar este trecho" restringe a análise a ele.
-4. **Tabela**: do início ao fim, com a distância de cada ponto, barras e o maior (vermelho) e menor (azul) valor. Amostras do mesmo ponto (sub-pontos da parede) aparecem juntas.
-5. **Inverter início ⇄ fim** se o início escolhido (a ponta com a amostra mais antiga) não for o emboque.
-6. Abaixo do limite (ex.: <10): escolha mostrar no limite (triângulo vazado), na metade, ou não mostrar. Nunca vira zero.
-7. **Filtros** escondem amostras, mas a distância de cada uma continua a da galeria inteira.
-8. **Comparar com outras galerias**: cada uma em painel próprio (as distâncias de galerias diferentes não são o mesmo lugar).
-9. **Exportar**: CSV (tabela), PNG ou SVG (gráfico).
-10. **Ligar às galerias…** (amostras vindas da planilha só com o texto do local): busque o local (ex.: "1F5"), marque as variações de escrita do mesmo lugar, escolha a unidade e ligue. Lados e ramos diferentes (Direita, Esquerda, Subindo, Câmara) devem ir para unidades diferentes; se juntar ramos, o GeoMina avisa que as amostras não seguem uma linha única.
-11. Se a galeria tiver eixo desenhado (aba "Eixo e chainage"), dá para escolher "Pelo eixo desenhado".
+1. Escolha a **galeria** (ou várias, para comparar) e os **analitos** (ex.: Cr, Be, F). Não é preciso desenhar eixo.
+2. **Faixa de teores**: cada coluna é uma amostra, na ordem da galeria (pontos numerados do início ao fim; amostras do mesmo ponto — parede baixa e alta — ficam lado a lado). Cada linha é um analito, com a cor da classe e o valor. Hachurado = sem resultado; contorno tracejado = abaixo/acima do limite (ex.: <10). Clique numa coluna para ver a amostra completa.
+3. **Classes e cores**: quantis (cada cor com quantidade parecida de amostras), intervalos iguais, ou os seus limites (ex.: "500; 1000; 1500"). Escolha o número de classes e as cores (há tons de cinza para impressão). A legenda mostra os intervalos. As classes valem para todas as galerias mostradas.
+4. **Planta**: a galeria como uma fita colorida pelo teor de cada ponto, com as paredes da topografia.
+5. **Comparação entre as amostras**: menor e maior valor (com a amostra), média e mediana.
+6. **Inverter início ⇄ fim** se o início escolhido (ponta com a amostra mais antiga) não for o emboque. **Só amostras com resultado** esconde as que ainda não têm laudo.
+7. **Exportar**: tabela (CSV), faixa (SVG ou PNG).
+8. **Ligar às galerias…** (amostras vindas da planilha só com o texto do local): busque o local (ex.: "1F5"), marque as variações de escrita do mesmo lugar, escolha a unidade e ligue. Lados e ramos diferentes (Direita, Esquerda, Subindo, Câmara) devem ir para unidades diferentes; se juntar ramos, o GeoMina avisa.
 
 ## 18. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.

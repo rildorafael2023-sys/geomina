@@ -98,7 +98,8 @@
 
 > **Replanejamento (2026-11-26):** a Seção 27 do Prompt Mestre (`PROMPT_MESTRE_SECAO_27.md`) acrescentou o módulo de sondagem e detalhou longitudinal, perfis, seções e 3D. As etapas E11–E16 abaixo substituem as anteriores; justificativa da ordem em ANALISE_CRITICA.md §F9. Critérios de conclusão do módulo: Seção 27 §14.4.
 
-## E11 — Teores ao longo da galeria (§2) ✅ (v0.10.0)
+## E11 — Teores na galeria (§2) ✅ (v0.11.0)
+**Revisão 2 (usuário):** faixa de teores estilo *drillhole ribbon* no lugar do gráfico teor × distância.
 **Revisão (usuário):** sem exigir eixo; distância pelo caminho entre as amostras, planta numerada, comparação início/meio/fim; eixo desenhado opcional.
 **Escopo:** escolha de galeria/travessa/rampa (eixo vigente, E10); qualquer analito disponível; vários analitos em gráficos empilhados alinhados pelo chainage, cada um com escala própria (linear/log, mín/máx); faixa de chainage; filtros (litologia, alteração, mineralização, estruturas da ficha, data/período, responsável, tipo/campanha, faixa de teor); regra de <LD explícita; clique abre a amostra completa (resultados, ficha, fotos); comparação de 2+ galerias em painéis separados, cada um com seu 0 m; exportação CSV dos pontos e PNG/SVG dos gráficos.
 **Aceitação:** posições = chainage do banco; nenhum valor <LD vira zero; exportação reproduz exatamente os pontos; filtros testados com dados reais/sintéticos; E2E.

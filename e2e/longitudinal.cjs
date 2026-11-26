@@ -65,67 +65,76 @@ const X0 = 500000, Y0 = 7800000;
   const imp = await chamar("POST", `/minas/${mina.id}/laudos`, null, { nome: "laudo.csv", conteudo: csv });
   await chamar("POST", `/importacoes/${imp.id}/confirmar-laudo`, { certificado: "C-LONG-1" });
 
-  // 1. Galeria + analitos → planta numerada e gráficos, sem desenhar eixo
+  // 1. Galeria + analitos → faixa de teores com as amostras lado a lado, na ordem da galeria
   await page.getByRole("navigation").getByRole("link", { name: "Teores na galeria" }).click();
   await page.getByText("Escolha a galeria e pelo menos um analito.").waitFor();
-  await page.getByRole("textbox", { name: "Galeria, travessa ou rampa" }).click();
-  await page.getByRole("option", { name: /GAL-01 — Galeria 01 \(Galeria · 9 amostras com coordenadas\)/ }).click();
+  await page.getByRole("textbox", { name: "Galerias, travessas ou rampas" }).click();
+  await page.getByRole("option", { name: /GAL-01 — Galeria 01 \(9 amostras\)/ }).click();
+  await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Analitos" }).click();
   await page.getByRole("option", { name: "Cr (elemento)" }).click();
   await page.getByRole("option", { name: "Be (elemento)" }).click();
   await page.keyboard.press("Escape");
-  const graf = page.getByTestId("grafico-GAL-01");
-  await graf.locator(".main-svg").first().waitFor({ timeout: 30000 });
-  await page.getByTestId("planta-GAL-01").locator(".main-svg").first().waitFor();
-  await page.getByText(/8 pontos de amostragem ao longo de \d+[.,]\d m · distância pelo caminho entre as amostras · início: ponto da amostra BS-RP-300 \(coleta 01\/08\/2026\)/).waitFor();
-  assert.strictEqual(await graf.locator(".scatterlayer .points path.point").count(), 18, "9 amostras × 2 analitos");
-  // tabela do início ao fim, na ordem da galeria (não na de cadastro); sub-pontos juntos no ponto 4
-  const linhas = await page.getByRole("row").filter({ hasText: /BS-RP-3\d\d/ }).allInnerTexts();
-  assert.deepStrictEqual(linhas.map((l) => l.match(/BS-RP-3\d\d[AB]?/)[0]), ["BS-RP-300", "BS-RP-301", "BS-RP-302", "BS-RP-303A", "BS-RP-303B", "BS-RP-304", "BS-RP-305", "BS-RP-306", "BS-RP-307"]);
-  assert.match(linhas[0], /^1\s+0[.,]0\s+BS-RP-300/);
-  assert.match(linhas[3], /^4\s+\d+[.,]\d\s+BS-RP-303A\s+0–1[.,]5/);
-  assert.match(linhas[4], /^\s*BS-RP-303B/, "segundo sub-ponto não repete ponto/distância");
-  await shot("e11-01-galeria");
+  const faixa = page.getByTestId("faixa-GAL-01");
+  await faixa.waitFor({ timeout: 30000 });
+  const ordem = () => faixa.locator("g[data-amostra]").evaluateAll((gs) => gs.map((g) => g.getAttribute("data-amostra")));
+  assert.deepStrictEqual(await ordem(), ["BS-RP-300", "BS-RP-301", "BS-RP-302", "BS-RP-303A", "BS-RP-303B", "BS-RP-304", "BS-RP-305", "BS-RP-306", "BS-RP-307"],
+    "amostras na ordem da galeria (não na de cadastro), sub-pontos juntos");
+  await faixa.getByText("<10", { exact: true }).waitFor();
+  await page.getByText(/9 amostras em 8 pontos, numerados do início ao fim da galeria · início: ponto da amostra BS-RP-300/).waitFor();
+  await page.getByTestId("planta-GAL-01").waitFor();
+  await page.getByTestId("legenda").getByText("Cr (ppm)").waitFor();
+  assert.strictEqual(await page.getByText("Teor × distância").count(), 0, "sem gráfico teor × distância");
+  // comparação numérica
+  const linhaCr = page.getByRole("row").filter({ hasText: /^Cr/ });
+  await linhaCr.getByText("BS-RP-300").waitFor(); // menor medido: 300
+  await linhaCr.getByText("BS-RP-307").waitFor(); // maior: 1350
+  await shot("e11-01-faixa");
+
+  // só amostras com resultado: BS-RP-3xx todas têm; nada some
+  await page.getByLabel("Só amostras com resultado").check();
+  assert.strictEqual((await ordem()).length, 9);
+  await page.getByLabel("Só amostras com resultado").uncheck();
 
   // 2. Inverter início/fim
   await page.getByRole("button", { name: "Inverter início ⇄ fim" }).click();
   await page.getByText(/início: ponto da amostra BS-RP-307/).waitFor();
-  const inv = await page.getByRole("row").filter({ hasText: /BS-RP-3\d\d/ }).first().innerText();
-  assert.match(inv, /BS-RP-307/);
+  assert.strictEqual((await ordem())[0], "BS-RP-307");
   await page.getByRole("button", { name: "Inverter início ⇄ fim" }).click();
   await page.getByText(/início: ponto da amostra BS-RP-300/).waitFor();
 
-  // 3. Clique na tabela → consulta da amostra
-  await page.getByRole("row").filter({ hasText: "BS-RP-305" }).click();
+  // 3. Clique na amostra da faixa → consulta completa
+  await faixa.locator('g[data-amostra="BS-RP-305"]').click();
   const modal = page.getByRole("dialog");
   await modal.getByText("Amostra BS-RP-305").waitFor();
   await modal.getByText("C-LONG-1").first().waitFor();
   await shot("e11-02-consulta");
   await page.keyboard.press("Escape");
 
-  // 4. Filtros não mudam as distâncias
-  const distAntes = await page.getByRole("row").filter({ hasText: "BS-RP-306" }).getByRole("cell").nth(1).innerText();
+  // 4. Classes com limites informados: legenda com os intervalos
+  await page.getByRole("button", { name: "Classes e cores" }).click();
+  await page.getByText("Limites que eu informar").click();
+  await page.getByLabel("Limites de Cr (ppm)").fill("500; 1000");
+  const leg = page.getByTestId("legenda");
+  for (const t of ["≤ 500", "500 – 1.000", "> 1.000"]) await leg.getByText(t, { exact: true }).first().waitFor();
+  const cores = await faixa.locator('g[data-amostra="BS-RP-300"] rect, g[data-amostra="BS-RP-307"] rect').evaluateAll((rs) => rs.map((r) => r.getAttribute("fill")));
+  assert.notStrictEqual(cores[1], cores[4], "300 ppm e 1350 ppm em classes de cores diferentes");
+  await page.getByText("Quantis", { exact: true }).click();
+
+  // 5. Filtros: litologia e faixa de teor
   await page.getByRole("button", { name: /^Filtros/ }).click();
   await page.getByRole("textbox", { name: "Litologia" }).click();
   await page.getByRole("option", { name: new RegExp(lit[1].nome) }).first().click();
   await page.keyboard.press("Escape");
-  await page.getByText("4 amostras", { exact: true }).waitFor();
-  assert.strictEqual(await page.getByRole("row").filter({ hasText: "BS-RP-306" }).getByRole("cell").nth(1).innerText(), distAntes);
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="faixa-GAL-01"] g[data-amostra]').length === 4);
   await page.getByRole("textbox", { name: "Faixa de teor: analito" }).click();
   await page.getByRole("option", { name: "Cr", exact: true }).click();
   await page.getByLabel("Teor mínimo").fill("1000");
-  await page.getByText("3 amostras", { exact: true }).waitFor(); // pontos 5, 6, 7: Cr = 300 + 150·i ≥ 1000
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="faixa-GAL-01"] g[data-amostra]').length === 3);
   await page.getByRole("button", { name: "Limpar filtros" }).click();
-  await page.getByText("9 amostras", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="faixa-GAL-01"] g[data-amostra]').length === 9);
 
-  // 5. Regra de LD e escala log
-  await page.getByRole("textbox", { name: "Abaixo/acima do limite de detecção" }).click();
-  await page.getByRole("option", { name: "Não mostrar (contar)" }).click();
-  await page.getByText("Cr: 8 valores · 1 <LD · 1 fora").waitFor();
-  await page.getByRole("button", { name: "Escalas e aparência" }).click();
-  await page.getByRole("checkbox", { name: "log" }).first().check();
-
-  // 6a. Amostras só com texto do local: ligar em lote à galeria pela tela
+  // 6. Amostras só com texto do local: ligar em lote à galeria pela tela
   await page.getByText("2 amostra(s) ainda não estão ligadas a uma galeria").waitFor();
   await page.getByRole("button", { name: "Ligar às galerias…" }).click();
   await page.getByLabel("Buscar local").fill("1f 2");
@@ -137,18 +146,20 @@ const X0 = 500000, Y0 = 7800000;
   await page.keyboard.press("Escape");
   await page.getByText(/ainda não estão ligadas/).waitFor({ state: "detached" });
 
-  // 6. Comparar com outra galeria (painel próprio) e exportar CSV
-  await page.getByRole("button", { name: /^Comparar com outras galerias/ }).click();
-  await page.getByRole("textbox", { name: /Outras galerias/ }).click();
+  // 7. Comparar duas galerias com as mesmas classes; exportar tabela e faixa
+  await page.getByRole("textbox", { name: "Galerias, travessas ou rampas" }).click();
   await page.getByRole("option", { name: /GAL-02/ }).click();
   await page.keyboard.press("Escape");
-  await page.getByTestId("grafico-GAL-02").locator(".main-svg").first().waitFor({ timeout: 30000 });
-  await page.getByText("6 amostras", { exact: true }).waitFor();
+  await page.getByTestId("faixa-GAL-02").waitFor({ timeout: 30000 });
+  assert.strictEqual(await page.getByTestId("faixa-GAL-02").locator("g[data-amostra]").count(), 6);
   await shot("e11-03-comparacao");
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "CSV" }).first().click()]);
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Tabela (CSV)" }).first().click()]);
   const texto = fs.readFileSync(await dl.path(), "utf-8");
-  assert.match(texto, /caminho pelas amostras/);
   assert.strictEqual(texto.trim().split("\n").length, 2 + 9);
+  const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Faixa (SVG)" }).first().click()]);
+  assert.match(fs.readFileSync(await dl2.path(), "utf-8"), /<svg[^>]*xmlns="http:\/\/www.w3.org\/2000\/svg"[\s\S]*BS-RP-307/);
+  const [dl3] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Faixa (PNG)" }).first().click()]);
+  assert.ok(fs.readFileSync(await dl3.path()).subarray(1, 4).toString() === "PNG", "PNG válido");
 
   // 7. Celular
   await page.setViewportSize({ width: 390, height: 844 });
@@ -158,6 +169,6 @@ const X0 = 500000, Y0 = 7800000;
   await shot("e11-04-celular");
 
   assert.deepStrictEqual(erros, []);
-  console.log("E2E TEORES NA GALERIA OK: 8 cenários aprovados");
+  console.log("E2E TEORES NA GALERIA OK: 8 cenários aprovados (faixa de teores)");
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });
