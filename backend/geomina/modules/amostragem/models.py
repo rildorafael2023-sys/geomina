@@ -101,7 +101,8 @@ class Amostra(EntidadeMixin, Base):
     y: Mapped[float | None] = mapped_column(Float)
     z: Mapped[float | None] = mapped_column(Float)
     srid: Mapped[int | None] = mapped_column(Integer)
-    furo: Mapped[str | None] = mapped_column(String(40))  # testemunho de sondagem
+    furo: Mapped[str | None] = mapped_column(String(40))  # testemunho de sondagem (código como veio)
+    furo_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("furo.id", ondelete="RESTRICT"), index=True)
     prof_de_m: Mapped[float | None] = mapped_column(Float)
     prof_ate_m: Mapped[float | None] = mapped_column(Float)
     litologia_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("termo.id", ondelete="RESTRICT"), index=True)
@@ -149,7 +150,7 @@ class Importacao(EntidadeMixin, Base):
     __tablename__ = "importacao"
     __auditavel__ = True
     __table_args__ = (
-        CheckConstraint("tipo IN ('amostras','resultados','topografia')", name="tipo_importacao_valido"),
+        CheckConstraint("tipo IN ('amostras','resultados','topografia','sondagem')", name="tipo_importacao_valido"),
         CheckConstraint("estado IN ('analisada','confirmada','descartada')", name="estado_importacao_valido"),
     )
 

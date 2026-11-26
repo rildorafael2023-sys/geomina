@@ -24,6 +24,7 @@ from geomina.modules.mapeamento.models import (  # noqa: F401
     MedidaEstrutural,
 )
 from geomina.modules.sistema.models import ParametroSistema  # noqa: F401
+from geomina.modules.sondagem.models import Furo, IntervaloFuro, SurveyFuro  # noqa: F401
 from geomina.modules.topografia.models import (  # noqa: F401
     EixoVersao,
     FeicaoTopografica,
