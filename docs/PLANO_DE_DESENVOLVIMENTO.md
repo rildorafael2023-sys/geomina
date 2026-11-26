@@ -88,7 +88,7 @@
 **Escopo:** tipos, métodos, regras de código (BS-RP mina, BMT-TS testemunho, BE antigas; forma canônica e normalização com confirmação), importação da planilha "GEOQUIMICA_DESCRIÇÃO", campanhas, amostras (ponto/intervalo), QA/QC (padrões, brancos, duplicatas), lotes de envio, importação/exportação CSV/Excel, detecção de duplicidade.
 **Aceitação:** código duplicado rejeitado pelo banco; geração de códigos concorrentes sem colisão (teste com concorrência); duplicata sem original rejeitada; importação histórica com relatório de linhas rejeitadas; estado "aguardando resultado" derivado corretamente.
 
-## E9 — Importação geoquímica
+## E9 — Importação geoquímica ✅ (v0.8.0)
 **Escopo:** leitor do layout SGS Geosol (.xls: certificado, método/analito/unidade por coluna, SMP/DUP/REP/STD); assistente de 12 passos; CSV (`;`/`,`, vírgula decimal, encoding) e Excel; mapeamento de colunas salvo por laboratório; parsing de `<LD`, `>`, `ND`, `IS`; unidades; certificado/bateria; resultado preferido; cancelamento de importação; QA/QC básico (desejável).
 **Aceitação:** arquivos de laboratório **reais** (ou anonimizados) importados com contagens conferidas; amostras não encontradas e duplicidades listadas antes da confirmação; nada é gravado antes da confirmação; reimportação do mesmo arquivo detectada; valor original sempre recuperável.
 

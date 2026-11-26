@@ -153,6 +153,7 @@ function FormAmostra({ mina, amostra, podeEditar, aoFechar }: { mina: Mina; amos
         </SimpleGrid>
         <Textarea label="Descrição" autosize minRows={2} value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.currentTarget.value })} readOnly={ro} />
         <Textarea label="Observações" autosize minRows={1} value={f.observacoes} onChange={(e) => setF({ ...f, observacoes: e.currentTarget.value })} readOnly={ro} />
+        {a && <ResultadosAmostra id={a.id} />}
         {!ro && <Button loading={salvar.isPending} onClick={() => { setErro(null); salvar.mutate(); }}>Salvar</Button>}
       </Stack>
     </Modal>
@@ -316,5 +317,20 @@ function Importar({ mina }: { mina: Mina }) {
         </Alert>
       )}
     </Stack>
+  );
+}
+
+function ResultadosAmostra({ id }: { id: string }) {
+  const r = useQuery({ queryKey: ["resultados-amostra", id], queryFn: () => api<{ analito: string; metodo: string; certificado: string; tipo_linha: string; valor: string; unidade: string; preferido: boolean }[]>(`/amostras/${id}/resultados`) });
+  if (!r.data?.length) return <Text size="xs" c="dimmed">Sem resultados de laboratório.</Text>;
+  const pref = r.data.filter((x) => x.preferido);
+  return (
+    <Paper withBorder p="xs">
+      <Text size="sm" fw={600} mb={4}>Resultados de laboratório ({pref.length} analitos · certificado {[...new Set(pref.map((x) => x.certificado))].join(", ")})</Text>
+      <Group gap={4}>
+        {pref.map((x) => <Badge key={x.analito + x.metodo} variant="light" color="gray" tt="none">{x.analito}: {x.valor} {x.unidade}</Badge>)}
+      </Group>
+      {r.data.length > pref.length && <Text size="xs" c="dimmed" mt={4}>Há também {r.data.length - pref.length} resultado(s) de controle ou de certificados anteriores (ver Geoquímica).</Text>}
+    </Paper>
   );
 }

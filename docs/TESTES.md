@@ -93,6 +93,9 @@
 | 2026-11-26 | E8 | `pytest`: 146 (+10 amostragem, incluindo a **planilha real** via `GEOMINA_PLANILHA_CAMPO`) | **146 aprovados** | defeitos corrigidos: Excel sem extensão no armazenamento não abria; teste de backup corrompido não corrompia (bytes zerados no fim do arquivo) |
 | 2026-11-26 | E8 | E2E `e2e/amostras.cjs` (5 cenários: importação com prévia/sugestão/CRS/litologia não reconhecida, lista e detalhe, próximo código, lote de envio, painel) + regressão das outras 5 suítes | **aprovados** | |
 
+| 2026-11-26 | E9 | `pytest`: 153 (+7 geoquímica, incluindo os **2 laudos SGS reais** via `GEOMINA_LAUDOS`) | **153 aprovados** | |
+| 2026-11-26 | E9 | E2E `e2e/geoquimica.cjs` (4 cenários com o laudo real: prévia e confirmação, tabela com analitos escolhidos, QA/QC, resultados na amostra e painel) + regressão das outras 6 suítes | **aprovados** | ajuste de expectativa no teste (DUP/REP também ligam à amostra) |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).

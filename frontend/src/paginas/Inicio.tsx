@@ -40,8 +40,8 @@ export function Inicio({ usuario }: { usuario: Eu }) {
             detalhe={d.fichas.submetido ? `${d.fichas.submetido} aguardando revisão` : "nenhuma aguardando revisão"} para="/mapeamento" />
         )}
         {d.amostras !== null && (
-          <Numero rotulo="Amostras" valor={Object.entries(d.amostras).filter(([e]) => e !== "cancelada").reduce((a, [, v]) => a + v, 0)}
-            detalhe={`${d.amostras.enviada ?? 0} aguardando resultado`} para="/amostras" />
+          <Numero rotulo="Amostras" valor={Object.entries(d.amostras).filter(([e]) => ["coletada", "enviada"].includes(e)).reduce((a, [, v]) => a + v, 0)}
+            detalhe={`${d.amostras.aguardando_resultado ?? 0} aguardando resultado · ${d.amostras.com_resultado ?? 0} com resultado`} para="/amostras" />
         )}
         {d.arquivos !== null && <Numero rotulo="Arquivos originais" valor={d.arquivos.quantidade} detalhe={tamanhoLegivel(d.arquivos.bytes)} />}
         {d.usuarios_ativos !== null && <Numero rotulo="Usuários ativos" valor={d.usuarios_ativos} para="/usuarios" />}

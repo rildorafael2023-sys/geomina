@@ -1,6 +1,6 @@
-# INSTRUÇÕES DE USO — versão 0.7.0
+# INSTRUÇÕES DE USO — versão 0.8.0
 
-> Descreve apenas o que está implementado e testado. Laudos e topografia ainda não estão disponíveis.
+> Descreve apenas o que está implementado e testado. Topografia e 3D ainda não estão disponíveis.
 
 ## 1. Abrir e fechar
 - Abrir: ícone **GeoMina** na área de trabalho. O programa abre em janela própria.
@@ -97,7 +97,15 @@ Menu **Amostras**.
 - **Lotes de envio**: crie o lote com os códigos e "Marcar como enviado" — as amostras ficam "Enviada ao laboratório" (aparecem no painel como aguardando resultado).
 - **Importar planilha** (.xlsx ou CSV): a prévia mostra cada linha (ok, confirmar código, inválido, repetido, já cadastrado). Decida: aceitar as sugestões de código ("RP 478" → BS-RP-478), o sistema das coordenadas da planilha (ou não importar XYZ) e o termo das litologias não reconhecidas. Só então confirme.
 
-## 14. Segurança dos dados
+## 14. Geoquímica (laudos de laboratório)
+Menu **Geoquímica**.
+- **Importar laudo**: escolha o .xls/.xlsx da SGS (ou planilha com colunas "Cr (ppm)"…). A prévia mostra o certificado, os analitos (★ = novo), e cada linha: amostra cadastrada, não cadastrada ou controle do laboratório (padrão/branco). Confirme. O mesmo certificado não entra duas vezes.
+- Resultados de amostras ainda não cadastradas ficam guardados; depois de cadastrá-las, use **Ligar resultados pendentes** (aba Certificados).
+- **Resultados**: escolha os analitos e exporte em CSV. Valores abaixo do limite aparecem como no laudo (ex.: <0,5).
+- **Certificados e QA/QC**: clique no certificado para ver a diferença entre duplicatas/replicatas e a amostra original (limite ajustável) e todas as linhas do laudo.
+- Na ficha de cada amostra (menu Amostras) aparecem os resultados do laboratório.
+
+## 15. Segurança dos dados
 - Tudo fica no computador. Nada é enviado para a internet.
 - Toda criação ou alteração de cadastro fica registrada (quem, quando, valores antes e depois).
 - A sessão expira após 12 horas.

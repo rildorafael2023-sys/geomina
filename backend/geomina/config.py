@@ -13,7 +13,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-VERSAO_APP = "0.7.0"
+VERSAO_APP = "0.8.0"
 
 
 def pasta_dados_padrao() -> Path:

@@ -99,6 +99,7 @@
 
 ## 7. Amostragem e geoquímica (Etapas 8–9) — **amostragem IMPLEMENTADA (migração 0006)**
 > Implementado: `tipo_amostra`, `campanha`, `amostra` (com `serie`, `srid` das coordenadas, `local_descricao`, `ponto_campo`, seção/profundidade, `importacao_id` + `linha_origem`), `lote_envio`, `lote_envio_amostra`, `importacao` (genérica: amostras/resultados/topografia). `regra_codigo_amostra` configurável e `padrao_referencia` adiados (regras BS-RP/BMT-TS/BE fixas; CRM pelo código). Triggers: termos do dicionário certo, mesma mina, lote enviado fechado.
+> **Geoquímica IMPLEMENTADA (migração 0007):** `laboratorio`, `metodo_analitico` (por laboratório), `analito` (código sensível a maiúsculas, tipo elemento/óxido/parâmetro), `certificado` (único por laboratório; ligado à importação), `resultado` (valor_texto, valor_num, qualificador `= < > NA --`, limite, unidade, tipo_linha SMP/DUP/REP/STD/BLK, `codigo_laboratorio` e `codigo_canonico`, `amostra_id` opcional, `preferido`, linha de origem). Triggers: resultado imutável e não excluível; vínculo só com amostra da mesma mina. `unidade_medida` com conversões e `padrao_valor_certificado` adiados.
 
 | Tabela | Colunas principais | Restrições |
 |--------|--------------------|-----------|

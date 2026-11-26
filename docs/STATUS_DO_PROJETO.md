@@ -1,6 +1,6 @@
 # STATUS DO PROJETO
 
-**Última atualização:** 2026-11-26 · **Versão:** 0.7.0 · **Etapa atual:** E8 concluída; seguindo para a E9 (etapas em sequência, a pedido do usuário)
+**Última atualização:** 2026-11-26 · **Versão:** 0.8.0 · **Etapa atual:** E9 concluída; seguindo para a E10 (etapas em sequência, a pedido do usuário)
 
 ## Etapas
 
@@ -13,8 +13,26 @@
 | E5 Mapeamento geológico (ficha digital) | 🟡 **Concluída e testada, aguardando validação do usuário** (feita com a proposta da ficha como estava, a pedido do usuário: "comece") |
 | E6+E7 Croquis, documentos e fotografias | ✅ Concluídas e testadas (v0.6.0) |
 | E8 Amostragem | ✅ Concluída e testada (v0.7.0) |
-| E9 Importação geoquímica | 🔵 Em andamento |
+| E9 Importação geoquímica | ✅ Concluída e testada (v0.8.0) |
+| E10 Topografia, eixos e chainage | 🔵 Em andamento |
 | E5 – E21 | ⚪ Pendentes |
+
+## Entregue na E9 (versão 0.8.0)
+| Funcionalidade | Teste |
+|---|---|
+| Leitor do laudo **SGS Geosol** (.xls/.xlsx): certificado, data de emissão, projeto, referência; método, analito e unidade lidos dos cabeçalhos (ordem das colunas pode variar) | **2 laudos reais** |
+| Leitor genérico (CSV/XLSX com "Analito (unidade)" ou "Analito_unidade") | API |
+| Valores: `<0,5`, `>99`, `N.A.`, `--`, vírgula decimal; texto original sempre guardado; nada vira zero | API |
+| Tipos de linha SMP, DUP, REP, STD e branco (BRANCO_PREP) | laudos reais |
+| Importação em duas fases: prévia (amostras cadastradas/não cadastradas/controles, analitos novos, valores ilegíveis, certificado ou arquivo já importados) → confirmação | API + E2E |
+| Analitos em lista aberta (criados na importação: elemento/óxido/parâmetro) | API |
+| Resultados **imutáveis** (trigger); "preferido" = SMP do certificado mais recente; reanálise substitui o preferido sem apagar o anterior | API + banco |
+| Resultados de códigos não cadastrados guardados sem vínculo e ligados depois | API |
+| Tabela de resultados (escolha de analitos, preferidos ou linhas do certificado) e **exportação CSV** (abre no Excel com acentos) | API + E2E |
+| QA/QC: diferença relativa (RPD) de duplicatas e replicatas com limite ajustável; padrões e brancos listados | API + E2E (laudo real: 8 pares acima de 20%) |
+| Resultados na amostra; painel com "aguardando resultado" e "com resultado" | E2E |
+
+**Laudos reais:** GQ2613496 (2.064 resultados) e GQ2604840 (2.928 resultados) importados; valores conferidos (ex.: BS-RP-468B: F 6916 ppm, Be 68,1 ppm, Cr 1508 ppm; DUP Be 66,9 ppm).
 
 ## Entregue na E8 (versão 0.7.0)
 | Funcionalidade | Teste |
@@ -134,6 +152,8 @@ Feita e documentada em `DADOS_REAIS.md`. Principais impactos:
 - Medidas estruturais ficam como medidas (norte magnético + declinação registrada); a conversão para o norte da quadrícula será oferecida quando houver uso espacial (E13).
 - Importação de amostras: linhas sem código de amostra (só descrição de intervalo) não são importadas; códigos repetidos em várias linhas da planilha — decisão do usuário pendente (hoje: primeira ocorrência).
 - Vínculo de foto diretamente a uma amostra: ainda não (fotos se ligam à ficha ou à unidade).
+- QA/QC: os valores certificados dos padrões (OREAS920B, SG_092…) ainda não estão cadastrados, então o desvio dos padrões não é calculado.
+- Resultados não entram na auditoria linha a linha (milhares por laudo); a rastreabilidade é pela importação (arquivo original + relatório) e eles são imutáveis.
 - Backup diário automático contém só o banco (os arquivos originais entram no backup completo, feito pelo usuário). Recomenda-se um backup completo semanal em pendrive/disco externo.
 - Restauração pela tela aceita backups da pasta de backups; um backup que está num pendrive deve ser copiado antes para essa pasta ("Abrir pasta de backups").
 - "Abrir pasta de backups" funciona no Windows; em outros sistemas mostra o caminho.
