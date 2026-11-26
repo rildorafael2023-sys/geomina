@@ -29,12 +29,12 @@
 | E8 | 8 | Amostragem (+ lotes de envio, QA/QC) |
 | E9 | 9 | Importação geoquímica |
 | E10 | 13 (parte 1) | **Importação topográfica, banco espacial, eixos, chainage** [ALTERADO — antecipada] |
-| E11 | 10 | Análise geoquímica longitudinal (com chainage real) |
-| E12 | 13 (parte 2) | Visualizador 3D |
-| E13 | 14 | Integração espacial geológica |
-| E14 | 11 | Consultas avançadas |
-| E15 | 12 | Integração GIS (exportação) [ALTERADO — após dados espaciais] |
-| E16 | 15 | Perfil longitudinal integrado |
+| E11 | 10 + Seção 27 §2 | Análise geoquímica longitudinal das frentes |
+| E12 | Seção 27 §4 | **Sondagem: banco, importação, trajetória** [NOVO] |
+| E13 | Seção 27 §5–6.3 | **Perfil de sondagem (tracks)** [NOVO] |
+| E14 | 13 (parte 2) + 14 + Seção 27 §3, §5.3, §7 | Visualizador 3D integrado (frentes + furos) |
+| E15 | 15 + Seção 27 §6, §8 | Seções e perfil longitudinal integrado |
+| E16 | 11 + 12 + Seção 27 §9, §11 | Consultas integradas e exportação (tabelas, GIS) |
 | E17 | 16 | Relatórios |
 | E18 | 17 | Integração, auditoria e validação |
 | E19 | 18 | Implantação |
@@ -96,25 +96,30 @@
 **Escopo:** shapefiles CAD convertidos (layers, entidades, Z suspeito, cabeçalho inválido — DADOS_REAIS.md); validação SAD69 → SIRGAS com o piso fornecido nos dois sistemas; **eixos de galeria desenhados ou derivados com revisão** (não existem nos arquivos); configuração/validação do CRS; leitura de shapefile Z (linhas, polígonos, multi) via GDAL; relatório de validação (§12.4); levantamentos versionados; feições com atributos originais; criação de eixo de referência a partir de feição; chainage 3D; projeção de amostras/mapeamentos no eixo com afastamento.
 **Aceitação:** Z preservado vértice a vértice (comparação com o arquivo original); arquivo 2D identificado como 2D; arquivo sem `.prj` exige declaração; transformação registrada; chainage conferido com casos calculados à mão e com eixo real; dois levantamentos coexistem; desempenho medido com o maior arquivo disponível.
 
-## E11 — Análise geoquímica longitudinal
-**Escopo:** seleção de eixo (real ou manual), variáveis dinâmicas, gráficos Plotly com espaçamento real, intervalos como segmentos, multi-variável com eixos independentes, normalização explícita, regra de <LD visível, filtros §11.5, ficha da amostra ao clicar, exportação.
-**Aceitação:** posições no gráfico conferidas com chainage do banco; nenhuma normalização sem aviso; exportação CSV reproduz os pontos do gráfico.
+> **Replanejamento (2026-11-26):** a Seção 27 do Prompt Mestre (`PROMPT_MESTRE_SECAO_27.md`) acrescentou o módulo de sondagem e detalhou longitudinal, perfis, seções e 3D. As etapas E11–E16 abaixo substituem as anteriores; justificativa da ordem em ANALISE_CRITICA.md §F9. Critérios de conclusão do módulo: Seção 27 §14.4.
 
-## E12 — Visualizador 3D
-**Escopo:** Three.js com origem local; camadas; navegação; seleção e atributos; coordenadas reais exibidas; carregamento seletivo.
-**Aceitação:** coordenadas exibidas ao clicar conferem com o banco (tolerância < 1 mm); teste de precisão com coordenadas UTM grandes; desempenho medido (FPS, tempo de carga) com o conjunto real.
+## E11 — Análise geoquímica longitudinal das frentes (§2)
+**Escopo:** escolha de galeria/travessa/rampa (eixo vigente, E10); qualquer analito disponível; vários analitos em gráficos empilhados alinhados pelo chainage, cada um com escala própria (linear/log, mín/máx); faixa de chainage; filtros (litologia, alteração, mineralização, estruturas da ficha, data/período, responsável, tipo/campanha, faixa de teor); regra de <LD explícita; clique abre a amostra completa (resultados, ficha, fotos); comparação de 2+ galerias em painéis separados, cada um com seu 0 m; exportação CSV dos pontos e PNG/SVG dos gráficos.
+**Aceitação:** posições = chainage do banco; nenhum valor <LD vira zero; exportação reproduz exatamente os pontos; filtros testados com dados reais/sintéticos; E2E.
 
-## E13 — Integração espacial geológica
-Camadas de amostras (cor por teor), mapeamentos, medidas estruturais (símbolos orientados), fotos e croquis; da seleção no 3D para a ficha do registro e vice-versa.
+## E12 — Sondagem: banco, importação, trajetória (§4)
+**Escopo:** furo (collar, CRS, azimute, inclinação, profundidades, projeto, área, método, datas, responsável), survey, intervalos geológicos (dicionários existentes), intervalos de amostragem (amostras BMT-TS com furo e de/até) ligados aos resultados já importados; importação CSV/Excel com prévia e validação (sobreposição, de ≥ até, além da profundidade final, IDs duplicados, furo inexistente); trajetória por curvatura mínima, estimada quando faltar survey (marcada); coordenada XYZ em qualquer profundidade; tela de furos.
+**Aceitação:** trajetórias conferidas com casos calculados à mão (vertical, inclinado reto, curva); estimada nunca rotulada como real; erros de importação listados antes de gravar; E2E.
 
-## E14 — Consultas avançadas
-Construtor de filtros combinados (inclui condição sobre analitos e intervalo de chainage), consultas salvas, exportação do resultado.
+## E13 — Perfil de sondagem com tracks (§5.1, §5.2, §5.4, §6.3)
+**Escopo:** perfil por profundidade com tracks escolhidos e ordenados (litologia, alteração, mineralização, estruturas, amostras, um track por analito com escala/largura/limites próprios), intervalos sem resultado destacados, clique no intervalo → consulta completa, comparação lado a lado de furos, exportação PNG/SVG/CSV.
 
-## E15 — Integração GIS
-Exportação GeoPackage/Shapefile/GeoJSON/CSV com Z e atributos; teste de abertura no QGIS documentado.
+## E14 — Visualizador 3D integrado (§3, §5.3, §7)
+**Escopo:** Three.js com origem local; camadas: topografia (por levantamento/camada CAD), eixos, amostras de frente, collars, trajetórias (real × estimada), intervalos geológicos e de amostragem; cor por analito com classificação (intervalos do usuário, iguais, quantis), paleta e legenda configuráveis; troca de analito sem recarregar geometria; seleção → ficha completa e navegação para o registro; coordenada real ao clicar; filtros.
+**Aceitação:** coordenada exibida = banco (< 1 mm); desempenho medido com a topografia real + 300 furos sintéticos.
 
-## E16 — Perfil longitudinal integrado
-Faixas de cota, geologia, estruturas, amostras e teores ao longo do eixo; interação.
+## E15 — Seções e perfil longitudinal integrado (§6.1, §6.2, §8)
+**Escopo:** seção definida por linha/azimute/posição com faixa de projeção; furos e amostras projetados com distância ao plano; intervalos coloridos por analito ou litologia; perfil longitudinal da galeria com cota, topografia, geologia da ficha, amostras/teores, fotos/croquis e furos próximos projetados (identificados); exportação SVG/PNG.
+**Aceitação:** projeções conferidas com cálculo à mão; nada interpolado entre furos.
+
+## E16 — Consultas integradas e exportação (§9, §11; antiga E14 + E15)
+**Escopo:** construtor de filtros combinados (origem frente/sondagem, local, furo, profundidade, chainage, geologia, analito e faixa, data, campanha, responsável, tipo, laboratório, área espacial); resultado em tabela, no 3D e exportável (CSV/XLSX, GeoPackage, Shapefile, GeoJSON com Z e atributos); consultas salvas.
+**Aceitação:** consulta-exemplo da §9 (faixa de Cr + litologia + área) com resultado conferido; arquivo GIS aberto/lido de volta com atributos e Z.
 
 ## E17 — Relatórios
 PDF/Excel/CSV a partir de dados reais com filtros selecionáveis.

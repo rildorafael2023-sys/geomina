@@ -128,3 +128,42 @@ Listadas em `STATUS_DO_PROJETO.md` → *Pendências que dependem do usuário*.
 | C14 | Layers com Z inválido e cabeçalho de shapefile corrompido | 🟡 | Validação por registro; "Z suspeito" |
 | C15 | Instalação em Windows não testada no ambiente de desenvolvimento | 🟡 | Validação do usuário; instalador .exe na E19 |
 | C16 | SQLite não suporta vários PCs gravando no mesmo arquivo de rede | 🟡 | Documentado; cada PC tem seu banco; a sincronização (E20) servirá também entre PCs |
+
+## F. Seção 27 do Prompt Mestre — módulo integrado (2026-11-26)
+
+Texto integral em `PROMPT_MESTRE_SECAO_27.md`. A seção é compatível com a arquitetura (estava prevista nas E11–E16), mas **acrescenta um módulo inteiro de sondagem**, que não existia no plano. Pontos críticos e como serão tratados:
+
+### F1 🔴 Sondagem é um domínio novo (collar, survey, intervalos)
+Não há tabelas de furo. Será criado um módulo próprio (`furo`, `survey_furo`, `intervalo_geologico_furo`) e as amostras **BMT-TS** passam a poder ter `furo_id` + `de`/`ate` (profundidade). Os resultados geoquímicos continuam na mesma tabela de resultados (Seção 27 §10: sem banco paralelo).
+**Sem dados reais de sondagem até agora** (pendência P8): a importação será genérica (CSV/Excel com mapeamento de colunas) e testada com casos calculados à mão; o leiaute real será ajustado quando os arquivos chegarem.
+
+### F2 🔴 Trajetória do furo: real × estimada
+Reconstrução por **curvatura mínima** (método padrão da indústria) a partir do survey. Sem survey (ou só o collar): trajetória **reta estimada** a partir de azimute/inclinação do collar, gravada e exibida como `estimada` (linha tracejada/legenda), nunca como real (§4.3). Furos de subsolo podem ser **ascendentes** (inclinação positiva): a convenção de sinal será explícita na importação (negativo = para baixo) e validada (ex.: furo "subindo" acima da superfície é alerta).
+Survey também pode estar em norte magnético: a declinação será um parâmetro explícito do furo (como nas medidas estruturais, DT-027).
+
+### F3 🟡 Amostra de frente é ponto, não intervalo
+As amostras BS-RP têm X/Y/Z de um ponto e às vezes uma descrição "0 m – 1 m" (posição no canal/parede). No gráfico longitudinal a amostra é um ponto no chainage. Quando houver extensão (de/até ao longo da galeria), ela será desenhada como segmento — nunca inventada (§3.1).
+
+### F4 🟡 Valores abaixo/acima do limite de detecção
+Gráficos e cores precisam de número. Regra explícita e visível, escolhida pelo usuário: mostrar no valor do limite com símbolo diferente (padrão), ou LD/2, ou omitir. Nunca zero silencioso. Legenda sempre informa a regra.
+
+### F5 🟡 Comparação entre galerias
+O chainage de galerias diferentes **não** é equivalente (§2.5): a comparação usa painéis separados, cada um com seu eixo e sua origem (0 m) identificados. Alinhamento por uma referência comum só quando o usuário escolher e nomear a referência.
+
+### F6 🟡 Projeção em seções e perfis
+Furos/amostras projetados numa seção ou perfil longitudinal: faixa de projeção (largura) e distância de cada elemento ao plano mostradas; elementos projetados com símbolo próprio (§6.1, §8).
+
+### F7 🟢 Continuidade geológica
+Nenhuma interpolação entre furos/frentes (§7.3). Seções mostram só dados observados; interpretação fica com o geólogo.
+
+### F8 🟢 Desempenho
+Tabelas de resultado indexadas por analito/amostra; posições no eixo já pré-calculadas (E10); trajetórias calculadas na gravação (não a cada desenho); 3D com coordenadas relativas (DT-030) e carregamento por camada. Será medido com a topografia real (44 mil feições) + dados sintéticos de 300 furos.
+
+### F9 Ordem proposta (justificativa)
+1. **Longitudinal das frentes** primeiro: usa o que já existe (amostras, resultados, eixo e chainage da E10) — entrega valor imediato com dados reais.
+2. **Sondagem: banco, importação e trajetória**: base para tudo o que vem depois sobre furos.
+3. **Perfil de sondagem (tracks)**: depende só da etapa 2.
+4. **3D integrado**: depende de topografia (E10), amostras e furos; uma única implementação serve frentes e furos.
+5. **Seções e perfil longitudinal integrado**: dependem de trajetórias e do 3D (mesmas projeções).
+6. **Consultas integradas e exportação (tabelas, gráficos, GIS)**: fecham os critérios §9 e §11.
+Depois: relatórios, validação geral, implantação, captura offline, OCR — como antes.
