@@ -8,6 +8,7 @@ import { PainelDocumentos } from "../documentos/PainelDocumentos";
 import { useGeo, type Registro } from "./estado";
 
 interface Detalhe extends Registro {
+  xyz_trajetoria?: { xyz: number[]; estimada: boolean; srid: number };
   resultados: { analito: string; tipo_analito: string; metodo: string; certificado: string; tipo_linha: string; valor: string; unidade: string; qualificador: string; preferido: boolean }[];
 }
 
@@ -42,7 +43,9 @@ export function PainelContexto({ mina, eu, chave }: { mina: Mina; eu: Eu; chave:
               {linha("Galeria", d.galeria ? `${d.galeria.codigo} — ${d.galeria.nome}` : null)}
               {linha("Trecho", d.trecho?.codigo)}
               {linha("Local escrito", d.local)}
-              {linha("Coordenadas", d.x != null ? `E ${d.x.toFixed(2)}  N ${d.y?.toFixed(2)}  Z ${d.z?.toFixed(2) ?? "—"}  (EPSG:${d.srid})` : d.cadastrada ? "não informadas" : null)}
+              {linha("Coordenadas", d.x != null ? `E ${d.x.toFixed(2)}  N ${d.y?.toFixed(2)}  Z ${d.z?.toFixed(2) ?? "—"}  (EPSG:${d.srid})`
+                : d.xyz_trajetoria ? `E ${d.xyz_trajetoria.xyz[0].toFixed(2)}  N ${d.xyz_trajetoria.xyz[1].toFixed(2)}  Z ${d.xyz_trajetoria.xyz[2].toFixed(2)}  (EPSG:${d.xyz_trajetoria.srid}) — meio do intervalo, calculado na trajetória${d.xyz_trajetoria.estimada ? " ESTIMADA" : ""}`
+                : d.cadastrada ? "não informadas" : null)}
               {linha("Seção (parede)", d.secao_de_m != null ? `${d.secao_de_m} – ${d.secao_ate_m} m` : null)}
               {linha("Furo", d.furo ? `${d.furo}${d.prof_de_m != null ? ` · ${d.prof_de_m}–${d.prof_ate_m} m` : ""}` : null)}
               {linha("Coleta", d.data ? new Date(d.data + "T00:00").toLocaleDateString("pt-BR") : null)}

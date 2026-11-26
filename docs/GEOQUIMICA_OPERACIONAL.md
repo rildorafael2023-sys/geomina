@@ -28,7 +28,7 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 | 4 | Tracks geológicos: litologia, alteração, mineralização, estruturas, descrição, fotos/croquis, amostras | ✅ v0.13.0 |
 | 5 | Sondagens: banco, importação, survey/trajetória, perfil por profundidade | ✅ v0.14.0 |
 | 6 | Comparação: grupos, estatísticas, histograma, boxplot, dispersão | ✅ v0.15.0 |
-| 7 | Visualização espacial 3D integrada | pendente |
+| 7 | Visualização espacial 3D integrada | ✅ v0.16.0 |
 | 8 | Consulta completa | pendente (base pronta na Etapa 2) |
 | 9 | Exportação (CSV/Excel/PDF/imagens/GIS) | pendente |
 | 10 | Testes e auditoria final | pendente |
@@ -98,3 +98,18 @@ Este documento registra a auditoria (Etapa 1), as decisões do usuário e o anda
 **Testes**: `test_comparacao.py` (estatísticas e correlação conferidas à mão, inclusive empates; API com 3 grupos, grupo vazio sem números inventados, valores no limite fora/dentro, faceta furo); `vitest` histograma (bordas lineares/log, Sturges, contagem com o máximo); E2E `geoop_comparacao.cjs` (6 cenários: agrupar por galeria, estatísticas conferidas célula a célula, incluir limite, boxplot/log/histograma/dispersão/correlação, grupo da seleção com descrição do filtro, CSV).
 
 **Limitações**: até 12 grupos; seleção espacial desenhada (polígono) para formar grupo vem com o 3D/planta na Etapa 7.
+
+## Etapa 7 — Visualização espacial 3D (v0.16.0)
+**Desenvolvido**
+- **Servidor** (`/minas/{id}/geoop/espacial`): para a seleção do painel, amostras de frente como **ponto** (X/Y/Z medidos) e amostras de furo como **segmento de/até sobre a trajetória**, no sistema da mina (conversão só com transformação aprovada); trajetórias de todos os furos (estimada identificada); lista do que ficou **sem posição** e por quê (sem cota, sistema sem transformação aprovada, só no laudo, sem coordenadas/furo). Nada é posicionado sem dado.
+- **Visor** (Three.js 0.186.1, carregado só nesta aba): origem local (precisão com coordenadas UTM), Z para cima; camadas liga/desliga: topografia (linhas com cota em volta da seleção), amostras de frente (esferas), trajetórias (contínua = survey, **tracejada = estimada**, cone na boca), intervalos de furo (cilindros de/até). Girar, deslocar, zoom, "Enquadrar".
+- **Cor pelo analito** escolhido (qualquer analito dos laudos) com classes por quantis ou intervalos iguais, 3–7 classes, 3 paletas e legenda; cinza = sem resultado. **Trocar analito/classes/camadas não reconstrói a geometria** (só recolore).
+- **Clique** num objeto: seleciona a amostra (painel de contexto, e a mesma seleção vale nas outras abas), mostra a **coordenada real** (E/N/Z, EPSG) do ponto clicado; a amostra selecionada fica destacada.
+- Painel de contexto: amostras de furo passam a mostrar a coordenada calculada na trajetória (meio do intervalo), identificada como calculada/estimada.
+- Sem WebGL no computador: aviso claro (as outras abas continuam).
+
+**Desempenho medido (dados reais: 10.138 feições de topografia, 318 amostras)**: geometria da topografia 193 ms / 1,2 MB; consulta de amostras 74 ms; cena 3D 50 ms; comparação de 3 grupos 185 ms.
+
+**Testes**: `test_comparacao.py::test_espacial_frente_e_furo` (ponto, segmento do furo calculado, motivos de "sem posição", trajetória, unidades); E2E `geoop_espacial.cjs` com a **topografia real** como fundo (coordenadas calculadas da extensão, nenhuma no código): contagem de objetos, cor por classe, troca de analito sem reconstruir, clique em amostra de frente e em intervalo de furo → contexto e coordenada, camada desligada não seleciona, filtro do painel vale no 3D.
+
+**Limitações**: topografia no 3D limitada à vizinhança da seleção (desempenho); sem desenho de polígono para seleção espacial (filtros do painel cobrem nível/galeria/furo); testado com WebGL por software (SwiftShader) — conferir no PC do usuário.

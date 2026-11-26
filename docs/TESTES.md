@@ -119,10 +119,14 @@
 | 2026-11-26 | GO-6 | `pytest`: 199 (+3 comparação: estatística e correlação conferidas à mão; API de grupos); `vitest`: 13 (+3 histograma) | **aprovados** | 2 expectativas de teste corrigidas após refazer o cálculo à mão (o código estava certo) |
 | 2026-11-26 | GO-6 | E2E `geoop_comparacao.cjs` (6 cenários) + regressão das outras 12 suítes | **aprovados** | |
 
+| 2026-11-26 | GO-7 | `pytest`: 200 (+1 cena espacial); desempenho medido com dados reais (topografia 193 ms, consulta 74 ms, cena 50 ms, comparação 185 ms) | **aprovados** | |
+| 2026-11-26 | GO-7 | E2E `geoop_espacial.cjs` (5 cenários, topografia real de fundo, WebGL por software) + regressão das outras 12 suítes | **aprovados** | coordenada da amostra de furo ausente no painel (acrescentada); legenda da coordenada cortada (altura ajustada) |
+
 ### Ainda não testado
 - Visualizador de PDF e câmera do tablet no Windows/Edge real.
 - Impressão real em impressora/PDF do Windows (o layout foi conferido por captura de tela).
 - Atalho da área de trabalho, `pythonw` e janela do Edge no Windows (E3).
 - "Abrir pasta de backups" no Windows (E4).
 - Desempenho com volume real de dados: E2E completo da topografia real (incluindo a importação de 44 mil feições e o desenho de ~21 mil na planta) em 14 s no ambiente de testes; não medido em PC/tablet do usuário.
+- 3D com a placa de vídeo do PC do usuário (aqui só WebGL por software).
 - Topografia no Windows (Edge) e desenho da planta em tablet (toque/pinça ainda não tem zoom por gesto).

@@ -106,6 +106,18 @@ def registro(mina_id: uuid.UUID, chave: str, _u: Usuario = Depends(LER), db: Ses
     else:
         cod = r["codigo"]
         q = q.where(Resultado.amostra_id.is_(None), (Resultado.codigo_canonico == cod) | (Resultado.codigo_laboratorio == cod))
+    if r["furo_ref"] and r["prof_de_m"] is not None and r["prof_ate_m"] is not None:  # amostra de furo: posição na trajetória
+        from geomina.espacial import trajetoria as T
+        from geomina.modules.sondagem.models import Furo
+        from geomina.modules.sondagem.router import _trajetoria
+        from geomina.modules.topografia.router import _transformar_ponto
+        f = db.get(Furo, uuid.UUID(r["furo_ref"]["id"]))
+        t, _falha = _trajetoria(db, f)
+        d, _tid, _motivo = _transformar_ponto(db, db.get(Mina, mina_id), f.srid, [0.0, 0.0, 0.0])
+        if t is not None and d is not None:
+            p = T.posicao(t, (r["prof_de_m"] + r["prof_ate_m"]) / 2)
+            r["xyz_trajetoria"] = {"xyz": [round(float(p[i] + d[i]), 3) for i in range(3)], "estimada": t.estimada,
+                                   "srid": db.get(Mina, mina_id).srid_trabalho}
     r["resultados"] = [{"analito": an, "tipo_analito": ta, "metodo": me, "certificado": ce, "tipo_linha": x.tipo_linha,
                         "valor": x.valor_texto if x.qualificador != "=" else f"{x.valor_num:g}", "unidade": x.unidade,
                         "qualificador": x.qualificador, "preferido": x.preferido} for x, an, ta, me, ce in db.execute(q)]

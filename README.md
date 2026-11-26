@@ -4,7 +4,7 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 
 **Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-## Estado atual — versão 0.15.0
+## Estado atual — versão 0.16.0
 - ✅ Etapa 1: arquitetura e especificação (aprovada).
 - ✅ Etapa 2: infraestrutura (banco local, usuários, auditoria, arquivos, instalação offline) — validada no Windows.
 - ✅ Etapa 3: estrutura da mina (níveis, galerias, travessas, rampas, frentes, avanços) + janela própria com ícone.
@@ -15,13 +15,13 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 - ✅ Etapa 9: laudos SGS, resultados geoquímicos, QA/QC e exportação.
 - ✅ Etapa 10: topografia (shapefile da mina), calibração SAD69 → SIRGAS, planta, eixos de galeria e chainage 3D.
 - ✅ Etapa 11: **teores na galeria** — faixa de teores (estilo "drillhole ribbon") com as amostras lado a lado do início ao fim, planta com a galeria colorida pelo teor, comparação entre amostras e entre galerias.
-- 🔵 **Geoquímica operacional** (reestruturação pedida pelo usuário, 10 etapas): Etapas 2–4 prontas — área de trabalho com filtros encadeados, todos os resultados dos laudos, conciliação; tracks configuráveis das galerias (faixa/barras/pontos, escalas e classes próprias, zoom e seleção sincronizados, layouts salvos) com tracks geológicos; **sondagens** (importação com validação, trajetória por curvatura mínima, perfis por profundidade lado a lado); **comparação** entre grupos (estatísticas, boxplot, histograma, dispersão, correlação). Ver [`docs/GEOQUIMICA_OPERACIONAL.md`](docs/GEOQUIMICA_OPERACIONAL.md).
+- 🔵 **Geoquímica operacional** (reestruturação pedida pelo usuário, 10 etapas): Etapas 2–4 prontas — área de trabalho com filtros encadeados, todos os resultados dos laudos, conciliação; tracks configuráveis das galerias (faixa/barras/pontos, escalas e classes próprias, zoom e seleção sincronizados, layouts salvos) com tracks geológicos; **sondagens** (importação com validação, trajetória por curvatura mínima, perfis por profundidade lado a lado); **comparação** entre grupos (estatísticas, boxplot, histograma, dispersão, correlação); **visualização 3D** (topografia, amostras de frente e furos coloridos pelo teor, seleção sincronizada). Ver [`docs/GEOQUIMICA_OPERACIONAL.md`](docs/GEOQUIMICA_OPERACIONAL.md).
 - Depois (Seção 27 do Prompt Mestre) — módulo integrado (longitudinal, sondagens, perfis, seções e 3D). Ver [`docs/PROMPT_MESTRE_SECAO_27.md`](docs/PROMPT_MESTRE_SECAO_27.md).
 
 Detalhes em [`docs/STATUS_DO_PROJETO.md`](docs/STATUS_DO_PROJETO.md). Instalação em [`docs/INSTRUCOES_DE_INSTALACAO.md`](docs/INSTRUCOES_DE_INSTALACAO.md).
 
 ## Tecnologia
-Python · FastAPI (servidor interno local) · SQLite (WAL, R*Tree) · SQLAlchemy/Alembic · Shapely · pyproj/PROJ · React + TypeScript + Mantine. Previsto: Three.js (3D).
+Python · FastAPI (servidor interno local) · SQLite (WAL, R*Tree) · SQLAlchemy/Alembic · Shapely · pyproj/PROJ · React + TypeScript + Mantine. Three.js (3D, carregado só na aba espacial).
 Justificativas em [`docs/DECISOES_TECNICAS.md`](docs/DECISOES_TECNICAS.md).
 
 ## Documentação

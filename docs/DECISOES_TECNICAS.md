@@ -200,3 +200,7 @@ Curvatura mínima entre estações de survey; a posição numa profundidade inte
 ## DT-039 — Convenção de inclinação explícita na importação
 **Estado:** Aceita
 Guardada sempre como graus da horizontal, negativo = para baixo. Na importação o usuário declara como o arquivo está escrito (horizontal negativa, horizontal positiva para baixo, ou a partir da vertical) e o sistema converte; furos ascendentes geram aviso, nunca correção automática.
+
+## DT-040 — Visor 3D em Three.js com origem local, instâncias e recoloração sem reconstrução
+**Estado:** Aceita (Geoquímica Operacional, Etapa 7) — confirma DT-005
+Three.js 0.186.1 carregado sob demanda (chunk próprio). Coordenadas da cena = coordenada − origem (média dos objetos), evitando perda de precisão de float32 com UTM; a coordenada real é reconstruída ao clicar. Amostras e intervalos em `InstancedMesh` (uma chamada de desenho por camada); cor por instância — trocar analito/classe só reescreve as cores. Topografia em `LineSegments` recortada pela vizinhança da seleção. Amostra de furo = segmento entre as posições de "de" e "até" na trajetória (DT-038). Gancho `window.geomina3d` (contagem, projeção, cor) para testes e suporte.

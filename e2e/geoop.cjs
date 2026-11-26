@@ -138,9 +138,9 @@ const X0 = 500000, Y0 = 7800000;
   await page.waitForTimeout(500);
   assert.strictEqual(await page.getByText(/ainda não estão ligadas a uma galeria/).count(), 0, "testemunho (BMT-TS) não é cobrado como amostra de galeria");
 
-  // 8. Abas ainda não construídas não mostram dados de exemplo
+  // 8. Aba espacial abre o visor 3D
   await page.getByRole("tab", { name: "Visualização espacial" }).click();
-  await page.getByText("Este ambiente ainda não foi construído").waitFor();
+  await page.getByTestId("visor-3d").waitFor();
 
   assert.deepStrictEqual(erros, []);
   console.log("E2E GEOQUÍMICA OPERACIONAL (ETAPA 2) OK: 8 cenários aprovados");

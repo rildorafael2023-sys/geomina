@@ -5,11 +5,11 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-
 import { api, baixar, type Eu, type Mina } from "../../api/cliente";
 import { Comparacao } from "./Comparacao";
 import { Consulta } from "./Consulta";
+import { Espacial } from "./Espacial";
 import { parametrosGeo, useGeo, type Pagina } from "./estado";
 import { Galerias } from "./Galerias";
 import { PainelContexto } from "./PainelContexto";
 import { PainelFiltros } from "./PainelFiltros";
-import { Pendente } from "./Pendente";
 import { Sondagens } from "./Sondagens";
 
 const ABAS = [
@@ -78,7 +78,7 @@ function Trabalho({ mina, eu }: { mina: Mina; eu: Eu }) {
             <Route path="galerias" element={<Galerias mina={mina} />} />
             <Route path="sondagens" element={<Sondagens mina={mina} eu={eu} />} />
             <Route path="comparacao" element={<Comparacao mina={mina} />} />
-            <Route path="espacial" element={<Pendente tipo="espacial" mina={mina} />} />
+            <Route path="espacial" element={<Espacial mina={mina} />} />
             <Route path="consulta" element={<Consulta mina={mina} eu={eu} />} />
             <Route path="*" element={<Navigate to="galerias" replace />} />
           </Routes>
