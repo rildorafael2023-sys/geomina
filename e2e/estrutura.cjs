@@ -7,6 +7,7 @@ const URL = process.argv[2];
 const CAPTURAS = process.argv[3];
 const SENHA = "senhaForte123";
 
+const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { name: nome }).isVisible().catch(() => false))) await page.getByText("Administração", { exact: true }).click(); };
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1366, height: 860 } });
@@ -54,12 +55,12 @@ const SENHA = "senhaForte123";
     await page.getByRole("button", { name: "Nova unidade na raiz" }).click();
     await criar("Nível", n);
   }
-  // 3. Galeria > Travessa > Frente dentro do N144 (o formulário só oferece tipos permitidos)
+  // 3. Galeria > Travessa > Frente dentro do N144 (desde a 0011 todos os tipos são permitidos em qualquer lugar)
   await selecionar("N144");
   await page.getByRole("button", { name: "Nova unidade dentro" }).click();
   await dialogo().getByLabel("Tipo").click();
   const opcoes = await page.getByRole("option").allTextContents();
-  assert.ok(!opcoes.includes("Nível"), "Nível não deveria ser oferecido dentro de nível");
+  assert.ok(opcoes.includes("Travessa") && opcoes.includes("Galeria"), "travessa e galeria oferecidas dentro do nível");
   await page.keyboard.press("Escape");
   await criar("Galeria", "GAL-01", "Galeria principal");
   await page.getByRole("button", { name: "Nova unidade dentro" }).click();
@@ -110,6 +111,7 @@ const SENHA = "senhaForte123";
   await shot("e3-03-arvore");
 
   // 9. Tipos e regras
+  await abrirAdmin(page, "Tipos e regras");
   await page.getByRole("link", { name: "Tipos e regras" }).click();
   await page.getByText("Regras de hierarquia").waitFor();
   assert.ok(await page.getByLabel("Frente dentro de Travessa").isChecked());

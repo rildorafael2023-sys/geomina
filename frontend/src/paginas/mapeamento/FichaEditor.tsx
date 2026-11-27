@@ -32,9 +32,9 @@ import {
   type Eu,
   type Ficha,
   type Mina,
-  type UnidadeResumo,
 } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
+import { SeletorLocal } from "../../componentes/SeletorLocal";
 import { ColunaSecao, Estereograma } from "../../geologia/Graficos";
 import { PainelDocumentos } from "../documentos/PainelDocumentos";
 
@@ -174,7 +174,6 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
   const [params] = useSearchParams();
   const dic = useDicionarios();
   const ficha = useQuery({ queryKey: ["ficha", id], queryFn: () => api<Ficha>(`/mapeamentos/${id}`), enabled: !!id });
-  const unidades = useQuery({ queryKey: ["unidades", mina.id, false], queryFn: () => api<UnidadeResumo[]>(`/minas/${mina.id}/unidades?incluir_inativas=false`) });
   const [f, setF] = useState<Form | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [motivo, setMotivo] = useState<{ acao: string; titulo: string } | null>(null);
@@ -256,8 +255,7 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
   const upM = (k: number, p: Partial<MedidaF>) => up({ medidas: f.medidas.map((x, i) => (i === k ? { ...x, ...p } : x)) });
   const upA = (k: number, p: Partial<AmostraF>) => up({ amostras: f.amostras.map((x, i) => (i === k ? { ...x, ...p } : x)) });
   const ro = !editavel;
-  const opcoesUnidades = (unidades.data ?? []).map((u) => ({ value: u.id, label: `${u.codigo}${u.nome !== u.codigo ? " — " + u.nome : ""} (${u.tipo_nome})` }));
-  if (d && !opcoesUnidades.some((o) => o.value === d.unidade_id)) opcoesUnidades.push({ value: d.unidade_id, label: d.unidade });
+  const localAtual = d ? [{ value: d.unidade_id, label: d.unidade }] : [];
   const opcoesIntervalos = f.intervalos.map((i, k) => ({ value: String(k), label: `${k + 1}: ${i.de_m}–${i.ate_m} m` }));
 
   async function verificarCodigo(k: number) {
@@ -307,7 +305,7 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
           <Stack>
             <Secao titulo="A. Identificação">
               <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
-                <Select label="Local (unidade da mina)" required searchable data={opcoesUnidades} value={f.unidade_id} onChange={(v) => up({ unidade_id: v })} readOnly={ro} />
+                <SeletorLocal mina={mina} label="Local (unidade da mina)" required valor={f.unidade_id} aoMudar={(v) => up({ unidade_id: v })} readOnly={ro} extra={localAtual} podeCriar={eu.permissoes.includes("estrutura:editar")} />
                 <TextInput type="date" label="Data" required value={f.data} onChange={(e) => up({ data: e.currentTarget.value })} readOnly={ro} />
                 <TextInput type="time" label="Hora" value={f.hora} onChange={(e) => up({ hora: e.currentTarget.value })} readOnly={ro} />
                 <Select label="Exposição mapeada" data={dic.opcoes("EXPOSICAO", f.exposicao_id)} value={f.exposicao_id} onChange={(v) => up({ exposicao_id: v })} readOnly={ro} clearable />

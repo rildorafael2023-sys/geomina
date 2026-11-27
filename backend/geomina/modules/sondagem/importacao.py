@@ -42,6 +42,9 @@ ALIASES = {
     "observacoes": ["observacoes", "observacao", "obs", "notes", "comentarios"],
     "amostra": ["amostra", "sample", "sample id", "sampleid", "codigo amostra", "id amostra", "codigo da amostra", "sample_id"],
     "tipo": ["tipo", "tipo de amostra", "sample type", "type"],
+    "rqd": ["rqd", "rqd (%)", "rqd %"],
+    "recuperacao": ["recuperacao", "recuperacao (%)", "rec", "rec (%)", "recovery", "recovery (%)"],
+    "caixa": ["caixa", "cx", "box", "n caixa", "numero da caixa"],
 }
 MAPA = {normalizar(a): campo for campo, lista in ALIASES.items() for a in lista}
 OBRIGATORIOS = {"collar": {"furo", "x", "y", "z", "profundidade"}, "survey": {"furo", "profundidade", "azimute", "inclinacao"},
@@ -219,6 +222,12 @@ def analisar(arquivos: dict[str, tuple[bytes, str]], convencao: str, existentes:
     for f, de, ate, k, v in intervalos("geologia"):
         item = {"linha": k, "furo": f, "de": de, "ate": ate, "estruturas": _txt(v.get("estruturas")), "descricao": _txt(v.get("descricao")),
                 "observacoes": _txt(v.get("observacoes")), "atributos": {}}
+        for campo in ("rqd", "recuperacao"):
+            n = numero(v.get(campo))
+            if n is not None:
+                item["atributos"][campo] = n
+        if _txt(v.get("caixa")):
+            item["atributos"]["caixa"] = _txt(v.get("caixa"))
         for campo, dic in (("litologia", "LITOLOGIA"), ("alteracao", "ALTERACAO"), ("mineralizacao", "MINERALIZACAO")):
             t = _txt(v.get(campo))
             item[campo + "_id"] = None

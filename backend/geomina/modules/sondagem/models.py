@@ -80,3 +80,18 @@ class IntervaloFuro(EntidadeMixin, Base):
     responsavel: Mapped[str | None] = mapped_column(String(120))
     data: Mapped[date | None] = mapped_column(Date)
     atributos: Mapped[dict | None] = mapped_column(JSON)
+
+
+class FotoFuro(EntidadeMixin, Base):
+    """Foto de testemunho (caixa) ligada ao furo e ao intervalo de profundidade. O arquivo é um documento da categoria foto."""
+
+    __tablename__ = "foto_furo"
+    __auditavel__ = True
+    __table_args__ = (CheckConstraint("de_m IS NULL OR ate_m IS NULL OR ate_m > de_m", name="foto_furo_intervalo_valido"),)
+
+    furo_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("furo.id", ondelete="CASCADE"), nullable=False, index=True)
+    documento_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("documento.id", ondelete="RESTRICT"), nullable=False)
+    de_m: Mapped[float | None] = mapped_column(Float)
+    ate_m: Mapped[float | None] = mapped_column(Float)
+    caixa: Mapped[str | None] = mapped_column(String(40))
+    legenda: Mapped[str | None] = mapped_column(String(300))

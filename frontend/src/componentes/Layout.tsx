@@ -8,7 +8,6 @@ import type { Eu } from "../api/cliente";
 export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () => void; children: ReactNode }) {
   const [aberto, { toggle, close }] = useDisclosure();
   const local = useLocation();
-  const trabalho = local.pathname.startsWith("/geoop"); // áreas de trabalho usam a tela inteira
   const [recolhido, setRecolhido] = useState<boolean>(() => { try { return localStorage.getItem("geomina.menu") === "recolhido"; } catch { return false; } });
   const alternarMenu = () => setRecolhido((r) => { try { localStorage.setItem("geomina.menu", r ? "aberto" : "recolhido"); } catch { /* sem armazenamento */ } return !r; });
   const itens = [
@@ -16,12 +15,14 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/estrutura", rotulo: "Estrutura da mina", visivel: usuario.permissoes.includes("estrutura:ler") },
     { para: "/mapeamento", rotulo: "Mapeamento geológico", visivel: usuario.permissoes.includes("mapeamento:ler") },
     { para: "/amostras", rotulo: "Amostras", visivel: usuario.permissoes.includes("amostra:ler") },
-    { para: "/geoop", rotulo: "Geoquímica operacional", visivel: usuario.permissoes.includes("geoquimica:ler") },
+    { para: "/sondagem", rotulo: "Sondagem", visivel: usuario.permissoes.includes("sondagem:ler") },
     { para: "/geoquimica", rotulo: "Laboratório (laudos)", visivel: usuario.permissoes.includes("geoquimica:ler") },
     { para: "/topografia", rotulo: "Topografia", visivel: usuario.permissoes.includes("topografia:ler") },
     { para: "/relatorios", rotulo: "Relatórios", visivel: usuario.permissoes.includes("mapeamento:ler") || usuario.permissoes.includes("auditoria:ler") },
     { para: "/documentos", rotulo: "Fotos e croquis", visivel: usuario.permissoes.includes("arquivo:ler") },
     { para: "/dicionarios", rotulo: "Dicionários", visivel: true },
+  ];
+  const admin = [
     { para: "/configuracao/estrutura", rotulo: "Tipos e regras", visivel: usuario.permissoes.includes("estrutura:configurar") },
     { para: "/usuarios", rotulo: "Usuários", visivel: usuario.permissoes.includes("usuario:gerenciar") },
     { para: "/auditoria", rotulo: "Histórico de alterações", visivel: usuario.permissoes.includes("auditoria:ler") },
@@ -30,7 +31,7 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
     { para: "/senha", rotulo: "Trocar minha senha", visivel: true },
   ];
   return (
-    <AppShell header={{ height: 48 }} navbar={{ width: 220, breakpoint: "sm", collapsed: { mobile: !aberto, desktop: recolhido } }} padding={trabalho ? 0 : "md"}>
+    <AppShell header={{ height: 48 }} navbar={{ width: 220, breakpoint: "sm", collapsed: { mobile: !aberto, desktop: recolhido } }} padding="md">
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
@@ -54,6 +55,13 @@ export function Layout({ usuario, aoSair, children }: { usuario: Eu; aoSair: () 
           .map((i) => (
             <NavLink key={i.para} component={Link} to={i.para} label={i.rotulo} active={i.para === "/" ? local.pathname === "/" : local.pathname.startsWith(i.para)} onClick={close} />
           ))}
+        <NavLink label="Administração" defaultOpened={admin.some((i) => local.pathname.startsWith(i.para))} mt="sm">
+          {admin
+            .filter((i) => i.visivel)
+            .map((i) => (
+              <NavLink key={i.para} component={Link} to={i.para} label={i.rotulo} active={local.pathname.startsWith(i.para)} onClick={close} />
+            ))}
+        </NavLink>
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>
     </AppShell>

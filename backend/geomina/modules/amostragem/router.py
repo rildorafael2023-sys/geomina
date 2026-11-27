@@ -12,7 +12,15 @@ from sqlalchemy.orm import Session
 from geomina.core.dependencias import obter_sessao, requer
 from geomina.core.erros import ErroAplicacao
 from geomina.modules.amostragem import planilha
-from geomina.modules.amostragem.models import Amostra, Campanha, Importacao, LoteEnvio, TipoAmostra, lote_envio_amostra
+from geomina.modules.amostragem.models import (
+    Amostra,
+    Campanha,
+    FrenteIntervalo,
+    Importacao,
+    LoteEnvio,
+    TipoAmostra,
+    lote_envio_amostra,
+)
 from geomina.modules.arquivos.models import Arquivo
 from geomina.modules.auth.models import Usuario
 from geomina.modules.dicionarios.models import Dicionario, Termo
@@ -478,13 +486,21 @@ def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
     unidades_mina = {_chave_unidade(cod): (uid, cod) for uid, cod in db.execute(
         select(UnidadeOperacional.id, UnidadeOperacional.codigo).where(UnidadeOperacional.mina_id == mina_id))}
     vistos: set[str] = set()
-    resultado, nao_reconhecidas = [], {}
+    resultado, nao_reconhecidas, trechos_sem_amostra = [], {}, []
     ponto = None
     for ln in linhas:
         v = ln.valores
         ponto = v.get("ponto") or ponto
         bruto = v.get("codigo")
         if bruto is None or str(bruto).strip().lower() in ("x", "-", "—"):
+            # trecho da frente sem amostra: entra no perfil da frente
+            iv = planilha.intervalo(v.get("intervalo"))
+            if ponto is not None and iv:
+                lt = v.get("litologia")
+                lo = _reconhecer(db, dic_lito, str(lt)) if lt else None
+                trechos_sem_amostra.append({"linha": ln.numero, "ponto": str(ponto), "de": iv[0], "ate": iv[1],
+                                            "litologia_texto": str(lt).strip() if lt else None, "litologia_id": str(lo.id) if lo else None,
+                                            "descricao": v.get("descricao")})
             continue
         c = normalizar_codigo(str(bruto))
         msgs = []
@@ -538,7 +554,9 @@ def _analisar(db: Session, mina_id: uuid.UUID, caminho, nome: str) -> dict:
         })
     resumo = {s: sum(1 for r in resultado if r["status"] == s) for s in ("ok", "sugestao", "erro", "repetido", "existente")}
     return {"campos": campos, "total": len(resultado), "resumo": resumo, "linhas": resultado,
-            "litologias_nao_reconhecidas": nao_reconhecidas, "com_coordenadas": sum(1 for r in resultado if r["x"] is not None)}
+            "litologias_nao_reconhecidas": nao_reconhecidas, "com_coordenadas": sum(1 for r in resultado if r["x"] is not None),
+            "trechos_sem_amostra": trechos_sem_amostra,
+            "pontos": len({r["ponto"] for r in resultado if r["ponto"]} | {t["ponto"] for t in trechos_sem_amostra})}
 
 
 @router.post("/minas/{mina_id}/amostras/importacoes", status_code=201)
@@ -604,11 +622,51 @@ def confirmar(imp_id: uuid.UUID, e: Confirmacao, u: Usuario = Depends(IMPORTAR),
         db.add(a)
         ja.add(codigo.upper())
         gravadas += 1
+    db.flush()
+    trechos = _gravar_perfis(db, imp, e)
     imp.estado = "confirmada"
     imp.opcoes = e.model_dump(mode="json")
-    imp.relatorio = {**imp.relatorio, "gravadas": gravadas, "ignoradas": ignoradas}
+    imp.relatorio = {**imp.relatorio, "gravadas": gravadas, "ignoradas": ignoradas, "trechos_perfil": trechos}
     db.flush()
-    return {"gravadas": gravadas, "ignoradas": ignoradas}
+    return {"gravadas": gravadas, "ignoradas": ignoradas, "trechos_perfil": trechos}
+
+
+def _gravar_perfis(db: Session, imp: Importacao, e: Confirmacao) -> int:
+    """Perfil da frente de cada ponto da planilha: todas as linhas (inclusive a mesma amostra em vários trechos e os
+    trechos sem amostra). Pontos que já têm perfil no GeoMina não são alterados (reimportar não duplica)."""
+    rel = imp.relatorio
+    por_ponto: dict[str, list[dict]] = {}
+    for r in rel["linhas"]:
+        if r.get("ponto") and r.get("de") is not None and r.get("ate") is not None:
+            por_ponto.setdefault(r["ponto"], []).append(r)
+    for t in rel.get("trechos_sem_amostra", []):
+        por_ponto.setdefault(t["ponto"], []).append({**t, "codigo": None})
+    if not por_ponto:
+        return 0
+    amostras = {a.codigo.upper(): a for a in db.scalars(select(Amostra).where(Amostra.mina_id == imp.mina_id))}
+    com_perfil = set(db.scalars(select(FrenteIntervalo.ponto).where(FrenteIntervalo.mina_id == imp.mina_id).distinct()))
+    com_perfil = {p.upper() for p in com_perfil}
+    total = 0
+    for ponto, linhas in por_ponto.items():
+        if ponto.upper() in com_perfil:
+            continue
+        vistos = set()
+        for r in sorted(linhas, key=lambda x: (x["de"], x["ate"])):
+            dono = amostras.get(r["codigo"].upper()) if r.get("codigo") else None
+            chave = (r["de"], r["ate"], dono.id if dono else None)
+            if chave in vistos:
+                continue
+            vistos.add(chave)
+            if dono is not None and not dono.ponto_campo:
+                dono.ponto_campo = ponto
+            lito = r.get("litologia_id") or (e.litologias.get(r["litologia_texto"]) if r.get("litologia_texto") else None)
+            db.add(FrenteIntervalo(mina_id=imp.mina_id, ponto=ponto, amostra_id=dono.id if dono else None, de_m=r["de"], ate_m=r["ate"],
+                                   litologia_id=uuid.UUID(str(lito)) if lito else None,
+                                   litologia_texto=None if lito else r.get("litologia_texto"), descricao=r.get("descricao"),
+                                   importacao_id=imp.id, criado_por=imp.importado_por))
+            total += 1
+    db.flush()
+    return total
 
 
 @router.delete("/importacoes/{imp_id}", status_code=204)
