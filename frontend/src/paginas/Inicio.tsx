@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { api, dataCurta, dataHora, tamanhoLegivel, type Eu, type PainelDados } from "../api/cliente";
+import { api, dataCurta, dataHora, tamanhoLegivel, type Eu, type Mina, type PainelDados } from "../api/cliente";
 
 // Painel com números reais do banco (Etapa 4). Cada bloco só aparece se o usuário tiver acesso ao módulo.
 export function Inicio({ usuario }: { usuario: Eu }) {
@@ -46,6 +46,8 @@ export function Inicio({ usuario }: { usuario: Eu }) {
         {d.arquivos !== null && <Numero rotulo="Arquivos originais" valor={d.arquivos.quantidade} detalhe={tamanhoLegivel(d.arquivos.bytes)} />}
         {d.usuarios_ativos !== null && <Numero rotulo="Usuários ativos" valor={d.usuarios_ativos} para="/usuarios" />}
       </SimpleGrid>
+
+      {usuario.permissoes.includes("sondagem:ler") && <CartaoSondagem />}
 
       <SimpleGrid cols={{ base: 1, md: 2 }}>
         {d.unidades_por_tipo !== null && (
@@ -138,6 +140,39 @@ function Bloco({ titulo, acao, children }: { titulo: string; acao?: ReactNode; c
         {acao}
       </Group>
       {children}
+    </Paper>
+  );
+}
+
+interface ResumoSondagem { exploratorios: number; ina: number; intervalos: number; amostras: number; com_quimica: number; fotos: number; metros: number }
+
+/** Cartão da Sondagem: furos exploratórios e INA, trechos descritos, amostras, química e fotos. */
+function CartaoSondagem() {
+  const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
+  const mina = minas.data?.[0];
+  const r = useQuery({ queryKey: ["sondagem-resumo", mina?.id], queryFn: () => api<ResumoSondagem>(`/minas/${mina!.id}/sondagem/resumo`), enabled: !!mina });
+  if (!r.data) return null;
+  const d = r.data, fmt = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  return (
+    <Paper withBorder p="md">
+      <Group justify="space-between" mb="xs">
+        <Title order={5}>Sondagem: furos de sonda</Title>
+        <Text size="xs" c="dimmed">{fmt(d.metros)} m perfurados</Text>
+      </Group>
+      <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="xs">
+        <Numero rotulo="Exploratórios (F)" valor={d.exploratorios} para="/sondagem/furos" />
+        <Numero rotulo="INA (água)" valor={d.ina} para="/sondagem/furos" />
+        <Numero rotulo="Trechos descritos" valor={d.intervalos} para="/sondagem" />
+        <Numero rotulo="Amostras" valor={d.amostras} para="/sondagem/amostragem" />
+        <Numero rotulo="Com química" valor={d.com_quimica} para="/sondagem/amostragem" />
+        <Numero rotulo="Fotos de testemunho" valor={d.fotos} para="/sondagem/fotos" />
+      </SimpleGrid>
+      <Group gap="md" mt="xs">
+        <Anchor component={Link} to="/sondagem" size="sm">Perfil do furo</Anchor>
+        <Anchor component={Link} to="/sondagem/amostragem" size="sm">Amostragem geoquímica</Anchor>
+        <Anchor component={Link} to="/sondagem/fotos" size="sm">Fotos de testemunho</Anchor>
+        <Anchor component={Link} to="/sondagem/tracks" size="sm">Tracks geoquímicos</Anchor>
+      </Group>
     </Paper>
   );
 }

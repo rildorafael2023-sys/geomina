@@ -4,7 +4,16 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 
 **Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-## Estado atual — versão 0.22.0
+## Estado atual — versão 0.23.0
+- ✅ **Sondagem refeita como no vídeo de referência** (furos de sonda):
+  - **Início** com o cartão da Sondagem (exploratórios F, INA, trechos descritos, amostras, com química, fotos).
+  - **Perfil do furo**: barra de RQD (Excelente…Muito ruim, média ponderada), colunas RQD, profundidade, cota, testemunho colorido pela litologia, ocorrências (esmeralda, berilo, molibdenita, água, carbonato, sulfetos, não recuperado, lidas da descrição), fotos, litologia com caixa, amostras e uma barra por elemento; painel de elementos por unidade (Padrão / Maiores / Todos); modo Amostrado/Inteiro; zoom; mostrar/ocultar colunas; exportar PNG, SVG, CSV e PDF.
+  - Clicar num trecho abre tudo daquele intervalo (RQD, caixa, espessura, cotas, descrição, fotos, amostras e teores) e permite **marcar/tirar esmeralda** à mão.
+  - **Furos lado a lado** com a mesma escala e profundidade; **química comparada** por nível (valor × m desde o topo) e por litologia (boxplots), com tabela de medianas e exportação.
+  - **Amostragem geoquímica**: filtros por situação e localização, busca por código e descrição, conjuntos de elementos, ficha da amostra com a química completa, exportação.
+  - **Fotos de testemunho**: importação em lote pelo nome do arquivo (`F310_CX29_136,6-137,2.jpg`), conferência antes de gravar, vistas por caixa / ao longo do furo / tabela, caixas sem foto, tabelas Datarock/Imago e Leapfrog, visor com zoom e giro (original preservado).
+  - **Tracks geoquímicos**: pontos por amostra contra a profundidade, escala linear/log, mín/máx, regra do limite de detecção, coluna de registros (fotos, minério, amostras).
+  - A descrição geológica aceita as colunas **RQD**, **recuperação** e **caixa**.
 - ✅ **Versão simplificada (pedido do usuário)**: o software fica só com a gestão de dados de amostragem, mapeamento e sondagem.
   - Saiu a **Geoquímica operacional** (tracks, comparação, 3D, consulta) e a análise longitudinal da galeria.
   - **Amostras**: clicar numa amostra abre o **perfil da frente** (trechos metro a metro com a litologia, a amostra de cada trecho e os teores de todos os elementos do laudo), com edição e impressão. A importação da planilha de campo grava todos os trechos de cada ponto, inclusive os não amostrados.

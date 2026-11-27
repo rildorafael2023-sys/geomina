@@ -113,6 +113,7 @@ const SENHA = "senhaForte123";
   }, [furo.id, png]);
 
   await nav.getByRole("link", { name: "Sondagem" }).click();
+  await page.getByRole("tab", { name: "Cadastro de furos" }).click();
   await page.getByRole("cell", { name: "FD-001" }).click();
   await page.getByText("Log de sondagem — FD-001").waitFor();
   await page.getByTestId("tabela-teores").getByRole("cell", { name: "1508", exact: true }).waitFor();
