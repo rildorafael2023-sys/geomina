@@ -1,10 +1,12 @@
-import { Alert, Badge, Button, FileButton, Group, Loader, Paper, Radio, ScrollArea, Select, Stack, Table, Tabs, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, FileButton, Group, Loader, Paper, Radio, ScrollArea, Select, Stack, Table, Tabs, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, enviarArquivos, ErroApi, json, type Eu, type Mina } from "../../api/cliente";
 import { Planta } from "./Planta";
+import { IconMap2 } from "@tabler/icons-react";
+import { Pagina } from "../../componentes/ui";
 
 interface CamadaCad { nome: string; feicoes: number; z_min?: number; z_mediana?: number; z_max?: number; fracao_zero?: number; z_suspeito?: boolean }
 interface OpcaoTrans { id: string; nome: string; metodo: string; aprovada: boolean; residuo_medio_m?: number | null; precisao_m?: number | null; observacao?: string; origem_calibracao?: string }
@@ -28,8 +30,7 @@ export function Topografia({ eu }: { eu: Eu }) {
   if (!mina) return <Alert color="yellow">Cadastre a mina primeiro.</Alert>;
   const importa = eu.permissoes.includes("topografia:importar");
   return (
-    <Stack>
-      <Title order={3}>Topografia</Title>
+    <Pagina titulo="Topografia" icone={<IconMap2 size={20} />}>
       <Tabs defaultValue="planta" keepMounted={false}>
         <Tabs.List>
           <Tabs.Tab value="planta">Planta</Tabs.Tab>
@@ -49,7 +50,7 @@ export function Topografia({ eu }: { eu: Eu }) {
         <Tabs.Panel value="importar" pt="sm"><Importar mina={mina} /></Tabs.Panel>
         <Tabs.Panel value="transformacoes" pt="sm"><Transformacoes mina={mina} pode={eu.permissoes.includes("topografia:transformar")} /></Tabs.Panel>
       </Tabs>
-    </Stack>
+    </Pagina>
   );
 }
 

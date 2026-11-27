@@ -120,7 +120,7 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
           </div>
           {podeEditar && (
             <Group gap={6}>
-              <Button size="xs" variant="light" onClick={() => setModal("editar")}>
+              <Button size="xs" variant="default" onClick={() => setModal("editar")}>
                 Editar
               </Button>
               {d.ativo && (tipo?.filhos_permitidos.length ?? 0) > 0 && (
@@ -128,7 +128,7 @@ export function DetalheUnidade({ id, mina, tipos, todas, eu, aoSelecionar }: Pro
                   Nova unidade dentro
                 </Button>
               )}
-              <Button size="xs" variant="subtle" onClick={() => setModal("mover")}>
+              <Button size="xs" variant="default" onClick={() => setModal("mover")}>
                 Mover
               </Button>
               <Button

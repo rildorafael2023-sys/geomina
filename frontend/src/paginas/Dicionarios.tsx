@@ -1,10 +1,12 @@
-import { Alert, Badge, Button, ColorInput, Group, Loader, Modal, NumberInput, Paper, ScrollArea, Select, Stack, Switch, Table, Tabs, Text, TextInput, Textarea, Title } from "@mantine/core";
+import { Alert, Badge, Button, ColorInput, Group, Modal, NavLink, NumberInput, Select, Stack, Switch, Text, TextInput, Textarea } from "@mantine/core";
+import { IconEdit, IconPlus, IconVocabulary } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, ErroApi, json, type Dicionario, type Termo } from "../api/cliente";
 import { useDicionarios } from "../api/dicionarios";
+import { Carregando, Pagina, Painel, TabelaDados } from "../componentes/ui";
 
 type Form = { codigo: string; nome: string; sigla: string; cor: string; classe: string | null; ordem: number; ativo: boolean; sinonimos: string; descricao: string };
 
@@ -45,7 +47,7 @@ export function Dicionarios({ podeEditar }: { podeEditar: boolean }) {
     onError: (e) => setErro(e instanceof ErroApi ? e.message : "Falha ao salvar."),
   });
 
-  if (dic.isLoading) return <Loader />;
+  if (dic.isLoading) return <Carregando />;
   const abrir = (d: Dicionario, t: Termo | null) => {
     setErro(null);
     setEdit({ dic: d, termo: t });
@@ -54,52 +56,35 @@ export function Dicionarios({ podeEditar }: { podeEditar: boolean }) {
       : { codigo: "", nome: "", sigla: "", cor: "", classe: d.codigo === "TIPO_ESTRUTURA" ? "planar" : null, ordem: (d.termos.at(-1)?.ordem ?? 0) + 10, ativo: true, sinonimos: "", descricao: "" });
   };
 
+  const atual = (dic.data ?? []).find((d) => d.codigo === aba) ?? dic.data?.[0];
   return (
-    <Stack>
-      <div>
-        <Title order={3}>Dicionários</Title>
-        <Text size="sm" c="dimmed">
-          Listas usadas nas fichas: litologias, alterações, estruturas, minerais… Termos inativos deixam de ser oferecidos, mas continuam nos registros antigos.
-          Sinônimos permitem reconhecer outras grafias em importações de planilhas.
-        </Text>
+    <Pagina titulo="Dicionários" icone={<IconVocabulary size={20} />}
+      subtitulo="Listas usadas nas fichas e importações. Termos inativos deixam de ser oferecidos, mas continuam nos registros antigos; sinônimos reconhecem outras grafias nas planilhas.">
+      <div className="gm-explorador">
+        <Painel titulo="Listas" p={4} className="gm-explorador-lista">
+          {(dic.data ?? []).map((d) => (
+            <NavLink key={d.codigo} active={d.codigo === atual?.codigo} onClick={() => setAba(d.codigo)} py={5} label={d.nome}
+              rightSection={<Badge size="sm" color="gray">{d.termos.filter((t) => t.ativo).length}</Badge>} />
+          ))}
+        </Painel>
+        {atual && (
+          <Painel p={0} titulo={atual.nome} descricao={`${atual.termos.length} termo(s)`}
+            acoes={podeEditar && <Button leftSection={<IconPlus size={14} />} onClick={() => abrir(atual, null)}>Novo termo</Button>}>
+            <TabelaDados key={atual.codigo} dados={atual.termos} chave={(t) => t.id} busca minLargura={620} alturaMax="calc(100vh - 260px)"
+              colunas={[
+                { chave: "nome", titulo: "Nome", valor: (t) => t.nome, render: (t) => (
+                  <Group gap={6} wrap="nowrap" style={{ opacity: t.ativo ? 1 : 0.5 }}>
+                    <span style={{ width: 12, height: 12, background: t.cor ?? "transparent", border: "1px solid #9aa6b2", display: "inline-block", flexShrink: 0 }} />
+                    {t.nome} {!t.ativo && <Badge size="xs" color="gray">inativo</Badge>} {t.classe && <Badge size="xs" variant="outline">{t.classe}</Badge>}
+                  </Group>) },
+                { chave: "sigla", titulo: "Sigla", largura: 80, valor: (t) => t.sigla ?? "" },
+                { chave: "codigo", titulo: "Código", largura: 120, valor: (t) => t.codigo, render: (t) => <Text size="xs" c="dimmed">{t.codigo}</Text> },
+                { chave: "sinonimos", titulo: "Sinônimos", valor: (t) => t.sinonimos.join("; ") },
+                { chave: "acao", titulo: "", ordenavel: false, largura: 70, render: (t) => podeEditar && <Button size="compact-xs" variant="subtle" leftSection={<IconEdit size={12} />} onClick={() => abrir(atual, t)}>editar</Button> },
+              ]} />
+          </Painel>
+        )}
       </div>
-      <Tabs value={aba} onChange={setAba}>
-        <ScrollArea>
-          <Tabs.List style={{ flexWrap: "nowrap" }}>
-            {(dic.data ?? []).map((d) => <Tabs.Tab key={d.codigo} value={d.codigo}>{d.nome}</Tabs.Tab>)}
-          </Tabs.List>
-        </ScrollArea>
-        {(dic.data ?? []).map((d) => (
-          <Tabs.Panel key={d.codigo} value={d.codigo} pt="sm">
-            <Paper withBorder p="sm">
-              {podeEditar && <Group justify="flex-end" mb="xs"><Button size="xs" onClick={() => abrir(d, null)}>Novo termo</Button></Group>}
-              <ScrollArea>
-                <Table striped miw={560}>
-                  <Table.Thead>
-                    <Table.Tr><Table.Th>Nome</Table.Th><Table.Th>Sigla</Table.Th><Table.Th>Código</Table.Th><Table.Th>Sinônimos</Table.Th><Table.Th /></Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {d.termos.map((t) => (
-                      <Table.Tr key={t.id} style={{ opacity: t.ativo ? 1 : 0.5 }}>
-                        <Table.Td>
-                          <Group gap={6} wrap="nowrap">
-                            {t.cor && <span style={{ width: 12, height: 12, background: t.cor, border: "1px solid #888", display: "inline-block" }} />}
-                            {t.nome} {!t.ativo && <Badge size="xs" color="gray">inativo</Badge>} {t.classe && <Badge size="xs" variant="outline">{t.classe}</Badge>}
-                          </Group>
-                        </Table.Td>
-                        <Table.Td>{t.sigla}</Table.Td>
-                        <Table.Td c="dimmed" fz="xs">{t.codigo}</Table.Td>
-                        <Table.Td fz="xs">{t.sinonimos.join("; ")}</Table.Td>
-                        <Table.Td>{podeEditar && <Button size="compact-xs" variant="subtle" onClick={() => abrir(d, t)}>editar</Button>}</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </ScrollArea>
-            </Paper>
-          </Tabs.Panel>
-        ))}
-      </Tabs>
       <Modal opened={edit !== null} onClose={() => setEdit(null)} title={edit?.termo ? `Editar: ${edit.termo.nome}` : `Novo termo em ${edit?.dic.nome}`}>
         {f && (
           <Stack>
@@ -120,6 +105,6 @@ export function Dicionarios({ podeEditar }: { podeEditar: boolean }) {
           </Stack>
         )}
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }

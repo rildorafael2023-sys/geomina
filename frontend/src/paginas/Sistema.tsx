@@ -1,12 +1,14 @@
-import { Alert, Badge, Button, Group, Loader, Paper, Stack, Switch, Table, Text, Title } from "@mantine/core";
+import { Alert, Badge, Button, Group, SimpleGrid, Stack, Switch, Table, Text } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, type Saude } from "../api/cliente";
+import { IconInfoCircle } from "@tabler/icons-react";
+import { Carregando, Pagina, Painel } from "../componentes/ui";
 
 export function Sistema({ podeVerificar = false }: { podeVerificar?: boolean }) {
   const { data, error, isLoading } = useQuery({ queryKey: ["saude"], queryFn: () => api<Saude>("/saude") });
-  if (isLoading) return <Loader />;
+  if (isLoading) return <Carregando />;
   if (error || !data) return <Alert color="red">Não foi possível ler a situação do aplicativo.</Alert>;
   const linhas: [string, string][] = [
     ["Situação", data.status === "ok" ? "Funcionando" : data.status],
@@ -21,11 +23,9 @@ export function Sistema({ podeVerificar = false }: { podeVerificar?: boolean }) 
     ["SIRGAS 2000 / UTM 23S (EPSG:31983)", data.crs_disponiveis["31983"] ? "disponível" : "INDISPONÍVEL"],
   ];
   return (
-    <Stack maw={760}>
-    <Paper withBorder p="md">
-      <Title order={4} mb="sm">
-        Sistema
-      </Title>
+    <Pagina titulo="Sistema" icone={<IconInfoCircle size={20} />} subtitulo="Situação do aplicativo local, versões e verificação de integridade dos dados">
+    <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={10}>
+    <Painel titulo="Aplicativo" p={0}>
       <Table>
         <Table.Tbody>
           {linhas.map(([k, v]) => (
@@ -38,9 +38,10 @@ export function Sistema({ podeVerificar = false }: { podeVerificar?: boolean }) 
           ))}
         </Table.Tbody>
       </Table>
-    </Paper>
+    </Painel>
     {podeVerificar && <Integridade />}
-    </Stack>
+    </SimpleGrid>
+    </Pagina>
   );
 }
 
@@ -51,8 +52,7 @@ function Integridade() {
   const m = useMutation({ mutationFn: () => api<{ ok: boolean; itens: ItemIntegridade[]; segundos: number }>(`/sistema/integridade?completa=${completa}`, { method: "POST" }) });
   const cor = { ok: "teal", aviso: "yellow", erro: "red" } as const;
   return (
-    <Paper withBorder p="md" data-testid="integridade">
-      <Title order={4} mb={4}>Verificação de integridade</Title>
+    <Painel titulo="Verificação de integridade" testId="integridade">
       <Text size="sm" c="dimmed" mb="sm">Confere o banco de dados, as regras que protegem os registros, o índice espacial e se os arquivos originais (fotos, croquis, laudos) continuam iguais ao que foi enviado. Não altera nada.</Text>
       <Group>
         <Button onClick={() => m.mutate()} loading={m.isPending}>Verificar agora</Button>
@@ -72,6 +72,6 @@ function Integridade() {
           ))}
         </Stack>
       )}
-    </Paper>
+    </Painel>
   );
 }

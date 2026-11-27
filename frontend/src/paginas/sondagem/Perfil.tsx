@@ -365,7 +365,7 @@ export function PerfilDoFuro() {
   };
 
   return (
-    <Group align="flex-start" gap="sm" wrap="nowrap">
+    <Group className="gm-lateral" align="flex-start" gap="sm" wrap="nowrap">
       <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
         <Paper withBorder p={6} className="nao-imprimir">
           <Group gap="xs" wrap="wrap">

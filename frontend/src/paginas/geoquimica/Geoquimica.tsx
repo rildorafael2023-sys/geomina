@@ -1,8 +1,10 @@
-import { Alert, Badge, Button, FileButton, Group, Loader, Modal, MultiSelect, Paper, ScrollArea, Select, Stack, Table, Tabs, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, FileButton, Group, Loader, Modal, MultiSelect, Paper, ScrollArea, Select, Stack, Table, Tabs, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconDownload, IconFlask } from "@tabler/icons-react";
 import { useState } from "react";
 
+import { BarraFiltros, Carregando, Pagina, Painel, TabelaDados, Vazio, type Coluna } from "../../componentes/ui";
 import { api, baixar, dataHora, enviarArquivos, ErroApi, json, type Eu, type Mina } from "../../api/cliente";
 
 interface Previa {
@@ -19,12 +21,11 @@ const SITUACAO: Record<string, { rotulo: string; cor: string }> = {
 
 export function Geoquimica({ eu }: { eu: Eu }) {
   const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
-  if (minas.isLoading) return <Loader />;
+  if (minas.isLoading) return <Carregando />;
   const mina = minas.data?.[0];
   if (!mina) return <Alert color="yellow">Cadastre a mina primeiro.</Alert>;
   return (
-    <Stack>
-      <Title order={3}>Laboratório — laudos e QA/QC</Title>
+    <Pagina titulo="Laboratório — laudos e QA/QC" icone={<IconFlask size={20} />} subtitulo="Resultados dos laudos, certificados, controles de qualidade (QA/QC) e importação de novos laudos">
       <Tabs defaultValue="resultados" keepMounted={false}>
         <Tabs.List>
           <Tabs.Tab value="resultados">Resultados</Tabs.Tab>
@@ -35,7 +36,7 @@ export function Geoquimica({ eu }: { eu: Eu }) {
         <Tabs.Panel value="certificados" pt="sm"><Certificados mina={mina} /></Tabs.Panel>
         <Tabs.Panel value="importar" pt="sm"><Importar mina={mina} /></Tabs.Panel>
       </Tabs>
-    </Stack>
+    </Pagina>
   );
 }
 
@@ -48,43 +49,33 @@ function Resultados({ mina, certificadoId }: { mina: Mina; certificadoId?: strin
   if (certificadoId) p.set("certificado_id", certificadoId);
   if (controles) p.set("incluir_controles", "true");
   const t = useQuery({ queryKey: ["tabela", mina.id, p.toString()], queryFn: () => api<{ colunas: string[]; total: number; linhas: { amostra: string | null; codigo_laboratorio: string; tipo: string; certificado: string; valores: Record<string, string> }[] }>(`/minas/${mina.id}/resultados/tabela?${p}`) });
+  const linhas = (t.data?.linhas ?? []).map((l, i) => ({ ...l, _i: i }));
+  const colunas: Coluna<(typeof linhas)[number]>[] = [
+    { chave: "amostra", titulo: "Amostra", fixa: true, valor: (l) => l.amostra ?? l.codigo_laboratorio,
+      render: (l) => (l.amostra ? <Text size="sm" fw={600}>{l.amostra}</Text> : <Text span c="orange" fz="xs">{l.codigo_laboratorio}</Text>) },
+    { chave: "tipo", titulo: "Tipo", valor: (l) => l.tipo, largura: 60 },
+    { chave: "certificado", titulo: "Certificado", valor: (l) => l.certificado },
+    ...(t.data?.colunas ?? []).map((c) => ({ chave: `v:${c}`, titulo: c, numero: true, valor: (l: (typeof linhas)[number]) => {
+      const v = l.valores[c]; if (v == null) return null; const x = Number(v.replace(",", ".")); return Number.isFinite(x) ? x : v; },
+      render: (l: (typeof linhas)[number]) => (l.valores[c] ?? "").replace(".", ",") })),
+  ];
   return (
-    <Stack gap="sm">
-      <Group align="flex-end">
-        <MultiSelect label="Analitos (vazio = todos)" searchable clearable maw={600} style={{ flex: 1 }} value={sel} onChange={setSel}
+    <Stack gap={10}>
+      <BarraFiltros fim={<Button variant="default" leftSection={<IconDownload size={14} />} onClick={() => baixar(`/minas/${mina.id}/resultados/tabela.csv?${p}`, "resultados_geomina.csv")}>Exportar CSV</Button>}>
+        <MultiSelect label="Analitos (vazio = todos)" searchable clearable w={420} value={sel} onChange={setSel}
           data={(analitos.data ?? []).map((a) => ({ value: a.codigo, label: `${a.codigo} (${a.tipo})` }))} />
-        <Select label="Linhas" w={260} allowDeselect={false} value={controles ? "s" : "n"} onChange={(v) => setControles(v === "s")}
+        <Select label="Linhas" w={280} allowDeselect={false} value={controles ? "s" : "n"} onChange={(v) => setControles(v === "s")}
           data={[{ value: "n", label: "Só amostras (SMP)" }, { value: "s", label: "Incluir controles (DUP, REP, STD, branco)" }]} />
-        <Button variant="light" onClick={() => baixar(`/minas/${mina.id}/resultados/tabela.csv?${p}`, "resultados_geomina.csv")}>Exportar CSV</Button>
-      </Group>
-      <Text size="xs" c="dimmed">
-        {certificadoId ? "Todas as linhas deste certificado, como vieram do laudo." : "Um valor por amostra e analito: o resultado preferido (amostra do certificado mais recente)."}
-        {" "}Valores abaixo/acima do limite aparecem como no laudo (ex.: &lt;0,5) — nunca são convertidos em zero.
-      </Text>
-      {t.data && t.data.total > t.data.linhas.length && (
-        <Text size="sm" c="orange" data-testid="tabela-limitada">Mostrando {t.data.linhas.length.toLocaleString("pt-BR")} de {t.data.total.toLocaleString("pt-BR")} linhas. Use "Exportar CSV" para ter todas, ou a Geoquímica operacional para filtrar.</Text>
-      )}
-      {t.isLoading ? <Loader size="sm" /> : !t.data?.linhas.length ? <Text size="sm" c="dimmed">Nenhum resultado.</Text> : (
-        <ScrollArea h={520}>
-          <Table striped stickyHeader miw={Math.max(600, 180 + t.data.colunas.length * 80)} fz="xs">
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Amostra</Table.Th><Table.Th>Tipo</Table.Th><Table.Th>Certificado</Table.Th>
-                {t.data.colunas.map((c) => <Table.Th key={c} style={{ whiteSpace: "nowrap" }}>{c}</Table.Th>)}
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {t.data.linhas.map((l, i) => (
-                <Table.Tr key={i}>
-                  <Table.Td fw={500} style={{ whiteSpace: "nowrap" }}>{l.amostra ?? <Text span c="orange" fz="xs">{l.codigo_laboratorio}</Text>}</Table.Td>
-                  <Table.Td>{l.tipo}</Table.Td><Table.Td>{l.certificado}</Table.Td>
-                  {t.data!.colunas.map((c) => <Table.Td key={c} ta="right">{l.valores[c] ?? ""}</Table.Td>)}
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
-      )}
+      </BarraFiltros>
+      <Painel p={0} titulo={`${linhas.length.toLocaleString("pt-BR")} linha(s) · ${t.data?.colunas.length ?? 0} analito(s)`}
+        descricao={(certificadoId ? "Todas as linhas deste certificado, como vieram do laudo." : "Um valor por amostra e analito: o resultado preferido (certificado mais recente).") + " Valores abaixo/acima do limite aparecem como no laudo (ex.: <0,5), nunca como zero."}>
+        {t.data && t.data.total > t.data.linhas.length && (
+          <Text size="sm" c="orange" px={10} pt={6} data-testid="tabela-limitada">Mostrando {t.data.linhas.length.toLocaleString("pt-BR")} de {t.data.total.toLocaleString("pt-BR")} linhas. Use "Exportar CSV" para ter todas, ou filtre os analitos.</Text>
+        )}
+        <TabelaDados dados={linhas} chave={(l) => String(l._i)} colunas={colunas} busca densa
+          alturaMax={certificadoId ? 420 : "calc(100vh - 330px)"} minLargura={Math.max(600, 220 + (t.data?.colunas.length ?? 0) * 74)}
+          vazio={t.isLoading ? <Carregando /> : <Vazio titulo="Nenhum resultado." descricao="Importe um laudo na aba Importar laudo." />} />
+      </Painel>
     </Stack>
   );
 }

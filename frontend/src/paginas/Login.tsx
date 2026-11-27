@@ -1,7 +1,8 @@
-import { Alert, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import { useState, type FormEvent } from "react";
 
 import { api, ErroApi, json, type RespostaLogin } from "../api/cliente";
+import { TelaEntrada } from "../componentes/ui";
 
 export function Login({ aoEntrar }: { aoEntrar: (token: string) => void }) {
   const [login, setLogin] = useState("");
@@ -24,23 +25,18 @@ export function Login({ aoEntrar }: { aoEntrar: (token: string) => void }) {
   }
 
   return (
-    <Center mih="100vh" p="md">
-      <Paper withBorder p="xl" w="100%" maw={380} component="form" onSubmit={enviar}>
-        <Stack>
-          <div>
-            <Title order={3}>GeoMina</Title>
-            <Text size="sm" c="dimmed">
-              Gestão de dados geológicos — aplicativo local
-            </Text>
-          </div>
+    <TelaEntrada largura={380}>
+      <form onSubmit={enviar}>
+        <Stack gap="sm">
+          <Text fw={600} size="lg">Entrar</Text>
           {erro && <Alert color="red">{erro}</Alert>}
-          <TextInput label="Login" value={login} onChange={(e) => setLogin(e.currentTarget.value)} required autoFocus />
-          <PasswordInput label="Senha" value={senha} onChange={(e) => setSenha(e.currentTarget.value)} required />
-          <Button type="submit" loading={enviando}>
+          <TextInput size="sm" label="Login" value={login} onChange={(e) => setLogin(e.currentTarget.value)} required autoFocus />
+          <PasswordInput size="sm" label="Senha" value={senha} onChange={(e) => setSenha(e.currentTarget.value)} required />
+          <Button type="submit" size="sm" loading={enviando}>
             Entrar
           </Button>
         </Stack>
-      </Paper>
-    </Center>
+      </form>
+    </TelaEntrada>
   );
 }

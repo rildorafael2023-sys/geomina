@@ -1,14 +1,16 @@
 import {
   ActionIcon, Alert, Badge, Button, FileButton, FileInput, Group, Image, Loader, Modal, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text,
-  TextInput, Textarea, Title,
+  TextInput, Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { IconArrowLeft, IconEdit, IconPrinter, IconTrash, IconUpload } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 
 import { api, CRS_OPCOES, dataCurta, ErroApi, json, urlArquivo, type Mina } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
+import { Carregando, Painel, TabelaDados, Vazio } from "../../componentes/ui";
 import { corLitologia, imprimirElemento, m, teor, type TermoP } from "../../componentes/perfil";
 
 interface FuroL { id: string; codigo: string; projeto: string | null; area: string | null; profundidade_final: number; azimute: number | null; inclinacao: number | null; surveys: number; intervalos: number; amostras: number; amostras_com_resultado: number; data_inicio: string | null; responsavel: string | null }
@@ -29,50 +31,23 @@ export interface Log {
 export function ListaFuros({ mina, pode }: { mina: Mina; pode: boolean }) {
   const navegar = useNavigate();
   const furos = useQuery({ queryKey: ["furos", mina.id], queryFn: () => api<FuroL[]>(`/minas/${mina.id}/furos`) });
-  const [novo, setNovo] = useState(false);
-  const [importar, setImportar] = useState(false);
-  const [texto, setTexto] = useState("");
-  const lista = (furos.data ?? []).filter((f) => !texto.trim() || `${f.codigo} ${f.projeto ?? ""} ${f.area ?? ""}`.toLowerCase().includes(texto.trim().toLowerCase()));
   return (
-    <Stack>
-      <Group justify="space-between">
-        <div>
-          <Title order={4}>Cadastro de furos</Title>
-          <Text size="sm" c="dimmed">Furos, descrição geológica, intervalos amostrados com os teores e fotos do testemunho. Clique num furo para abrir a ficha (log para imprimir, editar descrição, fotos).</Text>
-        </div>
-        {pode && (
-          <Group gap={6}>
-            <Button variant="default" onClick={() => setImportar(true)}>Importar planilhas…</Button>
-            <Button onClick={() => setNovo(true)}>Novo furo</Button>
-          </Group>
-        )}
-      </Group>
-      <TextInput w={280} placeholder="Buscar furo, projeto ou área" value={texto} onChange={(e) => setTexto(e.currentTarget.value)} />
-      {furos.isLoading ? <Loader size="sm" /> : !furos.data?.length ? (
-        <Alert color="gray">Nenhum furo cadastrado. Use <b>Novo furo</b> ou <b>Importar planilhas…</b> (collar, survey, descrição geológica e amostras, em CSV ou Excel).</Alert>
-      ) : (
-        <ScrollArea>
-          <Table striped highlightOnHover miw={760} data-testid="lista-furos">
-            <Table.Thead><Table.Tr><Table.Th>Furo</Table.Th><Table.Th>Projeto / área</Table.Th><Table.Th ta="right">Profundidade (m)</Table.Th><Table.Th>Az / Inc</Table.Th><Table.Th>Início</Table.Th><Table.Th ta="right">Intervalos descritos</Table.Th><Table.Th ta="right">Amostras (com laudo)</Table.Th></Table.Tr></Table.Thead>
-            <Table.Tbody>
-              {lista.map((f) => (
-                <Table.Tr key={f.id} style={{ cursor: "pointer" }} onClick={() => navegar(`/sondagem/furos/${f.id}`)} data-furo={f.codigo}>
-                  <Table.Td fw={600}>{f.codigo}</Table.Td>
-                  <Table.Td>{[f.projeto, f.area].filter(Boolean).join(" · ")}</Table.Td>
-                  <Table.Td ta="right">{m(f.profundidade_final)}</Table.Td>
-                  <Table.Td>{f.azimute ?? "—"} / {f.inclinacao ?? "—"}</Table.Td>
-                  <Table.Td>{f.data_inicio ? dataCurta(f.data_inicio) : ""}</Table.Td>
-                  <Table.Td ta="right">{f.intervalos}</Table.Td>
-                  <Table.Td ta="right">{f.amostras} ({f.amostras_com_resultado})</Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
-      )}
-      {novo && <NovoFuro mina={mina} aoFechar={() => setNovo(false)} aoCriar={(id) => navegar(`/sondagem/furos/${id}`)} />}
-      {importar && <ImportarSondagem mina={mina} fechar={() => setImportar(false)} />}
-    </Stack>
+    <Painel p={0} titulo="Cadastro de furos" descricao="Clique num furo para abrir a ficha: log para imprimir, editar a descrição e enviar fotos.">
+      <TabelaDados dados={furos.data ?? []} chave={(f) => f.id} aoClicar={(f) => navegar(`/sondagem/furos/${f.id}`)} busca minLargura={820} alturaMax="calc(100vh - 300px)" testId="lista-furos"
+        ordemInicial={{ chave: "codigo" }}
+        vazio={furos.isLoading ? <Carregando /> : <Vazio titulo="Nenhum furo cadastrado." descricao={pode ? "Use Novo furo ou Importar (collar, survey, descrição geológica e amostras, em CSV ou Excel)." : undefined} />}
+        colunas={[
+          { chave: "codigo", titulo: "Furo", fixa: true, render: (f) => <Text size="sm" fw={600} c="geo.8">{f.codigo}</Text>, valor: (f) => f.codigo },
+          { chave: "projeto", titulo: "Projeto / área", valor: (f) => [f.projeto, f.area].filter(Boolean).join(" · ") },
+          { chave: "profundidade_final", titulo: "Profundidade (m)", numero: true, valor: (f) => f.profundidade_final, render: (f) => m(f.profundidade_final) },
+          { chave: "azimute", titulo: "Az / Inc (°)", numero: true, valor: (f) => f.azimute, render: (f) => `${f.azimute ?? "—"} / ${f.inclinacao ?? "—"}` },
+          { chave: "data_inicio", titulo: "Início", valor: (f) => f.data_inicio ?? "", render: (f) => (f.data_inicio ? dataCurta(f.data_inicio) : "") },
+          { chave: "intervalos", titulo: "Intervalos descritos", numero: true, valor: (f) => f.intervalos },
+          { chave: "amostras", titulo: "Amostras", numero: true, valor: (f) => f.amostras },
+          { chave: "amostras_com_resultado", titulo: "Com laudo", numero: true, valor: (f) => f.amostras_com_resultado },
+          { chave: "responsavel", titulo: "Responsável", valor: (f) => f.responsavel ?? "" },
+        ]} />
+    </Painel>
   );
 }
 
@@ -139,17 +114,17 @@ export function LogFuro({ id, pode }: { id: string; pode: boolean }) {
   const d = q.data;
   const f = d.furo;
   return (
-    <Stack>
-      <Group justify="space-between">
+    <Stack gap={10}>
+      <Group justify="space-between" className="nao-imprimir">
         <Group gap="xs">
-          <Button variant="subtle" size="xs" onClick={() => navegar("/sondagem/furos")}>← Furos</Button>
-          <Title order={3}>Log do furo {f.codigo}</Title>
+          <Button variant="default" leftSection={<IconArrowLeft size={14} />} onClick={() => navegar("/sondagem/furos")}>Furos</Button>
+          <Text fw={600} size="lg">Log do furo {f.codigo}</Text>
         </Group>
         <Group gap={6}>
-          {pode && <Button size="xs" variant="light" onClick={() => setEditar(true)}>Editar descrição</Button>}
-          {pode && <Button size="xs" variant="light" onClick={() => setFotos(true)}>Enviar fotos / arquivos</Button>}
-          <Button size="xs" variant="default" onClick={() => imprimirElemento(area.current, `Log ${f.codigo}`)}>Imprimir / PDF</Button>
-          {pode && <Button size="xs" variant="subtle" color="red" onClick={() => setExcluir(true)}>Excluir furo</Button>}
+          {pode && <Button variant="default" leftSection={<IconEdit size={14} />} onClick={() => setEditar(true)}>Editar descrição</Button>}
+          {pode && <Button variant="default" leftSection={<IconUpload size={14} />} onClick={() => setFotos(true)}>Enviar fotos / arquivos</Button>}
+          <Button variant="default" leftSection={<IconPrinter size={14} />} onClick={() => imprimirElemento(area.current, `Log ${f.codigo}`)}>Imprimir / PDF</Button>
+          {pode && <Button variant="light" color="red" leftSection={<IconTrash size={14} />} onClick={() => setExcluir(true)}>Excluir furo</Button>}
         </Group>
       </Group>
       <div ref={area}>
@@ -166,7 +141,7 @@ export function LogFuro({ id, pode }: { id: string; pode: boolean }) {
           {f.descricao && <Text size="xs" mt={4}>{f.descricao}</Text>}
         </Paper>
         {d.sem_profundidade.length > 0 && <Alert color="yellow" mt="xs" p="xs">Amostras ligadas ao furo sem profundidade de/até: {d.sem_profundidade.join(", ")}</Alert>}
-        <Group align="flex-start" wrap="nowrap" gap="md" mt="sm">
+        <Group className="gm-lateral" align="flex-start" wrap="nowrap" gap="md" mt="sm">
           <ColunaLog d={d} />
           <Stack gap="md" style={{ flex: 1, minWidth: 0 }}>
             <TabelaAmostras d={d} />

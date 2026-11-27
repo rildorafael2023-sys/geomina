@@ -1,9 +1,10 @@
 import {
-  Alert, Badge, Button, Checkbox, FileButton, Group, Loader, Modal, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Table,
-  Tabs, Text, TextInput, Textarea, Title,
+  Alert, Badge, Button, Checkbox, FileButton, Group, Modal, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Table,
+  Tabs, Text, TextInput, Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconPlus, IconSearch, IconTestPipe } from "@tabler/icons-react";
 import { useState } from "react";
 
 import {
@@ -12,17 +13,18 @@ import {
 } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
 import { SeletorLocal } from "../../componentes/SeletorLocal";
+import { m } from "../../componentes/perfil";
+import { BarraFiltros, Carregando, Pagina, Painel, TabelaDados, Vazio } from "../../componentes/ui";
 import { PerfilFrente } from "./PerfilFrente";
 
 export function Amostras({ eu }: { eu: Eu }) {
   const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
-  if (minas.isLoading) return <Loader />;
+  if (minas.isLoading) return <Carregando />;
   const mina = minas.data?.[0];
   if (!mina) return <Alert color="yellow">Cadastre a mina antes de registrar amostras.</Alert>;
   const podeEditar = eu.permissoes.includes("amostra:editar");
   return (
-    <Stack>
-      <Title order={3}>Amostras</Title>
+    <Pagina titulo="Amostras" icone={<IconTestPipe size={20} />} subtitulo={`Amostras de frente, testemunho e controle de qualidade da ${mina.nome} · clique numa amostra para ver o perfil da frente com os teores`}>
       <Tabs defaultValue="lista" keepMounted={false}>
         <Tabs.List>
           <Tabs.Tab value="lista">Amostras</Tabs.Tab>
@@ -33,7 +35,7 @@ export function Amostras({ eu }: { eu: Eu }) {
         <Tabs.Panel value="lotes" pt="sm"><Lotes mina={mina} podeEditar={podeEditar} /></Tabs.Panel>
         <Tabs.Panel value="importar" pt="sm"><Importar mina={mina} /></Tabs.Panel>
       </Tabs>
-    </Stack>
+    </Pagina>
   );
 }
 
@@ -49,43 +51,35 @@ function Lista({ mina, podeEditar }: { mina: Mina; podeEditar: boolean }) {
   if (f.papel) p.set("papel", f.papel);
   if (f.litologia) p.set("litologia_id", f.litologia);
   const lista = useQuery({ queryKey: ["amostras", mina.id, p.toString()], queryFn: () => api<Amostra[]>(`/minas/${mina.id}/amostras?${p}`) });
+  const dados = lista.data ?? [];
+  const porEstado = Object.entries(ESTADOS_AMOSTRA).map(([k, e]) => ({ k, e, n: dados.filter((x) => x.estado === k).length })).filter((x) => x.n > 0);
   return (
-    <Stack gap="sm">
-      <Paper withBorder p="sm">
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 5 }}>
-          <TextInput label="Código, local ou descrição" value={f.texto} onChange={(e) => setF({ ...f, texto: e.currentTarget.value })} />
-          <Select label="Série" clearable value={f.serie} onChange={(v) => setF({ ...f, serie: v })} data={["BS-RP", "BMT-TS", "BE"]} />
-          <Select label="Situação" clearable value={f.estado} onChange={(v) => setF({ ...f, estado: v })} data={Object.entries(ESTADOS_AMOSTRA).map(([value, e]) => ({ value, label: e.rotulo }))} />
-          <Select label="Controle de qualidade" clearable value={f.papel} onChange={(v) => setF({ ...f, papel: v })} data={Object.entries(PAPEIS_CONTROLE).map(([value, label]) => ({ value, label }))} />
-          <Select label="Litologia" clearable searchable value={f.litologia} onChange={(v) => setF({ ...f, litologia: v })} data={dic.opcoes("LITOLOGIA", f.litologia)} />
-        </SimpleGrid>
-      </Paper>
-      <Group justify="space-between">
-        <Group gap={6}><Text size="sm" c="dimmed">{lista.data?.length ?? 0} amostra(s)</Text><Text size="xs" c="dimmed">· clique numa amostra para ver o perfil da frente com os teores</Text></Group>
-        {podeEditar && <Button size="xs" onClick={() => setAberta("nova")}>Nova amostra</Button>}
-      </Group>
-      {lista.isLoading ? <Loader size="sm" /> : (
-        <ScrollArea>
-          <Table striped highlightOnHover miw={760}>
-            <Table.Thead>
-              <Table.Tr><Table.Th>Código</Table.Th><Table.Th>Data</Table.Th><Table.Th>Local</Table.Th><Table.Th>Seção (m)</Table.Th><Table.Th>Litologia</Table.Th><Table.Th>Ficha</Table.Th><Table.Th>Situação</Table.Th></Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {(lista.data ?? []).map((a) => (
-                <Table.Tr key={a.id} style={{ cursor: "pointer" }} onClick={() => setPerfil(a)} data-amostra={a.codigo}>
-                  <Table.Td fw={500}>{a.codigo}{a.papel_controle !== "normal" && <Badge size="xs" ml={4} variant="outline">{PAPEIS_CONTROLE[a.papel_controle]}</Badge>}</Table.Td>
-                  <Table.Td>{a.data_coleta ? dataCurta(a.data_coleta) : ""}</Table.Td>
-                  <Table.Td fz="xs">{a.unidade ?? a.local_descricao ?? (a.furo ? `furo ${a.furo}` : "")}</Table.Td>
-                  <Table.Td fz="xs">{a.secao_de_m !== null ? `${a.secao_de_m}–${a.secao_ate_m}` : a.prof_de_m !== null ? `${a.prof_de_m}–${a.prof_ate_m} (prof.)` : ""}</Table.Td>
-                  <Table.Td fz="xs">{a.litologia ?? ""}</Table.Td>
-                  <Table.Td fz="xs">{a.ficha ?? ""}</Table.Td>
-                  <Table.Td><Badge size="sm" variant="light" color={ESTADOS_AMOSTRA[a.estado].cor}>{ESTADOS_AMOSTRA[a.estado].rotulo}</Badge></Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
-      )}
+    <Stack gap={10}>
+      <BarraFiltros aoLimpar={() => setF({ texto: "", serie: null, estado: null, papel: null, litologia: null })}
+        fim={podeEditar && <Button leftSection={<IconPlus size={14} />} onClick={() => setAberta("nova")}>Nova amostra</Button>}>
+        <TextInput w={220} label="Código, local ou descrição" leftSection={<IconSearch size={13} />} value={f.texto} onChange={(e) => setF({ ...f, texto: e.currentTarget.value })} />
+        <Select w={120} label="Série" clearable value={f.serie} onChange={(v) => setF({ ...f, serie: v })} data={["BS-RP", "BMT-TS", "BE"]} />
+        <Select w={170} label="Situação" clearable value={f.estado} onChange={(v) => setF({ ...f, estado: v })} data={Object.entries(ESTADOS_AMOSTRA).map(([value, e]) => ({ value, label: e.rotulo }))} />
+        <Select w={180} label="Controle de qualidade" clearable value={f.papel} onChange={(v) => setF({ ...f, papel: v })} data={Object.entries(PAPEIS_CONTROLE).map(([value, label]) => ({ value, label }))} />
+        <Select w={200} label="Litologia" clearable searchable value={f.litologia} onChange={(v) => setF({ ...f, litologia: v })} data={dic.opcoes("LITOLOGIA", f.litologia)} />
+      </BarraFiltros>
+      <Painel p={0} titulo={`${dados.length} amostra(s)`}
+        acoes={<Group gap={6}>{porEstado.map((x) => <Badge key={x.k} color={x.e.cor}>{x.e.rotulo}: {x.n}</Badge>)}</Group>}>
+        <TabelaDados dados={dados} chave={(a) => a.id} aoClicar={setPerfil} selecionada={perfil?.id} minLargura={820} alturaMax="calc(100vh - 290px)"
+          vazio={lista.isLoading ? <Carregando /> : <Vazio titulo="Nenhuma amostra encontrada." descricao="Importe a planilha de campo na aba Importar planilha ou cadastre uma nova amostra." />}
+          colunas={[
+            { chave: "codigo", titulo: "Código", fixa: true, valor: (a) => a.codigo,
+              render: (a) => <Text size="sm" fw={600} c="geo.8" span>{a.codigo}{a.papel_controle !== "normal" && <Badge size="xs" ml={4} variant="outline">{PAPEIS_CONTROLE[a.papel_controle]}</Badge>}</Text> },
+            { chave: "data", titulo: "Data", largura: 96, valor: (a) => a.data_coleta ?? "", render: (a) => (a.data_coleta ? dataCurta(a.data_coleta) : "") },
+            { chave: "local", titulo: "Local", valor: (a) => a.unidade ?? a.local_descricao ?? (a.furo ? `furo ${a.furo}` : "") },
+            { chave: "secao", titulo: "Seção / prof. (m)", numero: true, valor: (a) => a.secao_de_m ?? a.prof_de_m ?? null,
+              render: (a) => (a.secao_de_m !== null ? `${m(a.secao_de_m)} – ${m(a.secao_ate_m)}` : a.prof_de_m !== null ? `${m(a.prof_de_m)} – ${m(a.prof_ate_m)} (prof.)` : "") },
+            { chave: "litologia", titulo: "Litologia", valor: (a) => a.litologia ?? "" },
+            { chave: "ficha", titulo: "Ficha", valor: (a) => a.ficha ?? "" },
+            { chave: "estado", titulo: "Situação", largura: 150, valor: (a) => ESTADOS_AMOSTRA[a.estado].rotulo,
+              render: (a) => <Badge color={ESTADOS_AMOSTRA[a.estado].cor}>{ESTADOS_AMOSTRA[a.estado].rotulo}</Badge> },
+          ]} />
+      </Painel>
       {perfil && !aberta && <PerfilFrente amostraId={perfil.id} podeEditar={podeEditar} aoFechar={() => setPerfil(null)} aoEditarAmostra={() => setAberta(perfil)} />}
       {aberta && <FormAmostra mina={mina} amostra={aberta === "nova" ? null : aberta} podeEditar={podeEditar} aoFechar={() => setAberta(null)} />}
     </Stack>

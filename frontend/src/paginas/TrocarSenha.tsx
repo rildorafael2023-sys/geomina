@@ -1,8 +1,10 @@
-import { Alert, Button, Center, Paper, PasswordInput, Stack, Text, Title } from "@mantine/core";
+import { Alert, Button, PasswordInput, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState, type FormEvent } from "react";
 
 import { api, ErroApi, json } from "../api/cliente";
+import { IconKey } from "@tabler/icons-react";
+import { Pagina, Painel, TelaEntrada } from "../componentes/ui";
 
 export function TrocarSenha({ obrigatoria = false, aoConcluir }: { obrigatoria?: boolean; aoConcluir: () => void }) {
   const [atual, setAtual] = useState("");
@@ -24,9 +26,9 @@ export function TrocarSenha({ obrigatoria = false, aoConcluir }: { obrigatoria?:
   }
 
   const form = (
-    <Paper withBorder p="xl" w="100%" maw={400} component="form" onSubmit={enviar}>
+    <form onSubmit={enviar}>
       <Stack>
-        <Title order={4}>{obrigatoria ? "Defina uma nova senha" : "Trocar minha senha"}</Title>
+        {obrigatoria && <Text fw={600} size="lg">Defina uma nova senha</Text>}
         {obrigatoria && (
           <Text size="sm" c="dimmed">
             Sua senha foi criada ou redefinida pelo administrador. Defina uma senha pessoal para continuar.
@@ -38,13 +40,13 @@ export function TrocarSenha({ obrigatoria = false, aoConcluir }: { obrigatoria?:
         <PasswordInput label="Confirme a nova senha" value={conf} onChange={(e) => setConf(e.currentTarget.value)} required />
         <Button type="submit">Salvar</Button>
       </Stack>
-    </Paper>
+    </form>
   );
   return obrigatoria ? (
-    <Center mih="100vh" p="md">
-      {form}
-    </Center>
+    <TelaEntrada largura={420}>{form}</TelaEntrada>
   ) : (
-    form
+    <Pagina titulo="Trocar minha senha" icone={<IconKey size={20} />} subtitulo="A senha vale para entrar no GeoMina neste computador.">
+      <Painel style={{ maxWidth: 420 }}>{form}</Painel>
+    </Pagina>
   );
 }

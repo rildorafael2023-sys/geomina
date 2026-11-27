@@ -6,18 +6,18 @@ import {
   Modal,
   MultiSelect,
   PasswordInput,
-  ScrollArea,
   Stack,
   Switch,
-  Table,
+  Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { api, ErroApi, json, type Eu, type Papel, type Usuario } from "../api/cliente";
+import { api, dataHora, ErroApi, json, type Eu, type Papel, type Usuario } from "../api/cliente";
+import { IconEdit, IconKey, IconPlus, IconUsers } from "@tabler/icons-react";
+import { Pagina, Painel, TabelaDados } from "../componentes/ui";
 
 type Form = { login: string; nome: string; email: string; senha: string; papeis: string[]; ativo: boolean };
 const VAZIO: Form = { login: "", nome: "", email: "", senha: "", papeis: ["GEOLOGO"], ativo: true };
@@ -68,51 +68,25 @@ export function Usuarios({ eu }: { eu: Eu }) {
   const opcoesPapeis = (papeis.data ?? []).map((p) => ({ value: p.codigo, label: p.nome }));
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={3}>Usuários</Title>
-        <Button onClick={() => abrir("novo")}>Novo usuário</Button>
-      </Group>
+    <Pagina titulo="Usuários" icone={<IconUsers size={20} />} subtitulo="Quem pode entrar no GeoMina neste computador e o que cada um pode fazer (papéis)"
+      acoes={<Button leftSection={<IconPlus size={14} />} onClick={() => abrir("novo")}>Novo usuário</Button>}>
       {usuarios.error && <Alert color="red">Não foi possível carregar os usuários.</Alert>}
-      <ScrollArea>
-        <Table striped highlightOnHover miw={640}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Nome</Table.Th>
-              <Table.Th>Login</Table.Th>
-              <Table.Th>Papéis</Table.Th>
-              <Table.Th>Situação</Table.Th>
-              <Table.Th />
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {(usuarios.data ?? []).map((u) => (
-              <Table.Tr key={u.id}>
-                <Table.Td>{u.nome}</Table.Td>
-                <Table.Td>{u.login}</Table.Td>
-                <Table.Td>
-                  {u.papeis.map((p) => (
-                    <Badge key={p.codigo} variant="light" mr={4}>
-                      {p.nome}
-                    </Badge>
-                  ))}
-                </Table.Td>
-                <Table.Td>{u.ativo ? <Badge color="teal">Ativo</Badge> : <Badge color="gray">Inativo</Badge>}</Table.Td>
-                <Table.Td>
-                  <Group gap={4} justify="flex-end" wrap="nowrap">
-                    <Button size="xs" variant="subtle" onClick={() => abrir(u)}>
-                      Editar
-                    </Button>
-                    <Button size="xs" variant="subtle" onClick={() => { setErro(null); setNovaSenha(""); setSenhaDe(u); }}>
-                      Redefinir senha
-                    </Button>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      </ScrollArea>
+      <Painel p={0}>
+        <TabelaDados dados={usuarios.data ?? []} chave={(u) => u.id} busca minLargura={720}
+          colunas={[
+            { chave: "nome", titulo: "Nome", valor: (u) => u.nome, render: (u) => <Text size="sm" fw={600}>{u.nome}</Text> },
+            { chave: "login", titulo: "Login", valor: (u) => u.login },
+            { chave: "email", titulo: "E-mail", valor: (u) => u.email ?? "" },
+            { chave: "papeis", titulo: "Papéis", valor: (u) => u.papeis.map((p) => p.nome).join(", "), render: (u) => u.papeis.map((p) => <Badge key={p.codigo} mr={4}>{p.nome}</Badge>) },
+            { chave: "ultimo", titulo: "Último acesso", valor: (u) => u.ultimo_acesso ?? "", render: (u) => (u.ultimo_acesso ? dataHora(u.ultimo_acesso) : "—") },
+            { chave: "ativo", titulo: "Situação", valor: (u) => (u.ativo ? "Ativo" : "Inativo"), render: (u) => (u.ativo ? <Badge color="green">Ativo</Badge> : <Badge color="gray">Inativo</Badge>) },
+            { chave: "acoes", titulo: "", ordenavel: false, render: (u) => (
+              <Group gap={4} justify="flex-end" wrap="nowrap">
+                <Button size="compact-xs" variant="subtle" leftSection={<IconEdit size={12} />} onClick={() => abrir(u)}>Editar</Button>
+                <Button size="compact-xs" variant="subtle" leftSection={<IconKey size={12} />} onClick={() => { setErro(null); setNovaSenha(""); setSenhaDe(u); }}>Redefinir senha</Button>
+              </Group>) },
+          ]} />
+      </Painel>
 
       <Modal opened={editando !== null} onClose={() => setEditando(null)} title={titulo}>
         <Stack>
@@ -142,6 +116,6 @@ export function Usuarios({ eu }: { eu: Eu }) {
           </Button>
         </Stack>
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }

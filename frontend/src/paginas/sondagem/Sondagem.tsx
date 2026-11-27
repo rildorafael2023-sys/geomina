@@ -1,9 +1,11 @@
-import { Alert, Button, Group, Loader, SegmentedControl, Stack, Tabs, Text } from "@mantine/core";
+import { Alert, Button, SegmentedControl, Tabs, Text } from "@mantine/core";
+import { IconChartBar, IconChartLine, IconList, IconPhoto, IconPlus, IconStack2, IconTable, IconUpload } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api, type Eu, type Mina } from "../../api/cliente";
+import { Carregando, Pagina } from "../../componentes/ui";
 import { AmostragemFuros } from "./Amostragem";
 import { ImportarSondagem, ListaFuros, LogFuro, NovoFuro } from "./Cadastro";
 import { FotosTestemunho } from "./Fotos";
@@ -12,11 +14,11 @@ import { TracksGeoquimicos } from "./Tracks";
 import { SondagemCtx, type FiltroTipo, type FuroResumo } from "./tipos";
 
 const ABAS = [
-  { valor: "perfil", rotulo: "Perfil do furo" },
-  { valor: "amostragem", rotulo: "Amostragem geoquímica" },
-  { valor: "fotos", rotulo: "Fotos de testemunho" },
-  { valor: "tracks", rotulo: "Tracks geoquímicos" },
-  { valor: "furos", rotulo: "Cadastro de furos" },
+  { valor: "perfil", rotulo: "Perfil do furo", icone: <IconChartBar size={14} /> },
+  { valor: "amostragem", rotulo: "Amostragem geoquímica", icone: <IconTable size={14} /> },
+  { valor: "fotos", rotulo: "Fotos de testemunho", icone: <IconPhoto size={14} /> },
+  { valor: "tracks", rotulo: "Tracks geoquímicos", icone: <IconChartLine size={14} /> },
+  { valor: "furos", rotulo: "Cadastro de furos", icone: <IconList size={14} /> },
 ];
 
 function ler<T>(k: string, padrao: T): T {
@@ -28,7 +30,7 @@ function gravar(k: string, v: unknown) {
 
 export function Sondagem({ eu }: { eu: Eu }) {
   const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
-  if (minas.isLoading) return <Loader />;
+  if (minas.isLoading) return <Carregando />;
   const mina = minas.data?.[0];
   if (!mina) return <Alert color="yellow">Cadastre a mina antes de registrar sondagens.</Alert>;
   return <Area mina={mina} pode={eu.permissoes.includes("sondagem:importar")} />;
@@ -58,21 +60,20 @@ function Area({ mina, pode }: { mina: Mina; pode: boolean }) {
   const ex = todos.filter((f) => f.tipo === "exploratorio").length, ina = todos.length - ex;
   return (
     <SondagemCtx.Provider value={{ mina, pode, filtro, furos: visiveis, furo, setFuro, elementos, setElementos }}>
-      <Stack gap="xs">
-        <Group justify="space-between" gap="xs" className="nao-imprimir">
-          <Tabs value={aba === "" ? "perfil" : ABAS.some((a) => a.valor === aba) ? aba : "furos"} onChange={(v) => navegar(v === "perfil" ? "/sondagem" : `/sondagem/${v}`)} variant="pills" radius="xl">
-            <Tabs.List>
-              {ABAS.map((a) => <Tabs.Tab key={a.valor} value={a.valor}>{a.rotulo}</Tabs.Tab>)}
-            </Tabs.List>
-          </Tabs>
-          <Group gap={6}>
-            <SegmentedControl size="xs" value={filtro} onChange={(v) => setFiltro(v as FiltroTipo)}
-              data={[{ value: "todos", label: `Todos os furos (${todos.length})` }, { value: "exploratorio", label: `Exploratórios (F) ${ex}` }, { value: "ina", label: `INA (água) ${ina}` }]} />
-            {pode && <Button size="xs" variant="default" onClick={() => setNovo(true)}>Novo furo</Button>}
-            {pode && <Button size="xs" onClick={() => setImportar(true)}>Importar</Button>}
-          </Group>
-        </Group>
-        {furos.isLoading ? <Loader size="sm" /> : !todos.length && aba !== "furos" ? (
+      <Pagina titulo="Sondagem" icone={<IconStack2 size={20} />}
+        subtitulo={`${todos.length} furo(s) · ${ex} exploratório(s) (F) · ${ina} INA (água) · ${mina.codigo}`}
+        acoes={<>
+          <SegmentedControl value={filtro} onChange={(v) => setFiltro(v as FiltroTipo)}
+            data={[{ value: "todos", label: `Todos os furos (${todos.length})` }, { value: "exploratorio", label: `Exploratórios (F) ${ex}` }, { value: "ina", label: `INA (água) ${ina}` }]} />
+          {pode && <Button variant="default" leftSection={<IconPlus size={14} />} onClick={() => setNovo(true)}>Novo furo</Button>}
+          {pode && <Button leftSection={<IconUpload size={14} />} onClick={() => setImportar(true)}>Importar</Button>}
+        </>}>
+        <Tabs value={aba === "" ? "perfil" : ABAS.some((a) => a.valor === aba) ? aba : "furos"} onChange={(v) => navegar(v === "perfil" ? "/sondagem" : `/sondagem/${v}`)} className="nao-imprimir">
+          <Tabs.List>
+            {ABAS.map((a) => <Tabs.Tab key={a.valor} value={a.valor} leftSection={a.icone}>{a.rotulo}</Tabs.Tab>)}
+          </Tabs.List>
+        </Tabs>
+        {furos.isLoading ? <Carregando /> : !todos.length && aba !== "furos" ? (
           <Alert color="gray">
             <Text size="sm">Nenhum furo cadastrado. Use <b>Importar</b> com as planilhas de collar, desvio, descrição geológica (com RQD e caixa, se tiver) e amostras, ou <b>Novo furo</b>.</Text>
           </Alert>
@@ -86,7 +87,7 @@ function Area({ mina, pode }: { mina: Mina; pode: boolean }) {
             <Route path="furos/:id" element={<FichaComId pode={pode} />} />
           </Routes>
         )}
-      </Stack>
+      </Pagina>
       {novo && <NovoFuro mina={mina} aoFechar={() => setNovo(false)} aoCriar={(id) => { setNovo(false); setFuro(id); navegar("/sondagem"); }} />}
       {importar && <ImportarSondagem mina={mina} fechar={() => setImportar(false)} />}
     </SondagemCtx.Provider>

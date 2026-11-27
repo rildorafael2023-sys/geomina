@@ -5,7 +5,6 @@ import {
   Button,
   Collapse,
   Grid,
-  Group,
   Loader,
   Modal,
   NumberInput,
@@ -16,11 +15,11 @@ import {
   Text,
   TextInput,
   Textarea,
-  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { IconArrowLeft, IconClipboardText, IconPrinter } from "@tabler/icons-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
@@ -35,6 +34,7 @@ import {
 } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
 import { SeletorLocal } from "../../componentes/SeletorLocal";
+import { Pagina, Painel } from "../../componentes/ui";
 import { ColunaSecao, Estereograma } from "../../geologia/Graficos";
 import { PainelDocumentos } from "../documentos/PainelDocumentos";
 
@@ -268,25 +268,15 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
   }
 
   return (
-    <Stack>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Group gap="xs">
-            <Title order={3}>{d ? `Ficha ${d.numero}` : "Nova ficha de mapeamento"}</Title>
-            {d && <Badge color={ESTADOS_FICHA[d.estado].cor}>{ESTADOS_FICHA[d.estado].rotulo}</Badge>}
-            {d && d.revisao > 0 && <Badge variant="outline">revisão {d.revisao}</Badge>}
-          </Group>
-          {d && (
-            <Text size="sm" c="dimmed">
-              {d.geologo} · {d.unidade_caminho.join(" › ")} {d.revisado_por && `· revisada por ${d.revisado_por} em ${dataHora(d.revisado_em!)}`}
-            </Text>
-          )}
-        </div>
-        <Group gap={6} className="nao-imprimir">
-          <Button variant="subtle" component={Link} to="/mapeamento">Voltar à lista</Button>
-          {d && <Button variant="light" component={Link} to={`/mapeamento/${d.id}/imprimir`}>Imprimir / PDF</Button>}
-        </Group>
-      </Group>
+    <Pagina icone={<IconClipboardText size={20} />}
+      titulo={<span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>{d ? `Ficha ${d.numero}` : "Nova ficha de mapeamento"}
+        {d && <Badge color={ESTADOS_FICHA[d.estado].cor}>{ESTADOS_FICHA[d.estado].rotulo}</Badge>}
+        {d && d.revisao > 0 && <Badge variant="outline">revisão {d.revisao}</Badge>}</span>}
+      subtitulo={d ? `${d.geologo} · ${d.unidade_caminho.join(" › ")}${d.revisado_por ? ` · revisada por ${d.revisado_por} em ${dataHora(d.revisado_em!)}` : ""}` : "Preencha a identificação e os intervalos; a ficha começa como rascunho."}
+      acoes={<>
+        <Button variant="default" leftSection={<IconArrowLeft size={14} />} component={Link} to="/mapeamento">Voltar à lista</Button>
+        {d && <Button variant="default" leftSection={<IconPrinter size={14} />} component={Link} to={`/mapeamento/${d.id}/imprimir`}>Imprimir / PDF</Button>}
+      </>}>
 
       {erro && <Alert color="red" withCloseButton onClose={() => setErro(null)}>{erro}</Alert>}
       {d?.motivo && d.estado !== "aprovado" && (
@@ -300,11 +290,11 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
         </Alert>
       )}
 
-      <Grid>
-        <Grid.Col span={{ base: 12, lg: 8 }}>
-          <Stack>
+      <Grid gutter={10}>
+        <Grid.Col span={{ base: 12, lg: 8, xl: 9 }}>
+          <Stack gap={10}>
             <Secao titulo="A. Identificação">
-              <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+              <SimpleGrid cols={{ base: 1, sm: 2, md: 3, xl: 4 }} spacing="sm" verticalSpacing={6}>
                 <SeletorLocal mina={mina} label="Local (unidade da mina)" required valor={f.unidade_id} aoMudar={(v) => up({ unidade_id: v })} readOnly={ro} extra={localAtual} podeCriar={eu.permissoes.includes("estrutura:editar")} />
                 <TextInput type="date" label="Data" required value={f.data} onChange={(e) => up({ data: e.currentTarget.value })} readOnly={ro} />
                 <TextInput type="time" label="Hora" value={f.hora} onChange={(e) => up({ hora: e.currentTarget.value })} readOnly={ro} />
@@ -517,18 +507,9 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
           </Stack>
         </Grid.Col>
 
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <Stack style={{ position: "sticky", top: 70 }}>
-            <Paper withBorder p="sm">
-              <Text fw={600} size="sm" mb={4}>Coluna da seção</Text>
-              <ColunaSecao faixas={faixas} altura={n(f.altura_m)} />
-            </Paper>
-            <Paper withBorder p="sm">
-              <Text fw={600} size="sm" mb={4}>Estereograma (Schmidt, hemisfério inferior)</Text>
-              <Estereograma medidas={medidasPlot} />
-              <Text size="xs" c="dimmed">● polos e grandes círculos de planos · ▲ lineações</Text>
-            </Paper>
-            <Paper withBorder p="sm" className="nao-imprimir">
+        <Grid.Col span={{ base: 12, lg: 4, xl: 3 }}>
+          <Stack gap={10} style={{ position: "sticky", top: 56 }}>
+            <Painel titulo="Fluxo da ficha" className="nao-imprimir">
               <Stack gap="xs">
                 {editavel && (
                   <Button loading={salvar.isPending} onClick={() => { setErro(null); salvar.mutate(); }}>
@@ -536,13 +517,13 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
                   </Button>
                 )}
                 {d?.estado === "rascunho" && d.pode_editar && (
-                  <Button variant="light" color="yellow" onClick={() => { setErro(null); transicao.mutate({ acao: "submeter" }); }}>
+                  <Button color="yellow" onClick={() => { setErro(null); transicao.mutate({ acao: "submeter" }); }}>
                     Submeter para revisão
                   </Button>
                 )}
                 {d?.estado === "submetido" && d.pode_aprovar && (
                   <>
-                    <Button color="teal" onClick={() => { setErro(null); transicao.mutate({ acao: "aprovar" }); }}>Aprovar</Button>
+                    <Button color="green" onClick={() => { setErro(null); transicao.mutate({ acao: "aprovar" }); }}>Aprovar</Button>
                     <Button variant="light" onClick={() => { setTextoMotivo(""); setMotivo({ acao: "devolver", titulo: "Devolver ao autor" }); }}>Devolver ao autor</Button>
                   </>
                 )}
@@ -568,7 +549,14 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
                   </Text>
                 )}
               </Stack>
-            </Paper>
+            </Painel>
+            <Painel titulo="Coluna da seção" descricao="piso → teto">
+              <ColunaSecao faixas={faixas} altura={n(f.altura_m)} />
+            </Painel>
+            <Painel titulo="Estereograma" descricao="Schmidt, hemisfério inferior">
+              <Estereograma medidas={medidasPlot} />
+              <Text size="xs" c="dimmed">● polos e grandes círculos de planos · ▲ lineações</Text>
+            </Painel>
           </Stack>
         </Grid.Col>
       </Grid>
@@ -582,15 +570,10 @@ export function FichaEditor({ id, eu, mina }: { id?: string; eu: Eu; mina: Mina 
           </Button>
         </Stack>
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }
 
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <Paper withBorder p="md">
-      <Text fw={700} mb="sm">{titulo}</Text>
-      {children}
-    </Paper>
-  );
+  return <Painel titulo={titulo}>{children}</Painel>;
 }

@@ -1,9 +1,11 @@
-import { Alert, Badge, Button, Checkbox, ColorInput, Group, Loader, Modal, NumberInput, Paper, ScrollArea, Stack, Switch, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, Checkbox, ColorInput, Group, Loader, Modal, NumberInput, Paper, ScrollArea, Stack, Switch, Table, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { api, ErroApi, json, type TipoUnidade } from "../../api/cliente";
+import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
+import { Pagina } from "../../componentes/ui";
 
 type Form = Omit<TipoUnidade, "id" | "versao" | "filhos_permitidos">;
 const NOVO: Form = { codigo: "", nome: "", pode_ser_raiz: false, possui_eixo: false, multinivel: false, e_nivel: false, e_frente: false, cor: "#868e96", ordem: 100, ativo: true };
@@ -51,8 +53,7 @@ export function ConfiguracaoEstrutura() {
     setRegras((r) => ({ ...r, [pai]: r[pai]?.includes(filho) ? r[pai].filter((x) => x !== filho) : [...(r[pai] ?? []), filho] }));
 
   return (
-    <Stack>
-      <Title order={3}>Configuração da estrutura</Title>
+    <Pagina titulo="Configuração da estrutura" icone={<IconAdjustmentsHorizontal size={20} />}>
       {erro && (
         <Alert color="red" withCloseButton onClose={() => setErro(null)}>
           {erro}
@@ -163,6 +164,6 @@ export function ConfiguracaoEstrutura() {
           </Button>
         </Stack>
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }

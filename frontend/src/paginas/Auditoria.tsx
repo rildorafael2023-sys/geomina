@@ -1,8 +1,10 @@
-import { Alert, Badge, Button, Code, Group, Loader, Modal, Pagination, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, Code, Group, Modal, Pagination, ScrollArea, Select, Stack, Table, Text, TextInput } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { api, dataHora, type ItemAuditoria, type Usuario } from "../api/cliente";
+import { IconHistory } from "@tabler/icons-react";
+import { BarraFiltros, Carregando, Pagina, Painel } from "../componentes/ui";
 
 const OPERACOES = [
   { value: "I", label: "Inclusão" },
@@ -37,33 +39,24 @@ export function Auditoria({ podeVerUsuarios }: { podeVerUsuarios: boolean }) {
   };
 
   return (
-    <Stack>
-      <div>
-        <Title order={3}>Histórico de alterações (auditoria)</Title>
-        <Text size="sm" c="dimmed">
-          Todo cadastro, alteração e exclusão feito no GeoMina. Os registros não podem ser alterados nem apagados.
-        </Text>
-      </div>
-      <Paper withBorder p="sm">
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 3 }}>
-          <Select label="Assunto" clearable data={(tabelas.data ?? []).map((t) => ({ value: t.valor, label: t.rotulo }))} value={f.tabela} onChange={(v) => mudar({ tabela: v })} />
-          <Select label="Operação" clearable data={OPERACOES} value={f.operacao} onChange={(v) => mudar({ operacao: v })} />
+    <Pagina titulo="Histórico de alterações (auditoria)" icone={<IconHistory size={20} />} subtitulo={<>Todo cadastro, alteração e exclusão feito no GeoMina. Os registros não podem ser alterados nem apagados.</>}>
+      <BarraFiltros>
+          <Select w={200} label="Assunto" clearable data={(tabelas.data ?? []).map((t) => ({ value: t.valor, label: t.rotulo }))} value={f.tabela} onChange={(v) => mudar({ tabela: v })} />
+          <Select w={150} label="Operação" clearable data={OPERACOES} value={f.operacao} onChange={(v) => mudar({ operacao: v })} />
           {podeVerUsuarios && (
-            <Select label="Usuário" clearable searchable data={(usuarios.data ?? []).map((u) => ({ value: u.id, label: u.nome }))} value={f.usuario} onChange={(v) => mudar({ usuario: v })} />
+            <Select w={200} label="Usuário" clearable searchable data={(usuarios.data ?? []).map((u) => ({ value: u.id, label: u.nome }))} value={f.usuario} onChange={(v) => mudar({ usuario: v })} />
           )}
-          <TextInput type="date" label="De" value={f.de} onChange={(e) => mudar({ de: e.currentTarget.value })} />
-          <TextInput type="date" label="Até" value={f.ate} onChange={(e) => mudar({ ate: e.currentTarget.value })} />
-          <TextInput label="Contém o texto" placeholder="ex.: N144" value={f.texto} onChange={(e) => mudar({ texto: e.currentTarget.value })} />
-        </SimpleGrid>
-      </Paper>
+          <TextInput w={140} type="date" label="De" value={f.de} onChange={(e) => mudar({ de: e.currentTarget.value })} />
+          <TextInput w={140} type="date" label="Até" value={f.ate} onChange={(e) => mudar({ ate: e.currentTarget.value })} />
+          <TextInput w={200} label="Contém o texto" placeholder="ex.: N144" value={f.texto} onChange={(e) => mudar({ texto: e.currentTarget.value })} />
+      </BarraFiltros>
       {dados.error && <Alert color="red">Não foi possível consultar a auditoria.</Alert>}
       {dados.isLoading ? (
-        <Loader />
+        <Carregando />
       ) : (
-        <>
-          <Text size="sm" c="dimmed">{dados.data?.total ?? 0} registro(s)</Text>
+        <Painel p={0} titulo={`${dados.data?.total ?? 0} registro(s)`} descricao="os mais recentes primeiro">
           <ScrollArea>
-            <Table striped highlightOnHover miw={680}>
+            <Table highlightOnHover miw={680}>
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Quando</Table.Th>
@@ -91,16 +84,16 @@ export function Auditoria({ podeVerUsuarios }: { podeVerUsuarios: boolean }) {
             </Table>
           </ScrollArea>
           {(dados.data?.total ?? 0) > TAMANHO && (
-            <Group justify="center">
-              <Pagination total={Math.ceil((dados.data?.total ?? 0) / TAMANHO)} value={pagina} onChange={setPagina} />
+            <Group justify="center" py={8}>
+              <Pagination size="sm" total={Math.ceil((dados.data?.total ?? 0) / TAMANHO)} value={pagina} onChange={setPagina} />
             </Group>
           )}
-        </>
+        </Painel>
       )}
       <Modal opened={aberto !== null} onClose={() => setAberto(null)} title="Detalhes do registro" size="lg">
         {aberto && <Detalhes a={aberto} />}
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }
 
