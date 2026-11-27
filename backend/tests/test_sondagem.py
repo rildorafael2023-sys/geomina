@@ -103,9 +103,6 @@ def test_perfil_trajetoria_e_resultados(cliente, h, mina):
     assert d3["trajetoria"]["pontos"][-1][2] == pytest.approx(500.0), "furo ascendente de subsolo sobe 20 m"
     tr = {t["codigo"]: t for t in cliente.get(f"{API}/minas/{mina['id']}/furos/trajetorias", headers=h).json()}
     assert tr["FUR-02"]["estimada"] is False and len(tr["FUR-02"]["pontos"]) > 10
-    # a amostra agora tem furo e profundidade também na base da geoquímica operacional
-    r = cliente.get(f"{API}/minas/{mina['id']}/geoop/registros", headers=h, params={"texto": "BMT-TS-458"}).json()["itens"][0]
-    assert (r["furo"], r["prof_de_m"], r["prof_ate_m"]) == ("FUR-01", 0, 1)
 
 
 def test_convencoes_de_inclinacao_e_crs(cliente, h, mina):

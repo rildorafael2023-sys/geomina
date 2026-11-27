@@ -8,9 +8,11 @@ import { useState } from "react";
 
 import {
   api, CRS_OPCOES, dataCurta, enviarArquivos, ErroApi, ESTADOS_AMOSTRA, json, PAPEIS_CONTROLE,
-  type Amostra, type Eu, type Lote, type Mina, type UnidadeResumo,
+  type Amostra, type Eu, type Lote, type Mina,
 } from "../../api/cliente";
 import { useDicionarios } from "../../api/dicionarios";
+import { SeletorLocal } from "../../componentes/SeletorLocal";
+import { PerfilFrente } from "./PerfilFrente";
 
 export function Amostras({ eu }: { eu: Eu }) {
   const minas = useQuery({ queryKey: ["minas"], queryFn: () => api<Mina[]>("/minas") });
@@ -39,6 +41,7 @@ function Lista({ mina, podeEditar }: { mina: Mina; podeEditar: boolean }) {
   const dic = useDicionarios();
   const [f, setF] = useState({ texto: "", serie: null as string | null, estado: null as string | null, papel: null as string | null, litologia: null as string | null });
   const [aberta, setAberta] = useState<Amostra | "nova" | null>(null);
+  const [perfil, setPerfil] = useState<Amostra | null>(null);
   const p = new URLSearchParams();
   if (f.texto.trim()) p.set("texto", f.texto.trim());
   if (f.serie) p.set("serie", f.serie);
@@ -58,7 +61,7 @@ function Lista({ mina, podeEditar }: { mina: Mina; podeEditar: boolean }) {
         </SimpleGrid>
       </Paper>
       <Group justify="space-between">
-        <Text size="sm" c="dimmed">{lista.data?.length ?? 0} amostra(s)</Text>
+        <Group gap={6}><Text size="sm" c="dimmed">{lista.data?.length ?? 0} amostra(s)</Text><Text size="xs" c="dimmed">· clique numa amostra para ver o perfil da frente com os teores</Text></Group>
         {podeEditar && <Button size="xs" onClick={() => setAberta("nova")}>Nova amostra</Button>}
       </Group>
       {lista.isLoading ? <Loader size="sm" /> : (
@@ -69,7 +72,7 @@ function Lista({ mina, podeEditar }: { mina: Mina; podeEditar: boolean }) {
             </Table.Thead>
             <Table.Tbody>
               {(lista.data ?? []).map((a) => (
-                <Table.Tr key={a.id} style={{ cursor: "pointer" }} onClick={() => setAberta(a)}>
+                <Table.Tr key={a.id} style={{ cursor: "pointer" }} onClick={() => setPerfil(a)} data-amostra={a.codigo}>
                   <Table.Td fw={500}>{a.codigo}{a.papel_controle !== "normal" && <Badge size="xs" ml={4} variant="outline">{PAPEIS_CONTROLE[a.papel_controle]}</Badge>}</Table.Td>
                   <Table.Td>{a.data_coleta ? dataCurta(a.data_coleta) : ""}</Table.Td>
                   <Table.Td fz="xs">{a.unidade ?? a.local_descricao ?? (a.furo ? `furo ${a.furo}` : "")}</Table.Td>
@@ -83,6 +86,7 @@ function Lista({ mina, podeEditar }: { mina: Mina; podeEditar: boolean }) {
           </Table>
         </ScrollArea>
       )}
+      {perfil && !aberta && <PerfilFrente amostraId={perfil.id} podeEditar={podeEditar} aoFechar={() => setPerfil(null)} aoEditarAmostra={() => setAberta(perfil)} />}
       {aberta && <FormAmostra mina={mina} amostra={aberta === "nova" ? null : aberta} podeEditar={podeEditar} aoFechar={() => setAberta(null)} />}
     </Stack>
   );
@@ -94,7 +98,6 @@ const n = (v: N) => (v === "" ? null : Number(v));
 function FormAmostra({ mina, amostra, podeEditar, aoFechar }: { mina: Mina; amostra: Amostra | null; podeEditar: boolean; aoFechar: () => void }) {
   const qc = useQueryClient();
   const dic = useDicionarios();
-  const unidades = useQuery({ queryKey: ["unidades", mina.id, false], queryFn: () => api<UnidadeResumo[]>(`/minas/${mina.id}/unidades?incluir_inativas=false`) });
   const tipos = useQuery({ queryKey: ["tipos-amostra"], queryFn: () => api<{ id: string; nome: string }[]>("/tipos-amostra") });
   const a = amostra;
   const [f, setF] = useState({
@@ -136,7 +139,7 @@ function FormAmostra({ mina, amostra, podeEditar, aoFechar }: { mina: Mina; amos
           {f.papel_controle === "padrao" && <TextInput label="Material de referência" placeholder="OREAS920B" value={f.padrao_codigo} onChange={(e) => setF({ ...f, padrao_codigo: e.currentTarget.value })} readOnly={ro} />}
           <Select label="Tipo" clearable value={f.tipo_id} onChange={(v) => setF({ ...f, tipo_id: v })} data={(tipos.data ?? []).map((t) => ({ value: t.id, label: t.nome }))} readOnly={ro} />
           <TextInput type="date" label="Data da coleta" value={f.data_coleta} onChange={(e) => setF({ ...f, data_coleta: e.currentTarget.value })} readOnly={ro} />
-          <Select label="Local (unidade)" clearable searchable value={f.unidade_id} onChange={(v) => setF({ ...f, unidade_id: v })} data={(unidades.data ?? []).map((u) => ({ value: u.id, label: `${u.codigo} (${u.tipo_nome})` }))} readOnly={ro} />
+          <SeletorLocal mina={mina} label="Local (unidade)" valor={f.unidade_id} aoMudar={(v) => setF({ ...f, unidade_id: v })} readOnly={ro} />
           <TextInput label="Descrição do local" value={f.local_descricao} onChange={(e) => setF({ ...f, local_descricao: e.currentTarget.value })} readOnly={ro} />
           <NumberInput label="Seção: de (m)" decimalSeparator="," min={0} value={f.secao_de_m} onChange={(v) => setF({ ...f, secao_de_m: v })} readOnly={ro} />
           <NumberInput label="Seção: até (m)" decimalSeparator="," min={0} value={f.secao_ate_m} onChange={(v) => setF({ ...f, secao_ate_m: v })} readOnly={ro} />
@@ -225,7 +228,7 @@ function Importar({ mina }: { mina: Mina }) {
   const [previa, setPrevia] = useState<Previa | null>(null);
   const [op, setOp] = useState({ srid: null as string | null, aceitar: false, repetidos: "primeira" });
   const [mapa, setMapa] = useState<Record<string, string | null>>({});
-  const [resultado, setResultado] = useState<{ gravadas: number; ignoradas: { linha: number; codigo: string; motivo: string }[] } | null>(null);
+  const [resultado, setResultado] = useState<{ gravadas: number; trechos_perfil?: number; ignoradas: { linha: number; codigo: string; motivo: string }[] } | null>(null);
   const [filtro, setFiltro] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const analisar = useMutation({
@@ -234,7 +237,7 @@ function Importar({ mina }: { mina: Mina }) {
     onError: (e) => setErro(e instanceof ErroApi ? e.message : "Falha ao ler a planilha."),
   });
   const confirmar = useMutation({
-    mutationFn: () => api<{ gravadas: number; ignoradas: { linha: number; codigo: string; motivo: string }[] }>(`/importacoes/${previa!.id}/confirmar-amostras`, {
+    mutationFn: () => api<{ gravadas: number; trechos_perfil?: number; ignoradas: { linha: number; codigo: string; motivo: string }[] }>(`/importacoes/${previa!.id}/confirmar-amostras`, {
       method: "POST", body: json({ srid: op.srid ? Number(op.srid) : null, aceitar_sugestoes: op.aceitar, repetidos: op.repetidos, litologias: mapa }),
     }),
     onSuccess: (r) => { setResultado(r); qc.invalidateQueries({ queryKey: ["amostras"] }); notifications.show({ color: "teal", message: `${r.gravadas} amostra(s) importada(s).` }); },
@@ -310,7 +313,8 @@ function Importar({ mina }: { mina: Mina }) {
       )}
       {resultado && (
         <Alert color="teal" title={`${resultado.gravadas} amostra(s) importada(s)`}>
-          {resultado.ignoradas.length} linha(s) não importada(s):
+          {(resultado.trechos_perfil ?? 0) > 0 && <div>{resultado.trechos_perfil} trecho(s) gravados no perfil da frente (cada metro com a rocha e a amostra).</div>}
+          {resultado.ignoradas.length} linha(s) não viraram amostra nova (já cadastradas ou repetidas continuam no perfil da frente):
           <ScrollArea.Autosize mah={200}>
             {resultado.ignoradas.map((i) => <div key={i.linha}>linha {i.linha} · {i.codigo} · {i.motivo}</div>)}
           </ScrollArea.Autosize>

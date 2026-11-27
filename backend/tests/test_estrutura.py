@@ -83,7 +83,20 @@ def test_codigo_unico_por_mina(cliente, h, mina, arvore):
     nova(cliente, h, outra, "NIVEL", "N144")  # mesmo código em outra mina é permitido
 
 
-def test_regra_de_hierarquia_pela_api(cliente, h, mina, arvore):
+def test_locais_livres_pela_api(cliente, h, mina, arvore):
+    """Desde a 0011 o geólogo cadastra o local onde precisar: travessa na raiz ou dentro de qualquer região."""
+    r = cliente.post(f"{API}/unidades", headers=h, json={"mina_id": mina["id"], "tipo": "TRAVESSA", "codigo": "1F5", "nome": "Travessa 1F5"})
+    assert r.status_code == 201, r.text
+    r = cliente.post(f"{API}/unidades", headers=h, json={"mina_id": mina["id"], "tipo": "TRAVESSA", "codigo": "1F6", "nome": "Travessa 1F6",
+                                                          "pai_id": arvore["rampa"]["id"]})
+    assert r.status_code == 201, r.text
+
+
+def test_regra_de_hierarquia_pela_api(cliente, h, mina, arvore, app):
+    """As regras continuam valendo se o administrador as restringir em "Tipos e regras"."""
+    _sql(app, "DELETE FROM regra_hierarquia WHERE tipo_pai_id = (SELECT id FROM tipo_unidade WHERE codigo = 'GALERIA') "
+              "AND tipo_filho_id = (SELECT id FROM tipo_unidade WHERE codigo = 'NIVEL')")
+    _sql(app, "UPDATE tipo_unidade SET pode_ser_raiz = 0 WHERE codigo = 'GALERIA'")
     r = cliente.post(f"{API}/unidades", headers=h, json={"mina_id": mina["id"], "tipo": "NIVEL", "codigo": "N9",
                                                           "nome": "N9", "pai_id": arvore["gal"]["id"]})
     assert r.status_code == 422 and r.json()["codigo"] == "regra_violada"
@@ -251,6 +264,9 @@ def _inserir(app, mina_hex, tipo_hex, pai_hex, codigo):
 def test_banco_recusa_hierarquia_invalida_sem_passar_pela_api(app, arvore):
     tipos, u = _ids(app)
     mina_hex = u["N144"][1]
+    _sql(app, "DELETE FROM regra_hierarquia WHERE tipo_pai_id = (SELECT id FROM tipo_unidade WHERE codigo = 'GALERIA') "
+              "AND tipo_filho_id = (SELECT id FROM tipo_unidade WHERE codigo = 'NIVEL')")
+    _sql(app, "UPDATE tipo_unidade SET pode_ser_raiz = 0 WHERE codigo = 'GALERIA'")
     with pytest.raises(IntegrityError, match="raiz"):
         _inserir(app, mina_hex, tipos["GALERIA"], None, "G-RAIZ")
     with pytest.raises(IntegrityError, match="não é permitido dentro"):

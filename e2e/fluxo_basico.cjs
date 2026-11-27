@@ -7,6 +7,7 @@ const URL = process.argv[2];
 const CAPTURAS = process.argv[3];
 const SENHA = "senhaForte123";
 
+const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { name: nome }).isVisible().catch(() => false))) await page.getByText("Administração", { exact: true }).click(); };
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -27,12 +28,14 @@ const SENHA = "senhaForte123";
   await shot("02-inicio");
 
   // 2. Página Sistema mostra dados reais do backend
+  await abrirAdmin(page, "Sistema");
   await page.getByRole("link", { name: "Sistema" }).click();
   await page.getByText("SIRGAS 2000 / UTM 23S (EPSG:31983)").waitFor();
   assert.ok(await page.getByText("local (somente este computador)").isVisible());
   await shot("03-sistema");
 
   // 3. Criar um geólogo
+  await abrirAdmin(page, "Usuários");
   await page.getByRole("link", { name: "Usuários" }).click();
   await page.getByRole("button", { name: "Novo usuário" }).click();
   const modal = page.getByRole("dialog");

@@ -162,3 +162,25 @@ class Importacao(EntidadeMixin, Base):
     relatorio: Mapped[dict | None] = mapped_column(JSON)
     estado: Mapped[str] = mapped_column(String(12), nullable=False, default="analisada")
     importado_por: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("usuario.id", ondelete="RESTRICT"), nullable=False)
+
+
+class FrenteIntervalo(EntidadeMixin, Base):
+    """Perfil da frente: trechos da seção de um ponto de amostragem (ex.: 0–1 m gnaisse, 1–2 m xisto…).
+
+    Um ponto (``ponto``, como na planilha de campo) reúne as amostras coletadas na mesma frente. Cada trecho
+    pode citar a amostra que o cobre; trechos sem amostra também ficam guardados (parte não amostrada da frente).
+    """
+
+    __tablename__ = "frente_intervalo"
+    __auditavel__ = True
+    __table_args__ = (CheckConstraint("de_m >= 0 AND ate_m > de_m", name="frente_intervalo_valido"),)
+
+    mina_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("mina.id", ondelete="RESTRICT"), nullable=False, index=True)
+    ponto: Mapped[str] = mapped_column(String(60, collation="NOCASE"), nullable=False, index=True)
+    amostra_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("amostra.id", ondelete="SET NULL"), index=True)
+    de_m: Mapped[float] = mapped_column(Float, nullable=False)
+    ate_m: Mapped[float] = mapped_column(Float, nullable=False)
+    litologia_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("termo.id", ondelete="RESTRICT"))
+    litologia_texto: Mapped[str | None] = mapped_column(String(120))  # como veio na planilha, se não reconhecida
+    descricao: Mapped[str | None] = mapped_column(Text)
+    importacao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("importacao.id", ondelete="RESTRICT"))

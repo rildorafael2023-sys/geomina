@@ -7,6 +7,7 @@ const URL = process.argv[2];
 const CAPTURAS = process.argv[3];
 const SENHA = "senhaForte123";
 
+const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { name: nome }).isVisible().catch(() => false))) await page.getByText("Administração", { exact: true }).click(); };
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1366, height: 860 } });
@@ -67,6 +68,7 @@ const SENHA = "senhaForte123";
   await shot("e4-01-painel");
 
   // 3. Histórico de alterações com filtro e detalhes
+  await abrirAdmin(page, "Histórico de alterações");
   await page.getByRole("link", { name: "Histórico de alterações" }).click();
   await page.getByLabel("Contém o texto").fill("GAL-01");
   await page.getByText("1 registro(s)").waitFor();
@@ -76,6 +78,7 @@ const SENHA = "senhaForte123";
   await page.keyboard.press("Escape");
 
   // 4. Backup completo
+  await abrirAdmin(page, "Backup");
   await page.getByRole("link", { name: "Backup" }).click();
   await page.getByRole("button", { name: "Fazer backup" }).click();
   await page.getByText(/Backup geomina-.*-completo\.zip criado/).waitFor();

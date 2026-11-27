@@ -4,7 +4,13 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 
 **Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-## Estado atual — versão 0.21.0
+## Estado atual — versão 0.22.0
+- ✅ **Versão simplificada (pedido do usuário)**: o software fica só com a gestão de dados de amostragem, mapeamento e sondagem.
+  - Saiu a **Geoquímica operacional** (tracks, comparação, 3D, consulta) e a análise longitudinal da galeria.
+  - **Amostras**: clicar numa amostra abre o **perfil da frente** (trechos metro a metro com a litologia, a amostra de cada trecho e os teores de todos os elementos do laudo), com edição e impressão. A importação da planilha de campo grava todos os trechos de cada ponto, inclusive os não amostrados.
+  - **Mapeamento geológico**: na ficha nova dá para **cadastrar o local na hora** (ex.: Travessa 1F5) e escolher a região onde ele fica. Todos os tipos de local podem ficar na raiz ou dentro de qualquer outro.
+  - **Sondagem** (menu próprio): cadastro e importação de furos (collar, survey, descrição geológica, amostras), **log do furo** com descrição, profundidade, intervalos amostrados e teores por intervalo, e **fotos do testemunho** por intervalo/caixa.
+  - Menu: itens de administração agrupados em "Administração".
 - ✅ Etapa 1: arquitetura e especificação (aprovada).
 - ✅ Etapa 2: infraestrutura (banco local, usuários, auditoria, arquivos, instalação offline) — validada no Windows.
 - ✅ Etapa 3: estrutura da mina (níveis, galerias, travessas, rampas, frentes, avanços) + janela própria com ícone.

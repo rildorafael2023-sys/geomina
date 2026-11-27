@@ -44,6 +44,8 @@ const SENHA = "senhaForte123";
   await page.getByRole("tab", { name: "Amostras" }).click();
   await page.getByText("3 amostra(s)", { exact: true }).waitFor();
   await page.getByRole("cell", { name: "BS-RP-226" }).click();
+  await page.getByText("Perfil da frente — BS-RP-226").first().waitFor();
+  await page.getByRole("button", { name: "Dados da amostra" }).click();
   const dlg = page.getByRole("dialog");
   await dlg.getByText(/Código original na planilha: RP 226/).waitFor().catch(async () => {
     assert.ok((await dlg.getByLabel("Observações").inputValue()).includes("RP 226"));

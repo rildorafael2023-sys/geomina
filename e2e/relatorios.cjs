@@ -8,6 +8,7 @@ const [URL, CAPTURAS] = process.argv.slice(2);
 const SENHA = "senhaForte123";
 const BASE = URL.replace(/\/$/, "");
 
+const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { name: nome }).isVisible().catch(() => false))) await page.getByText("Administração", { exact: true }).click(); };
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, acceptDownloads: true });
@@ -96,9 +97,9 @@ const BASE = URL.replace(/\/$/, "");
   assert.strictEqual(csv.length, 3, "cabeçalho + 2 estruturas (só janeiro)");
   assert.match(csv[1], /;230\/30;/);
 
-  // 3. Geoquímica aponta para a consulta; histórico em CSV
+  // 3. Geoquímica: tabela de teores em CSV; histórico em CSV
   await page.getByRole("tab", { name: "Geoquímica" }).click();
-  await page.getByRole("link", { name: "Abrir a consulta de amostras" }).waitFor();
+  await page.getByRole("button", { name: "Baixar teores (CSV)" }).waitFor();
   await page.getByRole("tab", { name: "Histórico de alterações" }).click();
   const h = await baixar(() => page.getByRole("button", { name: "Baixar CSV" }).click());
   assert.strictEqual(h.nome, "historico_alteracoes.csv");
@@ -106,6 +107,7 @@ const BASE = URL.replace(/\/$/, "");
   await shot("e17-02-historico");
 
   // 4. Sistema: verificação de integridade (E18)
+  await abrirAdmin(page, "Sistema");
   await page.getByRole("link", { name: "Sistema" }).click();
   const integ = page.getByTestId("integridade");
   await integ.getByRole("button", { name: "Verificar agora" }).click();

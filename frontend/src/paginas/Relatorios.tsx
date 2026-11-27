@@ -2,7 +2,6 @@ import { Alert, Badge, Button, Group, Loader, Paper, ScrollArea, Select, SimpleG
 import { notifications } from "@mantine/notifications";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 import { api, baixar, ESTADOS_FICHA, type Eu, type Mina, type UnidadeResumo } from "../api/cliente";
 import { useDicionarios } from "../api/dicionarios";
@@ -50,7 +49,7 @@ export function Relatorios({ eu }: { eu: Eu }) {
         </Tabs.List>
         <Tabs.Panel value="producao" pt="md"><RelProducao mina={mina} /></Tabs.Panel>
         <Tabs.Panel value="fichas" pt="md"><RelFichas mina={mina} /></Tabs.Panel>
-        <Tabs.Panel value="geoquimica" pt="md"><RelGeoquimica /></Tabs.Panel>
+        <Tabs.Panel value="geoquimica" pt="md"><RelGeoquimica mina={mina} /></Tabs.Panel>
         <Tabs.Panel value="historico" pt="md"><RelHistorico /></Tabs.Panel>
       </Tabs>
     </Stack>
@@ -186,16 +185,14 @@ function RelFichas({ mina }: { mina: Mina }) {
   );
 }
 
-function RelGeoquimica() {
+function RelGeoquimica({ mina }: { mina: Mina }) {
   return (
     <Stack gap="xs">
-      <Text size="sm">Os relatórios de geoquímica ficam na <b>Geoquímica operacional</b>, porque usam a seleção feita nos filtros encadeados (nível, galeria, furo, campanha, litologia, laboratório, teor…):</Text>
-      <Stack gap={2} pl="md">
-        <Text size="sm">• Tabela CSV e planilha Excel das amostras com os analitos escolhidos (com metadados);</Text>
-        <Text size="sm">• GeoPackage e GeoJSON para SIG; imagens dos tracks, gráficos e 3D;</Text>
-        <Text size="sm">• Relatório da seleção (estatísticas, gráficos e tabela) para imprimir ou salvar em PDF.</Text>
-      </Stack>
-      <Group><Button component={Link} to="/geoop/consulta" variant="light">Abrir a consulta de amostras</Button><Button component={Link} to="/geoop/relatorio" variant="default">Relatório da seleção</Button></Group>
+      <Text size="sm">Tabela com uma linha por amostra e os teores de todos os elementos dos laudos (resultado preferido de cada análise).</Text>
+      <Text size="sm">Para ver o perfil da frente de uma amostra com os teores, abra a amostra em <b>Amostras</b>. Para o log de um furo, use <b>Sondagem</b>.</Text>
+      <Group>
+        <Button variant="default" onClick={() => tentar(() => baixar(`/minas/${mina.id}/resultados/tabela.csv`, "teores_amostras.csv"))}>Baixar teores (CSV)</Button>
+      </Group>
     </Stack>
   );
 }

@@ -15,15 +15,17 @@ from geomina.espacial import trajetoria as T
 from geomina.modules.amostragem.models import Amostra, Importacao
 from geomina.modules.amostragem.router import serie_de
 from geomina.modules.analise.longitudinal import REGRAS_LD, valor_grafico
+from geomina.modules.arquivos.models import Arquivo
 from geomina.modules.auth.models import Usuario
 from geomina.modules.dicionarios.models import Dicionario, Termo
 from geomina.modules.dicionarios.router import _reconhecer
-from geomina.modules.documentos.router import _gravar_arquivo
+from geomina.modules.documentos.models import Documento
+from geomina.modules.documentos.router import _gravar_arquivo, _nova_versao
 from geomina.modules.estrutura.models import Mina
 from geomina.modules.geoquimica.models import Analito, Certificado, Resultado
 from geomina.modules.geoquimica.router import vincular_pendentes
 from geomina.modules.sondagem import importacao as I
-from geomina.modules.sondagem.models import Furo, IntervaloFuro, SurveyFuro
+from geomina.modules.sondagem.models import FotoFuro, Furo, IntervaloFuro, SurveyFuro
 from geomina.modules.topografia.router import _transformar_ponto
 
 router = APIRouter(tags=["sondagem"])
@@ -232,6 +234,10 @@ def perfil(furo_id: uuid.UUID, analitos: str = "", regra_ld: str = "limite", _u:
     lista = [a for a in analitos.split(",") if a]
     amostras, sem_prof = [], []
     ams = list(db.scalars(select(Amostra).where(Amostra.furo_id == f.id, Amostra.estado != "cancelada").order_by(Amostra.prof_de_m)))
+    if lista == ["*"]:  # todos os analitos que têm resultado nas amostras do furo, na ordem do laudo
+        lista = list(db.scalars(select(Analito.codigo).where(Analito.id.in_(
+            select(Resultado.analito_id).where(Resultado.amostra_id.in_([a.id for a in ams]), Resultado.preferido.is_(True))))
+            .order_by(Analito.tipo, Analito.ordem, Analito.codigo))) if ams else []
     vals: dict = {}
     if lista and ams:
         for r, an, cert in db.execute(select(Resultado, Analito.codigo, Certificado.codigo).join(Analito).join(Certificado)
@@ -257,7 +263,8 @@ def perfil(furo_id: uuid.UUID, analitos: str = "", regra_ld: str = "limite", _u:
                      "profundidade_final": f.profundidade_final, "profundidade_planejada": f.profundidade_planejada, "data_inicio": f.data_inicio,
                      "data_fim": f.data_fim, "responsavel": f.responsavel, "metodo": f.metodo, "descricao": f.descricao},
             "trajetoria": traj, "erro_trajetoria": falha, "survey": sv, "intervalos": ints, "amostras": amostras,
-            "sem_profundidade": sem_prof, "unidades": unidades, "regra_ld_descricao": REGRAS_LD[regra_ld]}
+            "sem_profundidade": sem_prof, "unidades": unidades, "analitos": [a for a in lista if a in unidades],
+            "regra_ld_descricao": REGRAS_LD[regra_ld], "fotos": _fotos(db, f.id)}
 
 
 @router.get("/minas/{mina_id}/furos/trajetorias")
@@ -276,3 +283,116 @@ def trajetorias(mina_id: uuid.UUID, _u: Usuario = Depends(LER), db: Session = De
     return out
 
 
+
+
+# ------------------------------------------------------------------ edição do log, fotos de testemunho e arquivos
+class TrechoFuro(BaseModel):
+    de_m: float = Field(ge=0)
+    ate_m: float = Field(gt=0)
+    litologia_id: uuid.UUID | None = None
+    alteracao_id: uuid.UUID | None = None
+    mineralizacao_id: uuid.UUID | None = None
+    estruturas: str | None = Field(None, max_length=300)
+    descricao: str | None = None
+
+
+class LogFuro(BaseModel):
+    intervalos: list[TrechoFuro]
+
+
+def _furo(db: Session, furo_id: uuid.UUID) -> Furo:
+    f = db.get(Furo, furo_id)
+    if f is None:
+        raise ErroAplicacao(404, "nao_encontrado", "Furo não encontrado.")
+    return f
+
+
+@router.put("/furos/{furo_id}/intervalos")
+def gravar_intervalos(furo_id: uuid.UUID, e: LogFuro, u: Usuario = Depends(IMPORTAR), db: Session = Depends(obter_sessao)) -> dict:
+    """Substitui a descrição geológica do furo (intervalos de/até com litologia e descrição)."""
+    f = _furo(db, furo_id)
+    trechos = sorted(e.intervalos, key=lambda t: (t.de_m, t.ate_m))
+    for t in trechos:
+        if t.ate_m <= t.de_m:
+            raise ErroAplicacao(422, "intervalo_invalido", f"Intervalo {t.de_m:g}–{t.ate_m:g} m: o 'até' precisa ser maior que o 'de'.")
+        if t.ate_m > f.profundidade_final + 1e-9:
+            raise ErroAplicacao(422, "alem_do_furo", f"Intervalo {t.de_m:g}–{t.ate_m:g} m passa da profundidade final ({f.profundidade_final:g} m).")
+    for t1, t2 in zip(trechos, trechos[1:], strict=False):
+        if t2.de_m < t1.ate_m - 1e-9:
+            raise ErroAplicacao(422, "sobreposicao", f"Os intervalos {t1.de_m:g}–{t1.ate_m:g} m e {t2.de_m:g}–{t2.ate_m:g} m se sobrepõem.")
+    for i in db.scalars(select(IntervaloFuro).where(IntervaloFuro.furo_id == f.id)):
+        db.delete(i)
+    db.flush()
+    for t in trechos:
+        db.add(IntervaloFuro(furo_id=f.id, de_m=t.de_m, ate_m=t.ate_m, litologia_id=t.litologia_id, alteracao_id=t.alteracao_id,
+                             mineralizacao_id=t.mineralizacao_id, estruturas=t.estruturas, descricao=t.descricao, responsavel=u.nome))
+    db.flush()
+    return {"intervalos": len(trechos)}
+
+
+@router.delete("/furos/{furo_id}", status_code=204)
+def excluir_furo(furo_id: uuid.UUID, _u: Usuario = Depends(IMPORTAR), db: Session = Depends(obter_sessao)):
+    """Exclui um furo cadastrado por engano. As amostras continuam cadastradas (só perdem o vínculo com o furo)."""
+    f = _furo(db, furo_id)
+    for a in db.scalars(select(Amostra).where(Amostra.furo_id == f.id)):
+        a.furo_id = None
+    for x in db.scalars(select(FotoFuro).where(FotoFuro.furo_id == f.id)):
+        db.delete(x)
+    db.flush()
+    db.delete(f)
+    db.flush()
+
+
+def _fotos(db: Session, furo_id: uuid.UUID) -> list[dict]:
+    out = []
+    for x, d in db.execute(select(FotoFuro, Documento).join(Documento, Documento.id == FotoFuro.documento_id)
+                           .where(FotoFuro.furo_id == furo_id).order_by(FotoFuro.de_m.nulls_last(), Documento.titulo)):
+        v = d.versoes[-1] if d.versoes else None
+        mime = db.scalar(select(Arquivo.mime).where(Arquivo.id == v.arquivo_id)) if v else None
+        out.append({"id": str(x.id), "documento_id": str(d.id), "versao": v.numero if v else 1, "titulo": d.titulo, "de": x.de_m, "ate": x.ate_m,
+                    "caixa": x.caixa, "legenda": x.legenda, "categoria": d.categoria, "mime": mime})
+    return out
+
+
+@router.get("/furos/{furo_id}/fotos")
+def fotos(furo_id: uuid.UUID, _u: Usuario = Depends(LER), db: Session = Depends(obter_sessao)) -> list[dict]:
+    _furo(db, furo_id)
+    return _fotos(db, furo_id)
+
+
+@router.post("/furos/{furo_id}/fotos", status_code=201)
+def enviar_fotos(furo_id: uuid.UUID, request: Request, arquivos: list[UploadFile] = File(...), de_m: float | None = Form(None),
+                 ate_m: float | None = Form(None), caixa: str | None = Form(None), legenda: str | None = Form(None),
+                 u: Usuario = Depends(IMPORTAR), db: Session = Depends(obter_sessao)) -> list[dict]:
+    """Fotos das caixas de testemunho (JPG/PNG/TIFF) ou arquivos da descrição do furo (PDF), ligados ao furo e ao intervalo."""
+    f = _furo(db, furo_id)
+    if de_m is not None and ate_m is not None and ate_m <= de_m:
+        raise ErroAplicacao(422, "intervalo_invalido", "O 'até' precisa ser maior que o 'de'.")
+    if len(arquivos) > 100:
+        raise ErroAplicacao(422, "muitos_arquivos", "Envie no máximo 100 arquivos por vez.")
+    for arq in arquivos:
+        nome = (arq.filename or "foto").replace("\\", "/").rsplit("/", 1)[-1]
+        a = _gravar_arquivo(request, db, arq.file, nome, u)
+        categoria = "foto" if a.mime.startswith("image/") else "campo"
+        intervalo = f" {de_m:g}–{ate_m:g} m" if de_m is not None and ate_m is not None else ""
+        d = Documento(mina_id=f.mina_id, categoria=categoria, titulo=f"{f.codigo}{intervalo} — {nome.rsplit('.', 1)[0]}"[:200],
+                      legenda=legenda, autor_id=u.id, descricao=f"Furo {f.codigo}" + (f", caixa {caixa}" if caixa else ""))
+        db.add(d)
+        db.flush()
+        _nova_versao(request, db, d, a, nome, None, u)
+        db.add(FotoFuro(furo_id=f.id, documento_id=d.id, de_m=de_m, ate_m=ate_m, caixa=caixa, legenda=legenda))
+    db.flush()
+    return _fotos(db, f.id)
+
+
+@router.delete("/fotos-furo/{foto_id}", status_code=204)
+def remover_foto(foto_id: uuid.UUID, _u: Usuario = Depends(IMPORTAR), db: Session = Depends(obter_sessao)):
+    """Tira a foto do log do furo. O arquivo continua guardado (arquivado em Fotos e croquis), como todo documento."""
+    x = db.get(FotoFuro, foto_id)
+    if x is None:
+        raise ErroAplicacao(404, "nao_encontrado", "Foto não encontrada.")
+    d = db.get(Documento, x.documento_id)
+    db.delete(x)
+    if d is not None:
+        d.arquivado = True
+    db.flush()
