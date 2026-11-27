@@ -59,8 +59,10 @@ def tipo_furo(codigo: str) -> str:
     return "ina" if _plano(codigo).replace(" ", "").startswith("ina") else "exploratorio"
 
 
-def cota(z: float, inclinacao: float | None, profundidade: float) -> float:
-    """Cota aproximada pela inclinação da boca (negativa = para baixo; sem inclinação, vertical)."""
+def cota(z: float | None, inclinacao: float | None, profundidade: float) -> float | None:
+    """Cota aproximada pela inclinação da boca (negativa = para baixo; sem inclinação, vertical). Sem Z, sem cota."""
+    if z is None:
+        return None
     inc = -90.0 if inclinacao is None else inclinacao
     return round(z + profundidade * math.sin(math.radians(inc)), 2)
 

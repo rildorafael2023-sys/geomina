@@ -21,6 +21,7 @@ class Furo(EntidadeMixin, Base):
         CheckConstraint("inclinacao IS NULL OR (inclinacao >= -90 AND inclinacao <= 90)", name="inclinacao_valida"),
         CheckConstraint("profundidade_final > 0", name="profundidade_positiva"),
         CheckConstraint("referencia_azimute IN ('quadricula','magnetico','geografico')", name="referencia_azimute_valida"),
+        CheckConstraint("(x IS NULL) = (y IS NULL) AND (x IS NULL) = (z IS NULL)", name="furo_xyz_juntos"),
     )
 
     mina_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("mina.id", ondelete="RESTRICT"), nullable=False, index=True)
@@ -28,9 +29,10 @@ class Furo(EntidadeMixin, Base):
     projeto: Mapped[str | None] = mapped_column(String(120))
     area: Mapped[str | None] = mapped_column(String(120))
     unidade_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("unidade_operacional.id", ondelete="RESTRICT"))
-    x: Mapped[float] = mapped_column(Float, nullable=False)
-    y: Mapped[float] = mapped_column(Float, nullable=False)
-    z: Mapped[float] = mapped_column(Float, nullable=False)
+    # sem coordenada da boca (X, Y, Z vazios): o furo é guardado com o log e as amostras, sem trajetória
+    x: Mapped[float | None] = mapped_column(Float)
+    y: Mapped[float | None] = mapped_column(Float)
+    z: Mapped[float | None] = mapped_column(Float)
     srid: Mapped[int] = mapped_column(Integer, nullable=False)
     azimute: Mapped[float | None] = mapped_column(Float)
     inclinacao: Mapped[float | None] = mapped_column(Float)  # graus da horizontal; negativo = para baixo

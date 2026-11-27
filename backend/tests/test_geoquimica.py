@@ -46,8 +46,7 @@ def test_valores_especiais():
     assert L.valor(">99") == (">99", None, ">", 99.0)
     assert L.valor("N.A.")[2] == "NA" and L.valor("--")[2] == "--"
     assert L.valor("1.234,5")[1] == 1234.5 and L.valor(7.98)[1] == 7.98
-    with pytest.raises(L.LaudoInvalido):
-        L.valor("abc")
+    assert L.valor("I.N.F.") == ("I.N.F.", None, "NA", None) and L.valor("I.S.")[2] == "NA"  # guardado como texto
 
 
 def test_csv_generico_previa_confirmacao_e_preferidos(cliente, h, mina):
@@ -55,10 +54,11 @@ def test_csv_generico_previa_confirmacao_e_preferidos(cliente, h, mina):
         cliente.post(f"{API}/minas/{mina['id']}/amostras", headers=h, json={"codigo": c})
     p = enviar(cliente, h, mina, "laudo.csv", CSV.encode())
     assert p["formato"] == "GENERICO" and [c["analito"] for c in p["colunas"]] == ["Cr", "Be", "MgO", "F"]
-    assert p["resumo"] == {"vinculada": 3, "controle_lab": 1, "nao_encontrada": 1}
+    assert p["resumo"] == {"vinculada": 3, "controle_lab": 1, "nova_amostra": 1}
     r = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={})
     assert r.status_code == 422 and r.json()["codigo"] == "certificado_obrigatorio"
-    c = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "B-001"}).json()
+    c = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h,
+                     json={"certificado": "B-001", "cadastrar_amostras": False}).json()
     assert c["amostras_vinculadas"] == 2 and c["sem_vinculo"] == ["BS-RP-999", "OREAS920B"]
     amostras = {a["codigo"]: a for a in cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()}
     res = {(x["analito"], x["tipo_linha"]): x for x in cliente.get(f"{API}/amostras/{amostras['BS-RP-1']['id']}/resultados", headers=h).json()}
@@ -77,6 +77,49 @@ def test_csv_generico_previa_confirmacao_e_preferidos(cliente, h, mina):
     assert cr["rpd"] == round(41 / 539.5 * 100, 1) and q["padroes"] == ["OREAS920B"]
 
 
+def test_laudo_cadastra_amostras_de_qualquer_serie(cliente, h, mina):
+    """Banco completo: códigos ainda não cadastrados (BE-01, solo, RP sem BS) viram amostras sem furo, com os teores."""
+    laudo = ("Amostra;Tipo;Cr (ppm);Be (ppm)\nBe-01-158;SMP;106;<3\nT1-034;SMP;55;I.N.F.\nRP 478;SMP;12;1\n"
+             "BLANK;SMP;<1;<1\nOREAS-45P;SMP;900;2\n")
+    p = enviar(cliente, h, mina, "antigo.csv", laudo.encode())
+    assert p["resumo"] == {"nova_amostra": 3, "controle_lab": 2} and not p["erros_valor"]
+    c = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "JUN2066"}).json()
+    assert c["amostras_cadastradas"] == 3 and c["sem_vinculo"] == ["BLANK", "OREAS-45P"]
+    a = {x["codigo"]: x for x in cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()}
+    assert {k: (v["serie"], v["estado"], v.get("furo")) for k, v in a.items()} == {
+        "BE-01-158": ("BE", "enviada", None), "T1-034": ("T", "enviada", None), "BS-RP-478": ("BS-RP", "enviada", None)}
+    res = {x["analito"]: x for x in cliente.get(f"{API}/amostras/{a['T1-034']['id']}/resultados", headers=h).json()}
+    assert res["Cr"]["preferido"] is True and (res["Be"]["qualificador"], res["Be"]["valor"]) == ("NA", "I.N.F.")
+
+
+def test_laudo_sgs_antigo_com_analitos_na_linha_do_type():
+    """SGS de 2002 a 2010: 'Type | Sample ID | Ag | Al…' na mesma linha, unidades embaixo, várias abas."""
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    for r in (["REP No.", "LG2006-JUL06"], [], ["", "", "ICP12B", "ICP12B", "ICP12B"], ["Type", "Sample ID", "Ag", "Al", "Al"],
+              ["", "", "ppm", "%", "ppm"], ["SMP", "Be-01-0412", "< 3", "3,7", "37000"], ["NOS", "REF014", "< 3", "3", "30000"],
+              ["DUP", "Be-01-0412", "< 3", "3,6", "---"]):
+        ws.append(r)
+    ws2 = wb.create_sheet("2")
+    for r in (["Type", "Sample ID", "Cr"], ["", "", "ppm"], ["SMP", "Be-01-0413", "2572"]):
+        ws2.append(r)
+    import io
+    buf = io.BytesIO()
+    wb.save(buf)
+    lau = L.ler(buf.getvalue(), "LG2006-JUL06.xlsx")
+    assert lau.formato == "TABELA" and lau.certificado == "LG2006-JUL06"
+    assert [(c.analito, c.unidade, c.metodo) for c in lau.colunas] == [("Ag", "ppm", "ICP12B"), ("Al", "%", "ICP12B"), ("Al", "ppm", "ICP12B_ppm"),
+                                                                        ("Cr", "ppm", "NAO_INFORMADO")]
+    assert [(x.tipo, x.codigo) for x in lau.linhas] == [("SMP", "Be-01-0412"), ("STD", "REF014"), ("DUP", "Be-01-0412"), ("SMP", "Be-01-0413")]
+    assert len({x.numero for x in lau.linhas}) == 4
+
+
+def test_laudo_icp_antigo_sem_unidade_no_cabecalho():
+    lau = L.ler(b"Sample ID;Ag;Al %;Cr\nBe-01-158;< 3.0;3.7;106\n", "JUN2066.csv")
+    assert [(c.analito, c.unidade) for c in lau.colunas] == [("Ag", "ppm"), ("Al", "%"), ("Cr", "ppm")]
+
+
 def test_reimportacao_bloqueada_e_resultados_imutaveis(app, cliente, h, mina):
     p = enviar(cliente, h, mina, "laudo.csv", CSV.encode())
     cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "B-001"})
@@ -92,7 +135,7 @@ def test_reimportacao_bloqueada_e_resultados_imutaveis(app, cliente, h, mina):
 
 def test_vincular_pendentes_e_reanalise(cliente, h, mina):
     p = enviar(cliente, h, mina, "laudo.csv", CSV.encode())
-    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "B-001"})
+    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "B-001", "cadastrar_amostras": False})
     cliente.post(f"{API}/minas/{mina['id']}/amostras", headers=h, json={"codigo": "BS-RP-999"})
     v = cliente.post(f"{API}/minas/{mina['id']}/resultados/vincular-pendentes", headers=h).json()
     assert v["amostras"] == 1 and v["vinculados"] == 4

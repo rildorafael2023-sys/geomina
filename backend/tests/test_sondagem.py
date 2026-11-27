@@ -40,7 +40,7 @@ def mina(cliente, h):
     cliente.post(f"{API}/minas/{m['id']}/amostras", headers=h, json={"codigo": "BMT-TS-459"})  # cadastrada antes, sem furo
     laudo = "Amostra;Tipo;Cr (ppm);Be (ppm)\nBMT-TS-458;SMP;519;4,2\nBMT-TS-459;SMP;<10;68,1\nBMT-TS-470;SMP;1508;12\n"
     p = cliente.post(f"{API}/minas/{m['id']}/laudos", headers=h, files={"arquivo": ("laudo.csv", laudo.encode())}).json()
-    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "C-S-1"})
+    cliente.post(f"{API}/importacoes/{p['id']}/confirmar-laudo", headers=h, json={"certificado": "C-S-1", "cadastrar_amostras": False})
     return m
 
 
@@ -57,7 +57,7 @@ def test_validacao_e_importacao(cliente, h, mina, token_admin):
     msgs = [e["mensagem"] for e in p["erros"]]
     esperados = ["FUR-01 repetido", "FUR-04: falta Z", "FUR-09 não está no collar", "survey a 150.0 m fora do furo",
                  "30.0–45.0 m sobrepõe", "90.0–120.0 m passa da profundidade final", "intervalo inválido 50.0–40.0",
-                 "2.0–3.0 m sobrepõe", "não segue as regras de código"]
+                 "2.0–3.0 m sobrepõe", "não é um código de amostra válido"]
     for esp in esperados:
         assert any(esp in m for m in msgs), (esp, msgs)
     av = [a["mensagem"] for a in p["avisos"]]
@@ -127,12 +127,27 @@ def test_convencoes_de_inclinacao_e_crs(cliente, h, mina):
     assert r.status_code == 422 and "cabeçalho" in r.json()["mensagem"]
 
 
-def test_furo_sem_trajetoria_nao_e_gravado(cliente, h, mina):
-    collar = "furo;x;y;z;azimute;dip;eoh\nOK1;500000;7800000;600;0;-90;10\nRUIM;500010;7800000;600;;;10\n"
-    am = "furo;amostra;de;ate\nRUIM;BMT-TS-900;0;1\nOK1;BMT-TS-901;0;1\n"
-    p = importar(cliente, h, mina, collar=collar, amostras=am)
-    msgs = [e["mensagem"] for e in p["erros"]]
-    assert any("RUIM: sem survey e sem azimute/inclinação" in m for m in msgs) and any("1 linha(s) de RUIM não serão gravadas" in m for m in msgs)
+def test_furo_sem_trajetoria_e_sem_coordenada_entram_para_conferir(cliente, h, mina):
+    """Banco completo: furo sem survey/azimute ou sem X, Y, Z entra com log e amostras, sem trajetória."""
+    collar = ("furo;x;y;z;azimute;dip;eoh\nOK1;500000;7800000;600;0;-90;10\nRUIM;500010;7800000;600;;;10\n"
+              "SEMXYZ;;;;0;-90;12\nMEIO;500020;;600;0;-90;5\n")
+    am = "furo;amostra;de;ate\nRUIM;BMT-TS-900;0;1\nOK1;BMT-TS-901;0;1\nSEMXYZ;BE-01-001;2;3\n"
+    geo = "furo;de;ate;descricao\nSEMXYZ;0;12;xisto\n"
+    p = importar(cliente, h, mina, collar=collar, amostras=am, geologia=geo)
+    assert [e["mensagem"] for e in p["erros"]] == ["MEIO: falta Y (informe X, Y e Z juntos, ou deixe os três em branco)"]
+    av = [a["mensagem"] for a in p["avisos"]]
+    assert any("RUIM: sem survey e sem azimute/inclinação — o furo entra sem trajetória" in a for a in av)
+    assert any("SEMXYZ: sem coordenada da boca" in a for a in av)
     g = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-sondagem", headers=h, json={"ignorar_erros": True}).json()
-    assert (g["furos"], g["amostras_ligadas"]) == (1, 1)
-    assert [f["codigo"] for f in cliente.get(f"{API}/minas/{mina['id']}/furos", headers=h).json()] == ["OK1"]
+    assert (g["furos"], g["amostras_ligadas"], g["intervalos"]) == (3, 3, 1)
+    furos = {f["codigo"]: f for f in cliente.get(f"{API}/minas/{mina['id']}/furos", headers=h).json()}
+    assert sorted(furos) == ["OK1", "RUIM", "SEMXYZ"] and furos["SEMXYZ"]["x"] is None
+    d = cliente.get(f"{API}/furos/{furos['SEMXYZ']['id']}/perfil", headers=h).json()
+    assert d["trajetoria"] is None and "sem coordenada" in d["erro_trajetoria"]
+    assert d["intervalos"][0]["cota_topo"] is None and [a["codigo"] for a in d["amostras"]] == ["BE-01-001"]
+    t = {x["codigo"]: x for x in cliente.get(f"{API}/minas/{mina['id']}/furos/trajetorias", headers=h).json()}
+    assert t["SEMXYZ"]["pontos"] is None and t["OK1"]["pontos"]
+    r = cliente.post(f"{API}/minas/{mina['id']}/furos", headers=h, json={"codigo": "N1", "x": 1, "srid": 31983, "profundidade_final": 5})
+    assert r.status_code == 422 and r.json()["codigo"] == "coordenada_incompleta"
+    assert cliente.post(f"{API}/minas/{mina['id']}/furos", headers=h, json={"codigo": "N2", "srid": 31983, "profundidade_final": 5}).status_code == 201
+

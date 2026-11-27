@@ -141,19 +141,22 @@ def test_importacao_planilha_previa_e_confirmacao(cliente, h, mina, termos):
     assert por["RP 478"]["litologia"] == "Anfibólio-flogopita xisto"
     assert por["BS - RP - 237 - B"]["status"] == "existente"
     assert por["BS - RP - 237 B"]["status"] == "repetido"
-    assert por["SAB-CP-026"]["status"] == "erro" and any("Data" in m for m in por["SAB-CP-026"]["mensagens"])
+    # código de outra série: aceito como está (banco completo); a data inválida só gera aviso
+    assert por["SAB-CP-026"]["codigo"] == "SAB-CP-026" and por["SAB-CP-026"]["status"] != "erro"
+    assert any("Data" in m for m in por["SAB-CP-026"]["mensagens"])
     assert p["litologias_nao_reconhecidas"] == {"Rocha Desconhecida": 1}
     assert cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()[0]["codigo"] == "BS-RP-237B"  # nada gravado ainda
     c = cliente.post(f"{API}/importacoes/{p['id']}/confirmar-amostras", headers=h,
                      json={"srid": 29193, "aceitar_sugestoes": True}).json()
-    assert c["gravadas"] == 2
-    assert sorted(i["motivo"] for i in c["ignoradas"]) == ["código inválido", "já cadastrada", "já cadastrada"]
+    assert c["gravadas"] == 3
+    assert sorted(i["motivo"] for i in c["ignoradas"]) == ["já cadastrada", "já cadastrada"]
+    assert {x["codigo"]: x["serie"] for x in cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()}["SAB-CP-026"] == "SAB-CP"
     a = {x["codigo"]: x for x in cliente.get(f"{API}/minas/{mina['id']}/amostras", headers=h).json()}
     assert a["BS-RP-225"]["srid"] == 29193 and a["BS-RP-225"]["local_descricao"] == "Lado esquerdo Rampa Sul"
     assert a["BS-RP-478"]["observacoes"] == "Código original na planilha: RP 478"
     assert cliente.post(f"{API}/importacoes/{p['id']}/confirmar-amostras", headers=h, json={}).status_code == 422
     hist = cliente.get(f"{API}/minas/{mina['id']}/importacoes", headers=h).json()
-    assert hist[0]["gravadas"] == 2 and len(hist[0]["arquivo_sha256"]) == 64
+    assert hist[0]["gravadas"] == 3 and len(hist[0]["arquivo_sha256"]) == 64
 
 
 def test_importacao_sem_sistema_de_coordenadas_nao_inventa(cliente, h, mina):

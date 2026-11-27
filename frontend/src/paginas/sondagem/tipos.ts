@@ -15,7 +15,7 @@ export interface IntervaloP {
   id: string; de: number; ate: number; espessura: number; litologia: TermoP | null; litologia_texto: string | null; alteracao: TermoP | null;
   mineralizacao: TermoP | null; estruturas: string | null; descricao: string | null; observacoes: string | null; rqd: number | null;
   classe_rqd: ClasseRqd | null; recuperacao: number | null; caixa: string | null; marca_esmeralda: boolean | null; ocorrencias: string[];
-  material: "solo" | "saprolito" | "nao_recuperado" | null; cota_topo: number; cota_base: number;
+  material: "solo" | "saprolito" | "nao_recuperado" | null; cota_topo: number | null; cota_base: number | null;
 }
 export interface AmostraP {
   id: string; codigo: string; de: number; ate: number; com_resultado: boolean;
@@ -24,7 +24,7 @@ export interface AmostraP {
 export interface FotoP { id: string; documento_id: string; versao: number; titulo: string; de: number | null; ate: number | null; caixa: string | null; legenda: string | null; categoria: string; mime: string | null }
 export type ClasseRqd = "excelente" | "bom" | "razoavel" | "ruim" | "muito_ruim";
 export interface PerfilP {
-  furo: { id: string; codigo: string; projeto: string | null; area: string | null; x: number; y: number; z: number; srid: number; azimute: number | null; inclinacao: number | null; profundidade_final: number; data_inicio: string | null; data_fim: string | null; responsavel: string | null; metodo: string | null; descricao: string | null; tipo: TipoFuro };
+  furo: { id: string; codigo: string; projeto: string | null; area: string | null; x: number | null; y: number | null; z: number | null; srid: number; azimute: number | null; inclinacao: number | null; profundidade_final: number; data_inicio: string | null; data_fim: string | null; responsavel: string | null; metodo: string | null; descricao: string | null; tipo: TipoFuro };
   intervalos: IntervaloP[];
   amostras: AmostraP[];
   sem_profundidade: string[];

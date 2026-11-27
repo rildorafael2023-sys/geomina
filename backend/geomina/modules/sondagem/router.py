@@ -150,9 +150,9 @@ def _uuid(v):
 # ------------------------------------------------------------------ furos
 class NovoFuro(BaseModel):
     codigo: str = Field(min_length=1, max_length=40)
-    x: float
-    y: float
-    z: float
+    x: float | None = None
+    y: float | None = None
+    z: float | None = None
     srid: int
     azimute: float | None = Field(None, ge=0, lt=360)
     inclinacao: float | None = Field(None, ge=-90, le=90)
@@ -167,6 +167,8 @@ class NovoFuro(BaseModel):
 @router.post("/minas/{mina_id}/furos", status_code=201)
 def criar_furo(mina_id: uuid.UUID, e: NovoFuro, _u: Usuario = Depends(IMPORTAR), db: Session = Depends(obter_sessao)) -> dict:
     _mina(db, mina_id)
+    if len({v is None for v in (e.x, e.y, e.z)}) > 1:
+        raise ErroAplicacao(422, "coordenada_incompleta", "Informe X, Y e Z juntos (ou deixe os três em branco para conferir depois).")
     if db.scalar(select(Furo.id).where(Furo.mina_id == mina_id, Furo.codigo == e.codigo.upper())):
         raise ErroAplicacao(409, "duplicado", f"O furo {e.codigo.upper()} já existe.")
     f = Furo(mina_id=mina_id, **{**e.model_dump(), "codigo": e.codigo.strip().upper()})
@@ -176,6 +178,8 @@ def criar_furo(mina_id: uuid.UUID, e: NovoFuro, _u: Usuario = Depends(IMPORTAR),
 
 
 def _trajetoria(db: Session, f: Furo) -> tuple[T.Trajetoria | None, str | None]:
+    if f.x is None:
+        return None, "Furo sem coordenada da boca (X, Y, Z): informe a coordenada no cadastro para calcular a trajetória."
     sv = db.execute(select(SurveyFuro.profundidade, SurveyFuro.azimute, SurveyFuro.inclinacao).where(SurveyFuro.furo_id == f.id)).all()
     try:
         return T.calcular((f.x, f.y, f.z), f.azimute, f.inclinacao, f.profundidade_final, [tuple(s) for s in sv], f.declinacao or 0.0), None

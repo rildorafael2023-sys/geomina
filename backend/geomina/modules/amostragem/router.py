@@ -29,7 +29,7 @@ from geomina.modules.documentos.router import _gravar_arquivo
 from geomina.modules.estrutura.models import Mina, UnidadeOperacional
 from geomina.modules.estrutura.service import validar_crs
 from geomina.modules.mapeamento.models import Mapeamento
-from geomina.modules.mapeamento.regras import normalizar_codigo
+from geomina.modules.mapeamento.regras import normalizar_codigo, serie_de_codigo
 
 router = APIRouter(tags=["amostragem"])
 LER = requer("amostra:ler")
@@ -38,10 +38,7 @@ IMPORTAR = requer("amostra:importar")
 
 
 def serie_de(codigo: str) -> str:
-    for s in ("BS-RP", "BMT-TS", "BE"):
-        if codigo.startswith(s):
-            return s
-    raise ErroAplicacao(422, "codigo_amostra", f"Código {codigo} fora das séries BS-RP, BMT-TS e BE.")
+    return serie_de_codigo(codigo)
 
 
 # ------------------------------------------------------------------ esquemas
