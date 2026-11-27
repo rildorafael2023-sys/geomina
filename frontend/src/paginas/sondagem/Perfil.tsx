@@ -125,8 +125,8 @@ export function PerfilSvg({ p, els, esc, log, topo, base, escala, cols, sel, aoS
         );
       })}
       {pos.prof != null && ticks.map((d) => <text key={d} x={pos.prof! + L("prof") - 4} y={y(d) + 3} textAnchor="end" fill="#495057">{m(d)}</text>)}
-      {pos.cota != null && ticks.map((d) => {
-        const c = p.furo.z + d * Math.sin(((p.furo.inclinacao ?? -90) * Math.PI) / 180);
+      {pos.cota != null && p.furo.z != null && ticks.map((d) => {
+        const c = p.furo.z! + d * Math.sin(((p.furo.inclinacao ?? -90) * Math.PI) / 180);
         return <text key={d} x={pos.cota! + L("cota") - 4} y={y(d) + 3} textAnchor="end" fill="#868e96" fontSize={9}>{m(Math.round(c * 10) / 10)}</text>;
       })}
       {pos.testemunho != null && (

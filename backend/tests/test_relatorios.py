@@ -74,7 +74,7 @@ def test_producao_por_periodo(cliente, h, token_admin, local, termos):  # noqa: 
     assert d["total"]["certificados"] == 1 and d["total"]["resultados"] == 6  # 3 amostras SMP × 2 analitos (padrão fora)
     assert d["total"]["fichas_aprovadas"] == 1 and meses["2026-10"]["rotulo"] == "out/2026"
     assert d["pendencias"] == {"amostras_sem_resultado": 2, "fichas_rascunho": 2, "fichas_aguardando_revisao": 0}
-    assert d["amostras_sem_data"] == 1
+    assert d["amostras_sem_data"] == 2  # BS-RP-4 e X-9 (cadastrada pelo laudo, sem data de coleta)
     assert {g["nome"]: g["fichas"] for g in d["geologos"]}["Geologo1"] == 2
     # sem período: inclui 2025
     assert cliente.get(f"{API}/minas/{m}/relatorios/producao", headers=h).json()["total"]["fichas"] == 3

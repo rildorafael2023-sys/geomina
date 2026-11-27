@@ -16,7 +16,7 @@ interface Previa {
 }
 const SITUACAO: Record<string, { rotulo: string; cor: string }> = {
   vinculada: { rotulo: "amostra cadastrada", cor: "teal" }, nao_encontrada: { rotulo: "amostra não cadastrada", cor: "orange" },
-  controle_lab: { rotulo: "controle do laboratório", cor: "gray" },
+  controle_lab: { rotulo: "controle do laboratório", cor: "gray" }, nova_amostra: { rotulo: "nova amostra (será cadastrada)", cor: "blue" },
 };
 
 export function Geoquimica({ eu }: { eu: Eu }) {
@@ -179,6 +179,7 @@ function Importar({ mina }: { mina: Mina }) {
             {previa.arquivo_ja_importado && <Alert color="yellow" mt="xs">Este mesmo arquivo já foi importado antes.</Alert>}
             {previa.erros_valor.length > 0 && <Alert color="red" mt="xs">{previa.erros_valor.length} valor(es) não reconhecidos (ex.: linha {previa.erros_valor[0].linha}, {previa.erros_valor[0].coluna}).</Alert>}
             {previa.resumo.nao_encontrada > 0 && <Alert color="orange" mt="xs">Resultados de amostras não cadastradas serão guardados sem vínculo e poderão ser ligados depois (aba Certificados).</Alert>}
+            {previa.resumo.nova_amostra > 0 && <Alert color="blue" mt="xs">{previa.resumo.nova_amostra} código(s) ainda não estão cadastrados: ao confirmar, cada um vira uma amostra sem furo, já com os teores do laudo.</Alert>}
           </Paper>
           <Group align="flex-end">
             <TextInput label="Laboratório" value={lab} onChange={(e) => setLab(e.currentTarget.value)} />

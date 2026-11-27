@@ -163,7 +163,7 @@ function Contexto({ p }: { p: PerfilP }) {
           <Table.Tr><Table.Th>Tipo</Table.Th><Table.Td>{f.tipo === "ina" ? "INA (água)" : "Exploratório"}</Table.Td></Table.Tr>
           {f.area && <Table.Tr><Table.Th>Local</Table.Th><Table.Td>{f.area}</Table.Td></Table.Tr>}
           {f.projeto && <Table.Tr><Table.Th>Projeto</Table.Th><Table.Td>{f.projeto}</Table.Td></Table.Tr>}
-          <Table.Tr><Table.Th>Boca</Table.Th><Table.Td>{fmt(f.x, 1)} E · {fmt(f.y, 1)} N · {fmt(f.z, 1)} m</Table.Td></Table.Tr>
+          <Table.Tr><Table.Th>Boca</Table.Th><Table.Td>{f.x == null ? "sem coordenada (conferir)" : `${fmt(f.x, 1)} E · ${fmt(f.y, 1)} N · ${fmt(f.z, 1)} m`}</Table.Td></Table.Tr>
           <Table.Tr><Table.Th>Az / Inc</Table.Th><Table.Td>{f.azimute ?? "—"}° / {f.inclinacao ?? "—"}°</Table.Td></Table.Tr>
           <Table.Tr><Table.Th>Profundidade</Table.Th><Table.Td>{m(f.profundidade_final)} m</Table.Td></Table.Tr>
           {f.data_inicio && <Table.Tr><Table.Th>Data</Table.Th><Table.Td>{f.data_inicio}{f.data_fim ? ` a ${f.data_fim}` : ""}</Table.Td></Table.Tr>}

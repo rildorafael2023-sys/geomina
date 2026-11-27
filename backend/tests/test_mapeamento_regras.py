@@ -3,7 +3,7 @@
 import pytest
 
 from geomina.modules.dicionarios.models import normalizar
-from geomina.modules.mapeamento.regras import ErroRegra, Faixa, linha, normalizar_codigo, plano, verificar_intervalos
+from geomina.modules.mapeamento.regras import ErroRegra, Faixa, linha, normalizar_codigo, plano, serie_de_codigo, verificar_intervalos
 
 
 # ------------------------------------------------------------------ orientações
@@ -77,7 +77,20 @@ def test_codigo_antigo_be_aceito_com_aviso():
     assert c.codigo == "BE-1234" and "antiga" in c.aviso
 
 
-@pytest.mark.parametrize("texto", ["x", "SAB-CP-026", "123", ""])
+@pytest.mark.parametrize("texto,canonico", [("Be-01-158", "BE-01-158"), ("BE 01 158", "BE-01-158"), ("be-01-0012a", "BE-01-012A"),
+                                            ("BE01-15", "BE-01-015")])
+def test_codigo_be_01_dos_laudos_antigos(texto, canonico):
+    assert normalizar_codigo(texto).codigo == canonico
+
+
+@pytest.mark.parametrize("texto,canonico,serie", [("SAB-CP-026", "SAB-CP-026", "SAB-CP"), ("T1-034", "T1-034", "T"),
+                                                  ("12-W-45", "12-W-45", "W"), ("SC4 / 12", "SC4-12", "SC"), ("ANA-CP-3", "ANA-CP-3", "ANA-CP")])
+def test_outras_series_aceitas_como_estao(texto, canonico, serie):
+    c = normalizar_codigo(texto)
+    assert c.codigo == canonico and "cadastrado como está" in c.aviso and serie_de_codigo(canonico) == serie
+
+
+@pytest.mark.parametrize("texto", ["x", "123", "", "Página", "A" * 31 + "1"])
 def test_codigos_fora_da_regra(texto):
     assert normalizar_codigo(texto).codigo is None
 

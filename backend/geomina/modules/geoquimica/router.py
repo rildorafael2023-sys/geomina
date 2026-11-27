@@ -20,23 +20,27 @@ from geomina.modules.auth.models import Usuario
 from geomina.modules.documentos.router import _gravar_arquivo
 from geomina.modules.geoquimica import laudo as L
 from geomina.modules.geoquimica.models import Analito, Certificado, Laboratorio, MetodoAnalitico, Resultado
-from geomina.modules.mapeamento.regras import normalizar_codigo
+from geomina.modules.mapeamento.regras import normalizar_codigo, serie_de_codigo
 
 router = APIRouter(tags=["geoquímica"])
 LER = requer("geoquimica:ler")
 IMPORTAR = requer("amostra:importar")
 
 
+def _canonico_laudo(codigo: str) -> str | None:
+    """Código canônico para ligar o resultado: no laudo, 'RP 478' é o ponto BS-RP-478 (mesmo ponto de produção)."""
+    c = normalizar_codigo(codigo)
+    return c.codigo or c.sugestao
+
+
 def _tipo_linha(tipo: str, codigo: str) -> str:
-    c = codigo.upper()
-    if tipo == "SMP" and ("BRANCO" in c or "BLANK" in c or c.startswith("BLK")):
-        return "BLK"
-    return tipo
+    return L.tipo_por_codigo(tipo, codigo)
 
 
 class Confirmacao(BaseModel):
     laboratorio: str = Field(default="SGS Geosol", min_length=2, max_length=120)
     certificado: str | None = Field(default=None, max_length=40, description="obrigatório se o laudo não informar")
+    cadastrar_amostras: bool = Field(default=True, description="cadastra como amostra (sem furo) cada código do laudo ainda não cadastrado")
 
 
 def _analisar(db: Session, mina_id: uuid.UUID, dados: bytes, nome: str, sha: str) -> dict:
@@ -50,11 +54,13 @@ def _analisar(db: Session, mina_id: uuid.UUID, dados: bytes, nome: str, sha: str
     for ln in laudo.linhas:
         tipo = _tipo_linha(ln.tipo, ln.codigo)
         c = normalizar_codigo(ln.codigo)
-        canon = c.codigo or None
+        canon = _canonico_laudo(ln.codigo)
         a = amostras.get(canon.upper()) if canon else None
         situacao = "vinculada" if a else ("controle_lab" if tipo in ("STD", "BLK") else "nao_encontrada")
         if tipo in ("DUP", "REP") and not a:
             situacao = "nao_encontrada"
+        if not a and tipo == "SMP" and canon:
+            situacao = "nova_amostra"  # será cadastrada (sem furo) ao confirmar
         valores = 0
         for col in laudo.colunas:
             try:
@@ -145,12 +151,19 @@ def confirmar(imp_id: uuid.UUID, e: Confirmacao, request: Request, u: Usuario = 
                 db.flush()
             analitos[c.analito] = an
     amostras = {a.codigo.upper(): a for a in db.scalars(select(Amostra).where(Amostra.mina_id == imp.mina_id))}
-    gravados, vinculados = 0, set()
+    gravados, vinculados, cadastradas = 0, set(), []
     novos = []
     for ln in laudo.linhas:
         tipo = _tipo_linha(ln.tipo, ln.codigo)
-        canon = normalizar_codigo(ln.codigo).codigo
+        canon = _canonico_laudo(ln.codigo)
         amostra = amostras.get(canon.upper()) if canon else None
+        if amostra is None and canon and tipo == "SMP" and e.cadastrar_amostras:
+            amostra = Amostra(mina_id=imp.mina_id, codigo=canon, serie=serie_de_codigo(canon), estado="enviada",
+                              observacoes=f"Cadastrada pelo laudo {codigo_cert} (código no laudo: {ln.codigo}).")
+            db.add(amostra)
+            db.flush()
+            amostras[canon.upper()] = amostra
+            cadastradas.append(canon)
         for col in laudo.colunas:
             texto, num, qual, lim = L.valor(ln.valores.get(col.indice))
             if qual == "--" and not texto:
@@ -169,9 +182,10 @@ def confirmar(imp_id: uuid.UUID, e: Confirmacao, request: Request, u: Usuario = 
     _recalcular_preferidos(db, {r["amostra_id"] for r in novos if r["amostra_id"] and r["tipo_linha"] == "SMP"})
     imp.estado = "confirmada"
     imp.opcoes = e.model_dump()
-    imp.relatorio = {**rel, "gravados": gravados, "amostras_vinculadas": sorted(vinculados)}
+    imp.relatorio = {**rel, "gravados": gravados, "amostras_vinculadas": sorted(vinculados), "amostras_cadastradas": cadastradas}
     db.flush()
     return {"certificado_id": cert.id, "certificado": codigo_cert, "resultados": gravados, "amostras_vinculadas": len(vinculados),
+            "amostras_cadastradas": len(cadastradas),
             "sem_vinculo": sorted({r["codigo_laboratorio"] for r in novos if r["amostra_id"] is None})}
 
 

@@ -73,12 +73,16 @@ def verificar_intervalos(faixas: list[Faixa], altura: float | None = None) -> li
 
 # ------------------------------------------------------------------ códigos de amostra
 # Regras informadas pelo usuário (2026-11-25): BS-RP = amostragem de mina; BMT-TS = testemunho de
-# sondagem; BE = amostras antigas. As regras configuráveis por mina chegam na Etapa 8.
+# sondagem; BE = amostras antigas (BE-01-nnn). Em 2026-11-27 o usuário pediu o banco completo: códigos de
+# outras séries (solo, FSR, ANA, BGS…) também são aceitos, como estão escritos, com aviso.
 PADROES = {
     "BS-RP": re.compile(r"^BS-RP-(\d+)([A-Z]{0,3})$"),
     "BMT-TS": re.compile(r"^BMT-TS-(\d+)([A-Z]{0,3})$"),
-    "BE": re.compile(r"^BE-?\w+$"),
+    "BE": re.compile(r"^BE-?[A-Z0-9][A-Z0-9-]*$"),
 }
+BE_01 = re.compile(r"^BE-?0?1-(\d+)-?([A-Z]{0,3})$")
+OUTRO = re.compile(r"^[A-Z0-9*#][A-Z0-9.\-_*#+]*$")
+TAMANHO_MAX = 30
 
 
 @dataclass
@@ -90,22 +94,38 @@ class CodigoAmostra:
 
 
 def normalizar_codigo(texto: str) -> CodigoAmostra:
-    """Forma canônica sem espaços: 'BS - RP - 237 - B' → 'BS-RP-237B'.
+    """Forma canônica sem espaços: 'BS - RP - 237 - B' → 'BS-RP-237B'; 'Be-01-158' → 'BE-01-158'.
 
     'RP 478' (sem o prefixo BS) não é convertido sozinho: vira sugestão a confirmar.
+    Códigos de outras séries (ex.: 'T1-034', 'FSR-12') são aceitos como estão, com aviso.
     """
     bruto = (texto or "").strip().upper()
     t = re.sub(r"\s*-\s*", "-", bruto)
+    t = re.sub(r"\s*/\s*", "-", t)
     t = re.sub(r"\s+", "-", t)
     # sufixo de letra separado ("237-B") junta-se ao número
     t = re.sub(r"^((?:BS-RP|BMT-TS)-\d+)-([A-Z]{1,3})$", r"\1\2", t)
+    m = BE_01.match(t)
+    if m:
+        t = f"BE-01-{int(m.group(1)):03d}{m.group(2)}"
     for prefixo, padrao in PADROES.items():
-        if padrao.match(t):
+        if padrao.match(t) and len(t) <= TAMANHO_MAX:
             aviso = "Código de amostra antiga (BE)." if prefixo == "BE" else None
             return CodigoAmostra(texto, t, None, aviso)
     m = re.match(r"^RP-?(\d+)([A-Z]{0,3})$", t)
     if m:
         sug = f"BS-RP-{m.group(1)}{m.group(2)}"
         return CodigoAmostra(texto, None, sug, f"'{texto}' parece ser {sug}; confirme o código completo.")
+    if OUTRO.match(t) and len(t) <= TAMANHO_MAX and re.search(r"[A-Z]", t) and re.search(r"\d", t):
+        return CodigoAmostra(texto, t, None, f"'{t}' não é das séries BS-RP, BMT-TS ou BE: cadastrado como está.")
     return CodigoAmostra(texto, None, None,
-                         f"'{texto}' não segue as regras de código (BS-RP-nnn, BMT-TS-nnn ou BE…).")
+                         f"'{texto}' não é um código de amostra válido (use letras e números, até {TAMANHO_MAX} caracteres).")
+
+
+def serie_de_codigo(codigo: str) -> str:
+    """Série = prefixo do código: 'BS-RP-12' → 'BS-RP'; 'T1-034' → 'T'; 'ANA-CP-3' → 'ANA-CP'."""
+    for s in ("BS-RP", "BMT-TS", "BE"):
+        if codigo.startswith(s):
+            return s
+    m = re.search(r"([A-Z]+(?:-[A-Z]+)*)", codigo)
+    return (m.group(1)[:10].rstrip("-") if m else "") or "OUTRA"

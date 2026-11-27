@@ -18,7 +18,7 @@ interface IntervaloL { id: string; de: number; ate: number; litologia: TermoP | 
 interface AmostraL { id: string; codigo: string; de: number; ate: number; com_resultado: boolean; valores: Record<string, { texto: string; unidade: string; certificado: string }> }
 export interface Foto { id: string; documento_id: string; versao: number; titulo: string; de: number | null; ate: number | null; caixa: string | null; legenda: string | null; categoria: string; mime: string | null }
 export interface Log {
-  furo: { id: string; codigo: string; projeto: string | null; area: string | null; x: number; y: number; z: number; srid: number; azimute: number | null; inclinacao: number | null; profundidade_final: number; data_inicio: string | null; data_fim: string | null; responsavel: string | null; metodo: string | null; descricao: string | null };
+  furo: { id: string; codigo: string; projeto: string | null; area: string | null; x: number | null; y: number | null; z: number | null; srid: number; azimute: number | null; inclinacao: number | null; profundidade_final: number; data_inicio: string | null; data_fim: string | null; responsavel: string | null; metodo: string | null; descricao: string | null };
   intervalos: IntervaloL[];
   amostras: AmostraL[];
   sem_profundidade: string[];
@@ -66,7 +66,8 @@ export function NovoFuro({ mina, aoFechar, aoCriar }: { mina: Mina; aoFechar: ()
     onSuccess: (r) => { qc.invalidateQueries({ queryKey: ["furos"] }); notifications.show({ color: "teal", message: `Furo ${f.codigo.toUpperCase()} cadastrado.` }); aoCriar(r.id); },
     onError: (e) => setErro(e instanceof ErroApi ? e.message : "Falha ao salvar."),
   });
-  const ok = f.codigo.trim() && f.x !== "" && f.y !== "" && f.z !== "" && Number(f.profundidade_final) > 0;
+  const nXyz = [f.x, f.y, f.z].filter((v) => v !== "").length;
+  const ok = f.codigo.trim() && (nXyz === 0 || nXyz === 3) && Number(f.profundidade_final) > 0;
   return (
     <Modal opened onClose={aoFechar} size="lg" title="Novo furo de sondagem">
       <Stack gap="sm">
@@ -75,9 +76,9 @@ export function NovoFuro({ mina, aoFechar, aoCriar }: { mina: Mina; aoFechar: ()
           <TextInput label="Código do furo" required value={f.codigo} onChange={(e) => setF({ ...f, codigo: e.currentTarget.value })} />
           <NumberInput label="Profundidade final (m)" required min={0} decimalSeparator="," value={f.profundidade_final} onChange={(v) => setF({ ...f, profundidade_final: v })} />
           <Select label="Sistema de coordenadas" allowDeselect={false} data={CRS_OPCOES} value={f.srid} onChange={(v) => setF({ ...f, srid: v ?? f.srid })} />
-          <NumberInput label="X (boca do furo)" required decimalSeparator="," value={f.x} onChange={(v) => setF({ ...f, x: v })} />
-          <NumberInput label="Y" required decimalSeparator="," value={f.y} onChange={(v) => setF({ ...f, y: v })} />
-          <NumberInput label="Z (cota)" required decimalSeparator="," value={f.z} onChange={(v) => setF({ ...f, z: v })} />
+          <NumberInput label="X (boca do furo)" description="deixe X, Y e Z em branco se ainda não tiver" decimalSeparator="," value={f.x} onChange={(v) => setF({ ...f, x: v })} />
+          <NumberInput label="Y" decimalSeparator="," value={f.y} onChange={(v) => setF({ ...f, y: v })} />
+          <NumberInput label="Z (cota)" decimalSeparator="," value={f.z} onChange={(v) => setF({ ...f, z: v })} />
           <NumberInput label="Azimute (°)" min={0} max={359.99} decimalSeparator="," value={f.azimute} onChange={(v) => setF({ ...f, azimute: v })} />
           <NumberInput label="Inclinação (°)" description="da horizontal; negativo = para baixo" min={-90} max={90} decimalSeparator="," value={f.inclinacao} onChange={(v) => setF({ ...f, inclinacao: v })} />
           <TextInput label="Método" placeholder="ex.: diamantada HQ" value={f.metodo} onChange={(e) => setF({ ...f, metodo: e.currentTarget.value })} />
@@ -134,7 +135,7 @@ export function LogFuro({ id, pode }: { id: string; pode: boolean }) {
             <Info r="Projeto / área" v={[f.projeto, f.area].filter(Boolean).join(" · ")} />
             <Info r="Profundidade final" v={`${m(f.profundidade_final)} m`} />
             <Info r="Azimute / inclinação" v={`${f.azimute ?? "—"}° / ${f.inclinacao ?? "—"}°`} />
-            <Info r="Boca (X, Y, Z)" v={`${m(f.x)}, ${m(f.y)}, ${m(f.z)} (EPSG:${f.srid})`} />
+            <Info r="Boca (X, Y, Z)" v={f.x == null ? "sem coordenada (conferir)" : `${m(f.x)}, ${m(f.y)}, ${m(f.z)} (EPSG:${f.srid})`} />
             <Info r="Período" v={[f.data_inicio && dataCurta(f.data_inicio), f.data_fim && dataCurta(f.data_fim)].filter(Boolean).join(" a ")} />
             <Info r="Responsável / método" v={[f.responsavel, f.metodo].filter(Boolean).join(" · ")} />
           </SimpleGrid>

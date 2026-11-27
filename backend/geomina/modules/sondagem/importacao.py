@@ -47,7 +47,7 @@ ALIASES = {
     "caixa": ["caixa", "cx", "box", "n caixa", "numero da caixa"],
 }
 MAPA = {normalizar(a): campo for campo, lista in ALIASES.items() for a in lista}
-OBRIGATORIOS = {"collar": {"furo", "x", "y", "z", "profundidade"}, "survey": {"furo", "profundidade", "azimute", "inclinacao"},
+OBRIGATORIOS = {"collar": {"furo", "profundidade"}, "survey": {"furo", "profundidade", "azimute", "inclinacao"},
                 "geologia": {"furo", "de", "ate"}, "amostras": {"furo", "amostra", "de", "ate"}}
 CONVENCOES = {
     "horizontal_negativo": "graus da horizontal, negativo = para baixo (−60 = 60° abaixo da horizontal)",
@@ -130,10 +130,15 @@ def analisar(arquivos: dict[str, tuple[bytes, str]], convencao: str, existentes:
         az = numero(v.get("azimute"))
         inc_b = numero(v.get("inclinacao"))
         inc = converter_inclinacao(inc_b, convencao) if inc_b is not None else None
-        falta = [c for c, val in (("X", x), ("Y", y), ("Z", z), ("profundidade final", prof)) if val is None]
-        if falta:
-            erro("collar", k, f"{furo}: falta {', '.join(falta)}")
+        if prof is None:
+            erro("collar", k, f"{furo}: falta profundidade final")
             continue
+        falta = [c for c, val in (("X", x), ("Y", y), ("Z", z)) if val is None]
+        if falta and len(falta) < 3:
+            erro("collar", k, f"{furo}: falta {', '.join(falta)} (informe X, Y e Z juntos, ou deixe os três em branco)")
+            continue
+        if falta:
+            aviso("collar", k, f"{furo}: sem coordenada da boca — o furo entra com log e amostras, sem trajetória (conferir)")
         if prof <= 0:
             erro("collar", k, f"{furo}: profundidade final deve ser maior que zero")
             continue
@@ -252,9 +257,10 @@ def analisar(arquivos: dict[str, tuple[bytes, str]], convencao: str, existentes:
 
     sem_trajetoria = set()
     for c in dados["collar"]:
+        if c["x"] is None:
+            continue  # já avisado: sem coordenada, sem trajetória
         if c["furo"] not in por_furo and (c["azimute"] is None or c["inclinacao"] is None):
-            erro("collar", c["linha"], f"{c['furo']}: sem survey e sem azimute/inclinação — não há como calcular a trajetória")
-            sem_trajetoria.add(c["furo"])
+            aviso("collar", c["linha"], f"{c['furo']}: sem survey e sem azimute/inclinação — o furo entra sem trajetória (conferir)")
         elif len(por_furo.get(c["furo"], ())) < 2:
             aviso("collar", c["linha"], f"{c['furo']}: sem survey suficiente — trajetória será ESTIMADA (reta)")
     if sem_trajetoria:  # o furo com erro não é gravado, nem o que depende dele
