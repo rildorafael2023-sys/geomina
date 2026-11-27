@@ -1,7 +1,8 @@
-import { Alert, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import { useState, type FormEvent } from "react";
 
 import { api, ErroApi, json, type RespostaLogin } from "../api/cliente";
+import { TelaEntrada } from "../componentes/ui";
 
 export function Instalacao({ aoConcluir }: { aoConcluir: (token: string) => void }) {
   const [f, setF] = useState({ login: "", nome: "", email: "", senha: "", confirmacao: "" });
@@ -31,11 +32,11 @@ export function Instalacao({ aoConcluir }: { aoConcluir: (token: string) => void
   }
 
   return (
-    <Center mih="100vh" p="md">
-      <Paper withBorder p="xl" w="100%" maw={440} component="form" onSubmit={enviar}>
-        <Stack>
+    <TelaEntrada largura={440}>
+      <form onSubmit={enviar}>
+        <Stack gap="sm">
           <div>
-            <Title order={3}>Primeiro acesso</Title>
+            <Text fw={600} size="lg">Primeiro acesso</Text>
             <Text size="sm" c="dimmed">
               Crie o administrador deste computador. Os dados ficam somente nesta máquina.
             </Text>
@@ -46,11 +47,11 @@ export function Instalacao({ aoConcluir }: { aoConcluir: (token: string) => void
           <TextInput label="E-mail (opcional)" {...campo("email")} />
           <PasswordInput label="Senha" description="Mínimo de 8 caracteres, com letras e números" required {...campo("senha")} />
           <PasswordInput label="Confirme a senha" required {...campo("confirmacao")} />
-          <Button type="submit" loading={enviando}>
+          <Button type="submit" size="sm" loading={enviando}>
             Criar administrador
           </Button>
         </Stack>
-      </Paper>
-    </Center>
+      </form>
+    </TelaEntrada>
   );
 }

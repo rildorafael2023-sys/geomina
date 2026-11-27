@@ -1,0 +1,97 @@
+/* Design system do GeoMina: variáveis, área de trabalho, tabelas e impressão. Ver docs/INTERFACE.md. */
+:root {
+  --gm-fundo: #eef1f4;
+  --gm-painel: #ffffff;
+  --gm-borda: #d5dbe1;
+  --gm-borda-suave: #e6eaee;
+  --gm-cabecalho: #f4f6f8;
+  --gm-texto: #1d2733;
+  --gm-texto-2: #5c6875;
+  --gm-menu: #17212b;
+  --gm-menu-2: #1f2b37;
+  --gm-menu-texto: #c3ccd6;
+  --gm-menu-ativo: #2f9bc7;
+  --gm-selecao: #e3f0f6;
+  --gm-topo: 44px;
+}
+html, body { background: var(--gm-fundo); color: var(--gm-texto); }
+body { font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #c3cbd3; border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #9aa6b2; background-clip: content-box; border: 2px solid transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Página */
+.gm-pagina { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gm-pagina-cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; }
+.gm-pagina-titulo { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gm-pagina-titulo h1 { font-size: 18px; font-weight: 600; margin: 0; line-height: 1.2; white-space: nowrap; }
+.gm-pagina-sub { color: var(--gm-texto-2); font-size: 12px; line-height: 1.3; }
+.gm-pagina-acoes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* Painel */
+.gm-painel { background: var(--gm-painel); border: 1px solid var(--gm-borda); border-radius: 3px; min-width: 0; }
+.gm-painel-cab { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 10px; border-bottom: 1px solid var(--gm-borda-suave); flex-wrap: wrap; }
+.gm-painel-cab h2 { font-size: 13px; font-weight: 600; margin: 0; }
+.gm-painel-cab .gm-painel-desc { color: var(--gm-texto-2); font-size: 11.5px; }
+.gm-painel-cab .gm-painel-acoes { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Filtros */
+.gm-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; padding: 8px 10px; background: var(--gm-painel); border: 1px solid var(--gm-borda); border-radius: 3px; }
+.gm-filtros .gm-filtros-fim { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+/* Indicadores compactos */
+.gm-indicadores { display: flex; flex-wrap: wrap; background: var(--gm-painel); border: 1px solid var(--gm-borda); border-radius: 3px; }
+.gm-indicador { padding: 7px 14px; border-right: 1px solid var(--gm-borda-suave); min-width: 120px; text-decoration: none; color: inherit; display: block; }
+.gm-indicador:last-child { border-right: 0; }
+a.gm-indicador:hover { background: var(--gm-cabecalho); }
+.gm-indicador-rotulo { font-size: 11px; color: var(--gm-texto-2); white-space: nowrap; }
+.gm-indicador-valor { font-size: 17px; font-weight: 600; line-height: 1.25; }
+.gm-indicador-detalhe { font-size: 11px; color: var(--gm-texto-2); white-space: nowrap; }
+
+/* Tabelas de dados */
+.gm-tabela-caixa { overflow: auto; position: relative; }
+.gm-tabela-caixa table { border-collapse: separate; border-spacing: 0; }
+.gm-tabela-caixa thead th { position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--gm-borda) !important; }
+.gm-tabela-caixa td { border-bottom: 1px solid var(--gm-borda-suave); }
+.gm-tabela-caixa .gm-fixa { position: sticky; left: 0; z-index: 1; background: var(--gm-painel); box-shadow: 1px 0 0 var(--gm-borda-suave); }
+.gm-tabela-caixa thead .gm-fixa { z-index: 3; background: var(--gm-cabecalho); }
+.gm-tabela-caixa tr[data-sel="true"] td { background: var(--gm-selecao) !important; }
+.gm-tabela-caixa tr[data-sel="true"] td:first-child { box-shadow: inset 3px 0 0 var(--mantine-color-geo-7); }
+.gm-tabela-caixa tr[data-clicavel="true"] { cursor: pointer; }
+.gm-ordenavel { cursor: pointer; user-select: none; }
+.gm-ordenavel:hover { color: var(--gm-texto) !important; }
+.gm-num { text-align: right !important; font-variant-numeric: tabular-nums; }
+
+/* Telas largas: Mantine Table em páginas antigas também com cabeçalho cinza */
+.mantine-Table-th { background: var(--gm-cabecalho); }
+
+/* Impressão de fichas: só o conteúdo, sem menu nem cabeçalho */
+@media print {
+  .mantine-AppShell-header, .mantine-AppShell-navbar, .nao-imprimir, .mantine-Notifications-root { display: none !important; }
+  .mantine-AppShell-main { padding: 0 !important; background: #fff !important; }
+  body, html { background: #fff !important; }
+  .gm-painel { border: 0; }
+  @page { size: A4; margin: 10mm; }
+}
+
+/* Explorador: lista/árvore à esquerda e detalhe à direita (Estrutura, Sondagem, Fotos…) */
+.gm-explorador { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 10px; align-items: start; }
+.gm-explorador-lista { position: sticky; top: 56px; }
+@media (max-width: 900px) { .gm-explorador { grid-template-columns: minmax(0, 1fr); } .gm-explorador-lista { position: static; } }
+
+/* Telas de entrada */
+.gm-entrada { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 16px;
+  background: radial-gradient(circle at 20% 10%, #22313f 0, var(--gm-menu) 55%); }
+.gm-entrada-marca { display: flex; gap: 10px; align-items: center; color: #fff; }
+.gm-entrada-nome { font-size: 22px; font-weight: 700; letter-spacing: .3px; }
+.gm-entrada-sub { font-size: 12px; color: #9fb0c0; }
+.gm-entrada-cartao { width: 100%; background: #fff; border-radius: 4px; padding: 22px 24px; border: 1px solid #0d141b; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.gm-entrada-rodape { font-size: 11px; color: #6f8192; }
+
+/* Painel lateral + conteúdo (filtros de Sondagem, log do furo): empilha em telas estreitas. */
+.gm-lateral > :last-child { flex: 1; min-width: 0; }
+@media (max-width: 760px) {
+  .gm-lateral { flex-direction: column; align-items: stretch !important; }
+  .gm-lateral > * { width: auto !important; max-width: 100%; }
+}

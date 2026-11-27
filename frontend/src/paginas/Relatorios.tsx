@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import { api, baixar, ESTADOS_FICHA, type Eu, type Mina, type UnidadeResumo } from "../api/cliente";
 import { useDicionarios } from "../api/dicionarios";
+import { IconReportAnalytics } from "@tabler/icons-react";
+import { Pagina } from "../componentes/ui";
 
 interface Mes { mes: string; rotulo: string; fichas: number; fichas_aprovadas: number; amostras: number; amostras_com_resultado: number; certificados: number; resultados: number }
 interface Producao {
@@ -35,11 +37,7 @@ export function Relatorios({ eu }: { eu: Eu }) {
   if (!mina) return <Alert color="yellow">Cadastre a mina em "Estrutura da mina" antes de gerar relatórios.</Alert>;
   const pode = (p: string) => eu.permissoes.includes(p);
   return (
-    <Stack>
-      <div className="nao-imprimir">
-        <Title order={3}>Relatórios</Title>
-        <Text size="sm" c="dimmed">Planilhas e relatórios gerados a partir dos dados do GeoMina, com os filtros escolhidos. Cada planilha tem uma aba "Metadados" com a data, o usuário e os filtros.</Text>
-      </div>
+    <Pagina titulo="Relatórios" icone={<IconReportAnalytics size={20} />} subtitulo={<>Planilhas e relatórios gerados a partir dos dados do GeoMina, com os filtros escolhidos. Cada planilha tem uma aba "Metadados" com a data, o usuário e os filtros.</>}>
       <Tabs defaultValue={pode("amostra:ler") ? "producao" : "fichas"} keepMounted={false}>
         <Tabs.List className="nao-imprimir">
           {pode("mapeamento:ler") && pode("amostra:ler") && <Tabs.Tab value="producao">Produção por período</Tabs.Tab>}
@@ -52,7 +50,7 @@ export function Relatorios({ eu }: { eu: Eu }) {
         <Tabs.Panel value="geoquimica" pt="md"><RelGeoquimica mina={mina} /></Tabs.Panel>
         <Tabs.Panel value="historico" pt="md"><RelHistorico /></Tabs.Panel>
       </Tabs>
-    </Stack>
+    </Pagina>
   );
 }
 

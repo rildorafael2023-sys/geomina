@@ -32,7 +32,7 @@ export function FotosTestemunho() {
   const p = perfil.data, c = caixas.data;
 
   return (
-    <Group align="flex-start" gap="sm" wrap="nowrap">
+    <Group className="gm-lateral" align="flex-start" gap="sm" wrap="nowrap">
       <Paper withBorder p="xs" w={210} style={{ flexShrink: 0 }}>
         <TextInput size="xs" placeholder="Buscar furo" value={busca} onChange={(e) => setBusca(e.currentTarget.value)} mb={4} />
         <Checkbox size="xs" label="Só furos com fotos" checked={soCom} onChange={(e) => setSoCom(e.currentTarget.checked)} mb={6} />
@@ -154,7 +154,7 @@ function AoLongo({ p, tam, aoFoto }: { p: PerfilP; tam: number; aoFoto: (f: Foto
         const ams = f.de == null ? [] : p.amostras.filter((a) => a.ate > f.de! && a.de < f.ate!);
         return (
           <Paper key={f.id} withBorder p={6}>
-            <Group align="flex-start" gap="sm" wrap="nowrap">
+            <Group align="flex-start" gap="sm" wrap="wrap">
               <Text fw={700} w={90} size="sm">{f.de != null ? `${m(f.de)}–${m(f.ate)} m` : "a conferir"}{f.caixa && <Text size="xs" c="dimmed">caixa {f.caixa}</Text>}</Text>
               <div style={{ width: tam * 1.8, flexShrink: 0 }}><Miniatura foto={f} altura={tam} aoAbrir={() => aoFoto(f)} rotulo={false} /></div>
               <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>

@@ -47,7 +47,7 @@ const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { 
   await shot("04-usuarios");
 
   // 4. Sair e entrar como geólogo: troca de senha obrigatória
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu do usuário" }).click(); await page.getByRole("menuitem", { name: "Sair" }).click();
   await page.getByLabel("Login").fill("joao.geologo");
   await page.getByLabel("Senha").fill("provisoria1");
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -66,7 +66,7 @@ const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { 
   assert.strictEqual(await page.getByRole("link", { name: "Usuários" }).count(), 0);
 
   // 6. Senha errada mostra mensagem
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu do usuário" }).click(); await page.getByRole("menuitem", { name: "Sair" }).click();
   await page.getByLabel("Login").fill("joao.geologo");
   await page.getByLabel("Senha").fill("errada000");
   await page.getByRole("button", { name: "Entrar" }).click();

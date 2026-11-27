@@ -22,11 +22,11 @@ const SENHA = "senhaForte123";
       return { status: r.status, corpo: await r.json().catch(() => null) };
     }, [metodo, caminho, corpo, token]);
   const entrar = async (login, senha) => {
-    if (await page.getByRole("button", { name: "Sair" }).count()) await page.getByRole("button", { name: "Sair" }).click();
+    if (await page.getByRole("button", { name: "Menu do usuário" }).count()) { await page.getByRole("button", { name: "Menu do usuário" }).click(); await page.getByRole("menuitem", { name: "Sair" }).click(); }
     await page.getByLabel("Login").fill(login);
     await page.getByLabel("Senha").fill(senha);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await page.getByRole("button", { name: "Sair" }).waitFor();
+    await page.getByRole("button", { name: "Menu do usuário" }).waitFor();
   };
   const escolher = async (campo, opcao) => {
     await campo.click();

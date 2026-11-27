@@ -4,7 +4,15 @@ Software de gestão de dados geológicos para a rotina operacional de mina subte
 
 **Aplicativo local para o PC**: roda somente no computador do usuário (127.0.0.1), sem internet e sem rede.
 
-## Estado atual — versão 0.23.0
+## Estado atual — versão 0.24.0
+- ✅ **Interface profissional (visual, UX e layout)** — ver `docs/INTERFACE.md`:
+  - **Design system** próprio: azul-petróleo `#1d6a8a`, cinzas ardósia, fonte do sistema (Segoe UI), textos compactos e legíveis, sem sombras pesadas nem degradês; ícones Tabler consistentes (funcionam sem internet).
+  - **Layout principal**: barra superior escura com caminho (grupo › módulo › subpágina), mina ativa e sistema de coordenadas, menu do usuário (trocar senha, sobre, sair); menu lateral agrupado (Mina, Geologia, Amostragem e química, Documentos, Administração) que pode ser recolhido e recolhe sozinho em telas até 1280 px.
+  - **Componentes padrão** (`componentes/ui.tsx`): cabeçalho de página com ações, painéis, barra de filtros com “Limpar filtros”, indicadores compactos, estados vazios e de carregamento, e **tabela de dados** com ordenação por coluna, busca, cabeçalho fixo, coluna principal fixa, números à direita, linha selecionada destacada e “mostrar mais”.
+  - Todas as telas no mesmo padrão (Painel, Estrutura, Mapeamento e ficha, Amostras, Sondagem, Laboratório, Topografia, Relatórios, Documentos, Dicionários, Tipos e regras, Usuários, Histórico, Backup, Sistema, login e troca de senha). Nenhuma função foi retirada e o banco não mudou.
+  - **Responsivo**: sem rolagem lateral em 1920, 1440, 1024 e 390 px (painéis laterais da Sondagem empilham no celular).
+
+## Versão 0.23.0
 - ✅ **Sondagem refeita como no vídeo de referência** (furos de sonda):
   - **Início** com o cartão da Sondagem (exploratórios F, INA, trechos descritos, amostras, com química, fotos).
   - **Perfil do furo**: barra de RQD (Excelente…Muito ruim, média ponderada), colunas RQD, profundidade, cota, testemunho colorido pela litologia, ocorrências (esmeralda, berilo, molibdenita, água, carbonato, sulfetos, não recuperado, lidas da descrição), fotos, litologia com caixa, amostras e uma barra por elemento; painel de elementos por unidade (Padrão / Maiores / Todos); modo Amostrado/Inteiro; zoom; mostrar/ocultar colunas; exportar PNG, SVG, CSV e PDF.

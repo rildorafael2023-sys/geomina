@@ -56,7 +56,7 @@ export function AmostragemFuros() {
   ].join("\n"), "amostragem_geoquimica_furos.csv");
 
   return (
-    <Group align="flex-start" gap="sm" wrap="nowrap">
+    <Group className="gm-lateral" align="flex-start" gap="sm" wrap="nowrap">
       <Paper withBorder p="xs" w={230} style={{ flexShrink: 0 }}>
         <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb={4}>Situação</Text>
         {([["todas", "Total de amostras", todas.length], ["com", "Com química", todas.filter(comQ).length], ["sem", "Sem química", todas.filter((a) => !comQ(a)).length]] as const).map(([k, r, n]) => (

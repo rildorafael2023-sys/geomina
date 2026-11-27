@@ -80,7 +80,6 @@ function furoDados(cod, prof, deslocA) {
 
   // 2. Perfil do furo
   await page.getByRole("link", { name: "Perfil do furo" }).click();
-  await page.waitForTimeout(1500); await shot("dbg"); await page.getByRole("tab", { name: "Tracks geoquímicos" }).waitFor();
   await page.getByText(/RQD F31\d/).first().waitFor();
   await page.getByText("Elementos no perfil").waitFor();
   await page.locator("svg text", { hasText: "Testemunho" }).first().waitFor();
@@ -167,13 +166,13 @@ function furoDados(cod, prof, deslocA) {
   await page.getByRole("button", { name: "Gravar 6 foto(s)" }).click();
   await page.getByText("6 foto(s) gravada(s).").waitFor();
   await page.getByText("Caixas do log sem foto:").waitFor();
-  await page.locator("img").first().waitFor();
+  await page.locator(".gm-trabalho img").first().waitFor();
   await page.waitForTimeout(500);
   await shot("v10-fotos-por-caixa");
   await page.getByText("Ao longo do furo", { exact: true }).click();
   await page.waitForTimeout(500);
   await shot("v11-fotos-ao-longo");
-  await page.locator("img").first().click();
+  await page.locator(".gm-trabalho img").first().click();
   await page.getByRole("link", { name: "Baixar original" }).waitFor();
   await page.getByRole("button", { name: "⟳ Girar" }).click();
   await page.waitForTimeout(500);

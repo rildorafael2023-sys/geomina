@@ -1,10 +1,12 @@
-import { Alert, Badge, Button, Group, Loader, Modal, Paper, PasswordInput, ScrollArea, Stack, Switch, Table, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Badge, Button, Group, Loader, Modal, Paper, PasswordInput, ScrollArea, Stack, Switch, Table, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api, baixar, dataHora, ErroApi, json, tamanhoLegivel, type Backup as TBackup } from "../api/cliente";
+import { IconDatabaseExport } from "@tabler/icons-react";
+import { Pagina } from "../componentes/ui";
 
 const TIPOS: Record<string, { rotulo: string; cor: string }> = {
   completo: { rotulo: "Completo", cor: "teal" },
@@ -49,13 +51,7 @@ export function Backup({ aoRestaurar }: { aoRestaurar: () => void }) {
   });
 
   return (
-    <Stack>
-      <div>
-        <Title order={3}>Backup e restauração</Title>
-        <Text size="sm" c="dimmed">
-          Todos os dados ficam neste computador. Faça backups completos com frequência e guarde uma cópia fora dele (pendrive ou disco externo).
-        </Text>
-      </div>
+    <Pagina titulo="Backup e restauração" icone={<IconDatabaseExport size={20} />} subtitulo={<>Todos os dados ficam neste computador. Faça backups completos com frequência e guarde uma cópia fora dele (pendrive ou disco externo).</>}>
       {erro && <Alert color="red" withCloseButton onClose={() => setErro(null)}>{erro}</Alert>}
 
       <Paper withBorder p="md">
@@ -143,7 +139,7 @@ export function Backup({ aoRestaurar }: { aoRestaurar: () => void }) {
           </Stack>
         )}
       </Modal>
-    </Stack>
+    </Pagina>
   );
 }
 

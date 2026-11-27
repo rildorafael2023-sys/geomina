@@ -59,8 +59,8 @@ const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { 
 
   // 2. Painel com números reais
   await page.reload();
-  await page.getByText("MINA01 — Mina 01").waitFor();
-  const cartao = (rotulo) => page.locator(".mantine-Paper-root", { has: page.getByText(rotulo, { exact: true }) }).first();
+  await page.locator(".gm-contexto").getByText("MINA01").waitFor();
+  const cartao = (rotulo) => page.locator(".gm-indicador", { has: page.getByText(rotulo, { exact: true }) }).first();
   assert.match(await cartao("Unidades ativas").innerText(), /\n3\b/);
   assert.match(await cartao("Frentes ativas").innerText(), /\n1\b/);
   assert.match(await cartao("Avanço em 30 dias").innerText(), /3,2 m/);
@@ -121,7 +121,7 @@ const abrirAdmin = async (page, nome) => { if (!(await page.getByRole("link", { 
 
   // 6. Geólogo não vê Backup nem Histórico
   await chamar("POST", "/usuarios", { login: "geo1", nome: "Geo Um", senha: "provisoria1", papeis: ["GEOLOGO"] });
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu do usuário" }).click(); await page.getByRole("menuitem", { name: "Sair" }).click();
   await page.getByLabel("Login").fill("geo1");
   await page.getByLabel("Senha").fill("provisoria1");
   await page.getByRole("button", { name: "Entrar" }).click();
